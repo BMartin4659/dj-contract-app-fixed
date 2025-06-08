@@ -2613,23 +2613,18 @@ Live City DJ Contract Terms and Conditions:
         : '0 1px 3px rgba(0,0,0,0.05)';
     });
     
-    // Update form data immediately to avoid state update issues
-    setFormData(prev => {
-      const newData = { ...prev, paymentMethod: method };
-      
-      // Defer context update to avoid setState during render
-      setTimeout(() => {
-        updateContractFormData(newData);
-      }, 0);
-      
-      // Also save to localStorage as backup
-      try {
-        localStorage.setItem('djContractFormData', JSON.stringify(newData));
-      } catch (error) {
-        console.error('Error saving payment method to localStorage:', error);
-      }
-      return newData;
-    });
+    const newData = { ...formData, paymentMethod: method };
+    
+    // Update form data immediately
+    setFormData(newData);
+    updateContractFormData(newData);
+    
+    // Also save to localStorage as backup
+    try {
+      localStorage.setItem('djContractFormData', JSON.stringify(newData));
+    } catch (error) {
+      console.error('Error saving payment method to localStorage:', error);
+    }
     
     // Clear any payment method error when a selection is made
     if (formErrors.paymentMethod) {
@@ -2639,7 +2634,7 @@ Live City DJ Contract Terms and Conditions:
         return newErrors;
       });
     }
-  }, [formErrors, updateContractFormData]);
+  }, [formData, formErrors, updateContractFormData]);
 
   // Memoize the payment method option styles to reduce recalculations
   const getPaymentOptionStyle = useCallback((method) => {
@@ -2717,13 +2712,10 @@ Live City DJ Contract Terms and Conditions:
         musicPreferences: selectedGenres,
         otherMusicPreference: selectedGenres.includes('other') ? otherGenre : ''
       };
+      
+      // Update both local and context state
       setFormData(newData);
-      
-      // Use setTimeout to defer the context update to avoid setState during render
-      setTimeout(() => {
-        updateContractFormData(newData);
-      }, 0);
-      
+      updateContractFormData(newData);
       onClose();
     };
     
