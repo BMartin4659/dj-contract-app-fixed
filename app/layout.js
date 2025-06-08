@@ -30,16 +30,20 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${inter.className}`}>
-      <body className="relative min-h-screen overflow-x-hidden">
+      <body suppressHydrationWarning className="min-h-screen flex flex-col">
         {/* Background layer */}
         <div className="fixed top-0 left-0 w-full h-full -z-10 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/bg.jpg')" }} />
 
         {/* App content */}
-        <ClientFormProvider>
-          <DocumentHead />
-          <HydrationSuppressor />
-          {children}
-        </ClientFormProvider>
+        <div id="__next" className="flex flex-col min-h-screen">
+          <ClientFormProvider>
+            <DocumentHead />
+            <HydrationSuppressor />
+            <main className="flex-1">
+              {children}
+            </main>
+          </ClientFormProvider>
+        </div>
       </body>
     </html>
   );
