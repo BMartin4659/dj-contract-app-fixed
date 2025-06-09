@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -13,6 +15,10 @@
 }
 
 :root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -82,21 +88,22 @@
 
 html {
   height: 100%;
+  font-size: 16px; /* Base font size */
+  -webkit-text-size-adjust: 100%; /* Prevent iOS font scaling */
   scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100vh;
-  font-family: 'Montserrat', sans-serif;
+  height: 100%;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #333;
-  overflow-x: hidden;
+  overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
   display: flex;
   flex-direction: column;
   position: relative;
-  height: 100%;
 }
 
 /* Background styles */
@@ -193,7 +200,10 @@ body::before {
 /* iOS specific fixes */
 @supports (-webkit-touch-callout: none) {
   body {
-    min-height: -webkit-fill-available;
+    /* Prevent rubber-band scroll effect */
+    position: fixed;
+    width: 100%;
+    height: -webkit-fill-available;
   }
 
   #__next {
@@ -1381,6 +1391,25 @@ h1, h2, h3, h4, h5, h6 {
       transform: translateY(var(--tw-exit-translate-y, -10px));
     }
   }
+
+  .min-h-screen-dynamic {
+    min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+
+  .bg-image {
+    @apply bg-cover bg-center bg-no-repeat;
+    background-attachment: scroll;
+    will-change: transform;
+  }
+
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] p-2;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* Mobile Performance and Scrolling Optimizations */
@@ -1958,20 +1987,54 @@ input, select, textarea {
 }
 
 /* DatePicker Styles */
-.datepicker-input {
+.react-datepicker-wrapper {
   width: 100% !important;
+}
+
+.react-datepicker__input-container {
+  width: 100% !important;
+}
+
+.react-datepicker__input-container button {
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0.5rem 0.75rem !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.5rem !important;
   background-color: white !important;
-  border: 1px solid #ccc !important;
-  border-radius: 8px !important;
-  padding: clamp(12px, 2vw, 16px) !important;
-  font-size: clamp(16px, 2.5vw, 18px) !important;
-  color: #1a1a1a !important;
-  margin-bottom: 1rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+  text-align: left !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
-  cursor: pointer !important;
-  height: 44px !important;
+}
+
+.react-datepicker__input-container button:hover {
+  border-color: #cbd5e0 !important;
+}
+
+.react-datepicker__input-container button:focus {
+  outline: none !important;
+  border-color: #3182ce !important;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1) !important;
+}
+
+.react-datepicker__input-container button span {
+  display: block !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #1a1a1a !important;
+}
+
+@media (max-width: 768px) {
+  .react-datepicker__input-container button {
+    font-size: 16px !important;
+    padding: 0.875rem !important;
+  }
 }
 
 .react-datepicker__month {
@@ -2112,5 +2175,115 @@ input, select, textarea {
   display: flex !important;
   justify-content: space-around !important;
   margin: 0 !important;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Form field styles */
+.form-grid-1col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+/* Event type and date field container */
+.event-fields-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+/* Event type dropdown and date picker styles */
+.event-type-field,
+.event-date-field {
+  width: 100%;
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 0.2s;
+  background-color: white;
+}
+
+.field-input:hover {
+  border-color: #cbd5e0;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+@media (max-width: 768px) {
+  .event-fields-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .field-input {
+    font-size: 16px;
+    padding: 0.875rem;
+  }
+}
+
+/* Custom styles for the date picker button */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  width: 100%;
+}
+
+.react-datepicker__input-container button,
+.event-type-select {
+  width: 100%;
+  min-height: 64px;
+  padding: 0.75rem 1rem;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #000;
+  transition: all 0.2s ease;
+}
+
+.react-datepicker__input-container button:hover,
+.event-type-select:hover {
+  border-color: #a0aec0;
+}
+
+.react-datepicker__input-container button:focus,
+.event-type-select:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  outline: none;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .event-fields-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .react-datepicker__input-container button,
+  .event-type-select {
+    min-height: 56px;
+    font-size: 16px;
+  }
 }
 

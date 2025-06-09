@@ -2,7 +2,6 @@
 
 import React from 'react';
 import DatePicker from 'react-datepicker';
-import { FaCalendarAlt } from 'react-icons/fa';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const CustomInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
@@ -10,43 +9,11 @@ const CustomInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
     type="button"
     onClick={onClick} 
     ref={ref}
-    className="w-full"
-    style={{
-      backgroundColor: 'white',
-      width: '100%',
-      padding: 'clamp(12px, 2vw, 16px)',
-      marginBottom: '1rem',
-      borderRadius: '8px',
-      border: '1px solid #ccc',
-      color: value ? '#000' : '#6b7280',
-      fontSize: 'clamp(16px, 2.5vw, 18px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      cursor: 'pointer',
-      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-      outline: 'none',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right 1rem top 50%',
-      backgroundSize: '0.75rem auto',
-      paddingRight: 'clamp(24px, 3vw, 32px)'
-    }}
+    className="react-datepicker__input-container button"
   >
-    <span style={{ 
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-      textAlign: 'left',
-      flex: 1
-    }}>
+    <span>
       {value || placeholder}
     </span>
-    <FaCalendarAlt style={{ 
-      color: '#6b7280',
-      marginLeft: '12px',
-      fontSize: '16px',
-      flexShrink: 0
-    }} />
   </button>
 ));
 
@@ -60,13 +27,14 @@ const ReactDatePickerField = ({ selectedDate, onChange, placeholder = "Select da
   const isValidDate = parsedDate && !isNaN(parsedDate.getTime());
   
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full h-[42px]">
       <DatePicker
         selected={isValidDate ? parsedDate : null}
         onChange={onChange}
         customInput={<CustomInput placeholder={placeholder} />}
         dateFormat="MMMM d, yyyy"
         placeholderText={placeholder}
+        className="w-full"
       />
     </div>
   );
