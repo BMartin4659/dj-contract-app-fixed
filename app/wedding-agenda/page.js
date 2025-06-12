@@ -38,6 +38,7 @@ import { useRouter } from 'next/navigation';
 import { useFormContext } from '../contexts/FormContext';
 import { getBasePriceV2 } from '../utils/weddingEventTypes';
 import SongSelector from '../components/SongSelector';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 // Add CSS for animation
 const animationStyles = `
@@ -234,8 +235,8 @@ export default function WeddingAgendaForm() {
   const formRef = useRef();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   // Sync form data to context when form data changes (in useEffect to avoid render-time updates)
   useEffect(() => {
@@ -308,16 +309,6 @@ export default function WeddingAgendaForm() {
       });
     }
   }, [contextIsClient, contractFormData]);
-
-  // Check for mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Time options for the dropdowns
   const timeOptions = [

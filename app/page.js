@@ -109,6 +109,7 @@ import { isWeddingEvent, getBasePrice } from './utils/eventUtils';
 
 // Import the form context
 import { useFormContext } from './contexts/FormContext';
+import { useIsMobile } from './hooks/useIsMobile';
 
 // Import the optimized address autocomplete component
 import AddressAutocomplete from './components/AddressAutocomplete';
@@ -1203,6 +1204,8 @@ const BookingConfirmationPage = ({ formData, onSendEmail, onBookAgain }) => {
 };
 
 export default function DJContractForm() {
+  const isMobile = useIsMobile();
+  
   const router = useRouter();
   
   // Get form context (now returns default values if not available)
