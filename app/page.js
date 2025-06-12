@@ -4467,15 +4467,17 @@ Live City DJ Contract Terms and Conditions:
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '16px',
+                    fontWeight: '500',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     marginBottom: '18px',
+                    gap: '8px'
                   }}
                 >
                   <span>By entering your name below, you agree to the terms and conditions</span>
-                  <FaInfoCircle style={{ marginLeft: '8px', fontSize: '16px' }} />
+                  <FaInfoCircle style={{ fontSize: '16px' }} />
                 </button>
                 {/* Signature Input Field with Script Font */}
                 <div style={{
@@ -4607,7 +4609,267 @@ Live City DJ Contract Terms and Conditions:
         />
         {/* Render the genre selection modal */}
         {showGenreModal && (
-          <GenreSelectionModal onClose={() => setShowGenreModal(false)} />
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1050,
+              opacity: 1,
+              transition: 'opacity 0.3s ease'
+            }}
+            onClick={() => setShowGenreModal(false)}
+          >
+            <div 
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                maxWidth: '800px',
+                width: '90%',
+                maxHeight: '85vh',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)',
+                border: '2px solid #0070f3',
+                overflow: 'hidden',
+                transform: 'translateY(0)',
+                transition: 'transform 0.4s ease-out',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                padding: '20px 25px',
+                borderBottom: '1px solid #eaeaea',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'linear-gradient(90deg, #0070f3, #3291ff)'
+              }}>
+                <h2 style={{ 
+                  margin: 0, 
+                  color: 'white',
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ marginRight: '12px', fontSize: '1.8rem' }}>🎵</span>
+                  Choose Your Music Style
+                </h2>
+                <button 
+                  onClick={() => setShowGenreModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    transition: 'background-color 0.2s',
+                    ':hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div style={{ 
+                padding: '20px 25px',
+                overflowY: 'auto',
+                flexGrow: 1
+              }}>
+                <p style={{ 
+                  marginBottom: '20px', 
+                  fontSize: '1.1rem',
+                  color: '#444'
+                }}>
+                  Select the music genres you&apos;d like to hear at your event:
+                </p>
+                
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: '15px',
+                  marginBottom: '25px'
+                }}>
+                  {musicGenres.map(genre => (
+                    <div key={genre.id} 
+                      onClick={() => {
+                        const newData = { ...formData, musicPreferences: [...formData.musicPreferences, genre.id] };
+                        setFormData(newData);
+                        
+                        // Defer context update to avoid setState during render
+                        setTimeout(() => {
+                          updateContractFormData(newData);
+                        }, 0);
+                        
+                        // Also save to localStorage as backup
+                        try {
+                          localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        } catch (error) {
+                          console.error('Error saving music preferences to localStorage:', error);
+                        }
+                      }}
+                      style={{
+                        padding: '15px',
+                        borderRadius: '8px',
+                        border: `2px solid ${formData.musicPreferences.includes(genre.id) ? '#0070f3' : '#e0e0e0'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: formData.musicPreferences.includes(genre.id) ? 'rgba(0, 112, 243, 0.08)' : 'white',
+                        transition: 'all 0.2s ease',
+                        transform: formData.musicPreferences.includes(genre.id) ? 'scale(1.02)' : 'scale(1)',
+                        boxShadow: formData.musicPreferences.includes(genre.id) 
+                          ? '0 6px 14px rgba(0, 112, 243, 0.15)' 
+                          : '0 2px 5px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: formData.musicPreferences.includes(genre.id) ? '#0070f3' : '#ddd',
+                        marginRight: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: formData.musicPreferences.includes(genre.id) ? '#0070f3' : 'white',
+                        transition: 'all 0.15s ease',
+                        flexShrink: 0
+                      }}>
+                        {formData.musicPreferences.includes(genre.id) && (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+                      <label style={{
+                        margin: 0,
+                        fontSize: '1.05rem',
+                        fontWeight: formData.musicPreferences.includes(genre.id) ? '600' : '500', 
+                        color: formData.musicPreferences.includes(genre.id) ? '#0070f3' : '#444',
+                        cursor: 'pointer',
+                        flexGrow: 1
+                      }}>
+                        {genre.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                
+                {formData.musicPreferences.includes('other') && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontWeight: '500',
+                      color: '#555'
+                    }}>
+                      Please specify other genres:
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.otherMusicPreference}
+                      onChange={(e) => {
+                        const newData = { ...formData, otherMusicPreference: e.target.value };
+                        setFormData(newData);
+                        
+                        // Defer context update to avoid setState during render
+                        setTimeout(() => {
+                          updateContractFormData(newData);
+                        }, 0);
+                        
+                        // Also save to localStorage as backup
+                        try {
+                          localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        } catch (error) {
+                          console.error('Error saving other music preference to localStorage:', error);
+                        }
+                      }}
+                      placeholder="Tell us about your other music preferences"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid #0070f3',
+                        fontSize: '1rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div style={{
+                padding: '15px 25px',
+                borderTop: '1px solid #eaeaea',
+                display: 'flex',
+                justifyContent: 'space-between',
+                backgroundColor: '#f9f9f9'
+              }}>
+                <button
+                  onClick={() => setShowGenreModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    backgroundColor: 'white',
+                    color: '#555',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    ':hover': { backgroundColor: '#f5f5f5' }
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const newData = { ...formData, musicPreferences: formData.musicPreferences.filter(id => id !== 'other') };
+                    setFormData(newData);
+                    
+                    // Defer context update to avoid setState during render
+                    setTimeout(() => {
+                      updateContractFormData(newData);
+                    }, 0);
+                    
+                    // Also save to localStorage as backup
+                    try {
+                      localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                    } catch (error) {
+                      console.error('Error saving music preferences to localStorage:', error);
+                    }
+                  }}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: '#0070f3',
+                    color: 'white',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    ':hover': { backgroundColor: '#0060df' }
+                  }}
+                >
+                  Apply Selections
+                </button>
+              </div>
+            </div>
+          </div>
         )}
         {/* Other modals */}
         {modalText && <InfoModal text={modalText} onClose={() => setModalText(null)} />}

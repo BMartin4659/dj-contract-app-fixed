@@ -94,54 +94,33 @@ const ReactDatePickerField = ({
   }
 
   return (
-    <div className="relative w-full" style={{ width: '100%', marginBottom: '1rem', display: 'block' }}>
+    <div className="relative w-full">
       <DatePicker
-        selected={selectedDate ? new Date(selectedDate) : null}
-        onChange={(date) => {
-          try {
-            if (date && typeof date === 'object' && date instanceof Date) {
-              onChange(date);
-            } else if (date === null) {
-              onChange(null);
-            }
-          } catch (error) {
-            console.error('Date picker error:', error);
-            onChange(null);
-          }
-        }}
+        selected={selectedDate}
+        onChange={onChange}
+        customInput={<CustomInput />}
         dateFormat={dateFormat}
-        placeholderText={placeholder}
         minDate={minDate}
-        customInput={<CustomInput placeholder={placeholder} />}
-        calendarClassName="date-picker-calendar"
-        wrapperClassName="w-full"
-        showPopperArrow={false}
-        fixedHeight
-        monthsShown={1}
-        shouldCloseOnSelect
-        formatWeekDay={nameOfDay => nameOfDay.substring(0, 2)}
+        placeholderText={placeholder}
         popperPlacement="bottom-start"
-        popperProps={{
-          strategy: "fixed"
-        }}
         popperModifiers={[
           {
-            name: "preventOverflow",
-            enabled: true,
-            options: {
-              rootBoundary: "viewport",
-              tether: false,
-              altAxis: true
-            }
-          },
-          {
             name: "offset",
-            enabled: true,
             options: {
               offset: [0, 8]
             }
+          },
+          {
+            name: "preventOverflow",
+            options: {
+              boundary: "viewport",
+              padding: 8
+            }
           }
         ]}
+        popperProps={{
+          strategy: "fixed"
+        }}
       />
       {error && (
         <p className="text-red-500 text-xs italic mt-1">{error}</p>

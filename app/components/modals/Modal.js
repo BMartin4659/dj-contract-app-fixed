@@ -51,7 +51,7 @@ const Modal = ({
           )}
         </div>
 
-        <div className="px-5 py-4 overflow-y-auto text-sm text-gray-700 dark:text-gray-300 flex-1">
+        <div className="px-5 py-4 overflow-y-auto text-base text-gray-700 dark:text-gray-300 flex-1" style={{ fontSize: '16px', lineHeight: '1.5' }}>
           {children}
         </div>
 
@@ -59,7 +59,8 @@ const Modal = ({
           {footer || (
             <button
               onClick={onClose}
-              className="bg-blue-600 text-white font-semibold px-6 py-2 rounded hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white font-semibold px-6 py-2 rounded hover:bg-blue-700 transition w-full text-base"
+              style={{ fontSize: '16px' }}
             >
               Ok
             </button>

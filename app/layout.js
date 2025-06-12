@@ -31,13 +31,13 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${inter.className}`}>
-      <body suppressHydrationWarning className="relative overflow-x-hidden">
-        <div id="__next">
+      <body suppressHydrationWarning className="relative min-h-screen flex flex-col">
+        <div id="__next" className="flex flex-col flex-1">
           <ClientOnly>
             <ClientFormProvider>
               <DocumentHead />
               <HydrationSuppressor />
-              <main className="main-wrapper">
+              <main className="main-wrapper flex-1 relative z-10">
                 {children}
               </main>
             </ClientFormProvider>
