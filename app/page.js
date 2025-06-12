@@ -107,9 +107,6 @@ import SuppressHydration from './components/SuppressHydration';
 // Import the event utilities - USING CONSOLIDATED FUNCTIONS
 import { isWeddingEvent, getBasePrice } from './utils/eventUtils';
 
-// Import payment utilities
-import { PAYMENT_URLS, handleCashAppRedirect } from './utils/pricingUtils';
-
 // Import the form context
 import { useFormContext } from './contexts/FormContext';
 
@@ -257,11 +254,43 @@ const PaymentOption = ({ method, isSelected, onSelect, color }) => (
   </div>
 );
 
-// Payment URLs are now imported from pricingUtils
+// Add at the top of the file after imports
+// Payment method URL configurations
+const PAYMENT_URLS = {
+  VENMO: process.env.NEXT_PUBLIC_VENMO_URL || 'https://venmo.com/u/Bobby-Martin-64',
+  CASHAPP: process.env.NEXT_PUBLIC_CASHAPP_URL || 'https://cash.app/$LiveCity',
+  PAYPAL: process.env.NEXT_PUBLIC_PAYPAL_URL || 'https://paypal.me/bmartin4659'
+};
 
-// CashApp handling is now imported from pricingUtils
+// We won't use a direct URL for CashApp as deep linking isn't working reliably
+const getCashAppInfo = () => {
+  const baseURL = PAYMENT_URLS.CASHAPP;
+  const username = baseURL.includes('$') ? baseURL.split('cash.app/').pop() : 'LiveCity';
+  
+  // Format the CashApp payment URL properly using a simple format
+  const formatPaymentUrl = (amount = 0) => {
+    // Remove $ if it exists at the beginning
+    const cleanUsername = username.startsWith('$') ? username.substring(1) : username;
+    
+    // Use the official format for Cash App (simple version)
+    return `https://cash.app/$${cleanUsername}`;
+  };
+  
+  return {
+    username: username,
+    url: baseURL,
+    formatPaymentUrl
+  };
+};
 
-// CashApp URL formatting is now handled in pricingUtils
+// Format CashApp URL with amount
+const formatCashAppURL = (username, amount = 0) => {
+  // Remove $ if it exists at the beginning
+  const cleanUsername = username.startsWith('$') ? username.substring(1) : username;
+  
+  // Use the simplest format to avoid 404 errors
+  return `https://cash.app/$${cleanUsername}`;
+};
 
 // Add this component before the main DJContractForm component
 function PlaylistHelpModal({ streamingService, onClose }) {
@@ -770,16 +799,57 @@ const BookingConfirmationPage = ({ formData, onSendEmail, onBookAgain }) => {
   }, []);
   
   // Handle payment button click
-  const handlePaymentClick = () => {
+  const handlePaymentClick = async () => {
     if (formData.paymentMethod === 'Stripe') {
-      // Stripe payment handling
-      handleStripePayment();
-    } else if (formData.paymentMethod === 'CashApp') {
-      // Use our consistent CashApp handler
-      handleCashAppRedirect();
-    } else if (paymentDetails?.url) {
-      // Other payment methods
-      window.open(paymentDetails.url, '_blank');
+      try {
+        // Calculate the amount to charge (in cents for Stripe)
+        const amountInDollars = formData.paymentAmount === 'deposit' ? (formData.totalAmount / 2) : formData.totalAmount;
+        const amountInCents = Math.round(amountInDollars * 100);
+        
+        console.log('Creating Stripe checkout with amount:', {
+          amountInDollars,
+          amountInCents,
+          paymentAmount: formData.paymentAmount,
+          totalAmount: formData.totalAmount
+        });
+        
+        // Create Stripe checkout session
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: amountInCents, // Amount in cents at root level
+            contractDetails: {
+              clientName: formData.clientName,
+              email: formData.email,
+              eventType: formData.eventType,
+              eventDate: formData.eventDate,
+              venueName: formData.venueName,
+              venueLocation: formData.venueLocation,
+              bookingId: formData.bookingId
+            }
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create checkout session');
+        }
+
+        const { url } = await response.json();
+        if (url) {
+          window.location.href = url;
+        } else {
+          throw new Error('No checkout URL received');
+        }
+      } catch (error) {
+        console.error('Error creating Stripe checkout:', error);
+        alert('Unable to process Stripe payment. Please try again or contact support.');
+      }
+    } else if (paymentDetails.url) {
+      // For other payment methods, use their direct URLs
+      window.location.href = paymentDetails.url;
     }
   };
   
@@ -2194,21 +2264,13 @@ Live City DJ Contract Terms and Conditions:
     };
 
     const handlePayment = () => {
-      // Get payment details
-      const paymentDetails = getPaymentDetails();
-      if (!paymentDetails?.url) {
-        console.error('No payment URL available');
-        return;
-      }
-
-      console.log('Payment details:', paymentDetails);
-      
-      if (formData.paymentMethod === 'CashApp') {
-        // Use our consistent CashApp handler
-        handleCashAppRedirect();
-      } else {
-        // For other payment methods, use the URL directly
-        window.open(paymentDetails.url, '_blank');
+      // Open payment app based on type - direct to payment platform using replace
+      if (paymentMethod === 'Venmo') {
+        window.location.replace(PAYMENT_URLS.VENMO);
+      } else if (paymentMethod === 'CashApp') {
+        window.location.replace(PAYMENT_URLS.CASHAPP);
+      } else if (paymentMethod === 'PayPal') {
+        window.location.replace(PAYMENT_URLS.PAYPAL);
       }
     };
 
@@ -2440,7 +2502,6 @@ Live City DJ Contract Terms and Conditions:
 
   // InfoModal component for displaying info popups with an "Ok" button.
   function InfoModal({ text, onClose }) {
-    // Modern, user-friendly terms and conditions modal
     return (
       <div 
         style={{
@@ -2456,72 +2517,52 @@ Live City DJ Contract Terms and Conditions:
           zIndex: 1000,
           padding: '15px'
         }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }}
+        onClick={onClose}
       >
         <div 
           style={{
             backgroundColor: 'white',
             padding: '32px 28px 24px 28px',
-            borderRadius: '14px',
+            borderRadius: '8px',
             maxWidth: '90%',
             width: '500px',
             maxHeight: '80vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.2)',
-            border: '2px solid #0070f3',
+            boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+            position: 'relative'
           }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <h3 style={{ marginBottom: '16px', color: '#0070f3', fontWeight: 700, fontSize: '1.35rem', letterSpacing: 0 }}>Terms and Conditions</h3>
           <div 
             style={{ 
               overflowY: 'auto', 
               flex: '1 1 auto',
               marginBottom: '20px',
               paddingRight: '5px',
-              WebkitOverflowScrolling: 'touch' // Enable smooth scrolling on iOS
+              WebkitOverflowScrolling: 'touch'
             }}
           >
-            <p style={{ marginBottom: '18px', color: '#333', fontSize: '1rem', lineHeight: 1.6 }}>
-              Please review the following terms before submitting your booking:
-            </p>
-            <ul style={{ paddingLeft: '20px', marginBottom: '22px', color: '#222', fontSize: '1rem', lineHeight: 1.7 }}>
-              <li style={{ marginBottom: '10px' }}><b>Booking & Deposit:</b> A <b>deposit of 50%</b> is required to secure your date.</li>
-              <li style={{ marginBottom: '10px' }}><b>Cancellation Policy:</b> Cancellations made less than <b>30 days</b> before the event forfeit the full deposit.</li>
-              <li style={{ marginBottom: '10px' }}><b>Final Payment:</b> Remaining balance is due on the day of the event <b>before services begin</b>.</li>
-              <li style={{ marginBottom: '10px' }}><b>Equipment:</b> DJ provides all necessary sound equipment unless otherwise specified.</li>
-              <li style={{ marginBottom: '10px' }}><b>Venue Requirements:</b> Client is responsible for providing adequate power supply and space.</li>
-              <li style={{ marginBottom: '10px' }}><b>Time Extensions:</b> Additional hours beyond contracted time will be charged at <b>$75/hour</b>.</li>
-              <li style={{ marginBottom: '10px' }}><b>Force Majeure:</b> Neither party is liable for failure to perform due to circumstances beyond reasonable control.</li>
-              <li style={{ marginBottom: '10px' }}><b>Breaks:</b> For events longer than 4 hours, DJ is entitled to a <b>15-minute break per 2 hours</b> of performance.</li>
-              <li style={{ marginBottom: '10px' }}><b>Liability:</b> DJ is not responsible for any injuries or property damage caused by guests.</li>
-              <li style={{ marginBottom: '10px' }}><b>Media Rights:</b> DJ may use event photos/videos for promotional purposes unless otherwise specified.</li>
-            </ul>
+            <div style={{ whiteSpace: 'pre-wrap' }}>{text}</div>
           </div>
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClose();
-            }}
+            onClick={onClose}
             style={{
+              width: '100%',
+              padding: '15px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
               backgroundColor: '#0070f3',
               color: 'white',
-              border: 'none',
-              padding: '10px 22px',
-              borderRadius: '6px',
               cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '1rem',
-              width: '100%'
+              fontWeight: 'bold',
+              boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease'
             }}
           >
             Ok
@@ -2613,18 +2654,23 @@ Live City DJ Contract Terms and Conditions:
         : '0 1px 3px rgba(0,0,0,0.05)';
     });
     
-    const newData = { ...formData, paymentMethod: method };
-    
-    // Update form data immediately
-    setFormData(newData);
-    updateContractFormData(newData);
-    
-    // Also save to localStorage as backup
-    try {
-      localStorage.setItem('djContractFormData', JSON.stringify(newData));
-    } catch (error) {
-      console.error('Error saving payment method to localStorage:', error);
-    }
+    // Update form data immediately to avoid state update issues
+    setFormData(prev => {
+      const newData = { ...prev, paymentMethod: method };
+      
+      // Defer context update to avoid setState during render
+      setTimeout(() => {
+        updateContractFormData(newData);
+      }, 0);
+      
+      // Also save to localStorage as backup
+      try {
+        localStorage.setItem('djContractFormData', JSON.stringify(newData));
+      } catch (error) {
+        console.error('Error saving payment method to localStorage:', error);
+      }
+      return newData;
+    });
     
     // Clear any payment method error when a selection is made
     if (formErrors.paymentMethod) {
@@ -2634,7 +2680,7 @@ Live City DJ Contract Terms and Conditions:
         return newErrors;
       });
     }
-  }, [formData, formErrors, updateContractFormData]);
+  }, [formErrors, updateContractFormData]);
 
   // Memoize the payment method option styles to reduce recalculations
   const getPaymentOptionStyle = useCallback((method) => {
@@ -2712,10 +2758,13 @@ Live City DJ Contract Terms and Conditions:
         musicPreferences: selectedGenres,
         otherMusicPreference: selectedGenres.includes('other') ? otherGenre : ''
       };
-      
-      // Update both local and context state
       setFormData(newData);
-      updateContractFormData(newData);
+      
+      // Use setTimeout to defer the context update to avoid setState during render
+      setTimeout(() => {
+        updateContractFormData(newData);
+      }, 0);
+      
       onClose();
     };
     
@@ -4404,40 +4453,27 @@ Live City DJ Contract Terms and Conditions:
                 </div>
                 
                 {/* Signature Section Header with Agreement Message - simplified */}
-                <div style={{
-                  background: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
-                  color: 'white',
-                  borderRadius: '8px',
-                  padding: '15px 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  marginBottom: '18px',
-                  borderBottom: 'none',
-                  justifyContent: 'center',
-                  width: '100%',
-                  boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  border: '2px solid transparent',
-                }}
-                onClick={() => setShowTerms(true)}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,118,255,0.45)';
-                  e.currentTarget.style.border = '2px solid rgba(255,255,255,0.1)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(0,118,255,0.39)';
-                  e.currentTarget.style.border = '2px solid transparent';
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FaInfoCircle style={{ fontSize: '18px' }} />
-                    <span>By entering your name below, you agree to the terms and conditions.</span>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTerms(true)}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    background: '#0070f3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    marginBottom: '18px',
+                  }}
+                >
+                  <span>By entering your name below, you agree to the terms and conditions</span>
+                  <FaInfoCircle style={{ marginLeft: '8px', fontSize: '16px' }} />
+                </button>
                 {/* Signature Input Field with Script Font */}
                 <div style={{
                   backgroundColor: '#f8f9fa',
