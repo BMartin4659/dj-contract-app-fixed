@@ -796,9 +796,9 @@ export default function WeddingAgendaForm() {
             }}>
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" id="wedding-form" style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                padding: isMobile ? '1.5rem' : '2.5rem',
-                borderRadius: '20px',
-                width: '100%',
+                padding: isMobile ? '1rem' : '2.5rem',
+                borderRadius: isMobile ? '8px' : '20px',
+                width: isMobile ? '98%' : '100%',
                 marginBottom: '50px',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)'

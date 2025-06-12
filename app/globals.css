@@ -119,25 +119,38 @@ body {
   z-index: 2;
 }
 
-/* Mobile optimizations */
+/* Original mobile styles - BACKUP 2024-01-31 */
+.form-container-original-mobile {
+  margin: 1rem auto;
+  padding: 1.5rem;
+  width: 95%;
+}
+
+/* Current mobile styles */
 @media (max-width: 768px) {
-  body::before {
-    background-attachment: scroll;
-  }
-
   .form-container {
-    margin: 1rem auto;
-    padding: 1.5rem;
-    width: 95%;
+    margin: 0.5rem auto;
+    padding: 1rem;
+    width: 98%; /* Increased from 95% to 98% */
+    max-width: 100%; /* Ensure it doesn't exceed screen width */
+    border-radius: 8px; /* Slightly reduced border radius for wider appearance */
   }
 
-  /* Improve touch targets */
-  input, 
-  select, 
-  textarea, 
-  button {
-    min-height: 44px;
-    font-size: 16px !important;
+  /* Ensure content doesn't overflow */
+  .form-container > * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Adjust main wrapper padding */
+  .main-wrapper {
+    padding: 0 5px; /* Reduced from 10px to 5px */
+  }
+
+  /* Form grid adjustments */
+  .form-grid-1col,
+  .form-grid-2col {
+    padding: 0;
   }
 }
 

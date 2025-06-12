@@ -3254,13 +3254,13 @@ Live City DJ Contract Terms and Conditions:
           {!submitted && (
             <div style={{ 
               maxWidth: '800px',
-              width: '96%',
-              margin: '2rem auto 3rem auto'
+              width: isMobile ? '98%' : '96%',
+              margin: isMobile ? '1rem auto 2rem auto' : '2rem auto 3rem auto'
             }}>
               <form onSubmit={handleSubmit} style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                padding: '2.5rem',
-                borderRadius: '20px',
+                padding: isMobile ? '1rem' : '2.5rem',
+                borderRadius: isMobile ? '8px' : '20px',
                 boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
                 width: '100%',
                 marginBottom: '50px',
