@@ -44,78 +44,98 @@ export default function HydrationSuppressor({ children }) {
           element.setAttribute('data-gramm', 'false');
           element.setAttribute('data-gramm_editor', 'false');
           element.setAttribute('data-enable-grammarly', 'false');
+          element.setAttribute('data-grammarly-extension', 'false');
         }
       });
       
       // Remove any Grammarly elements
-      document.querySelectorAll('grammarly-extension, grammarly-button').forEach(el => {
+      document.querySelectorAll('grammarly-extension, grammarly-button, div[data-grammarly-part="button"]').forEach(el => {
         el.remove();
       });
-    };
-    
-    // Set up MutationObserver to handle dynamically added attributes
-    const setupMutationObserver = () => {
-      const observer = new MutationObserver((mutations) => {
-        let needsCleanup = false;
-        
-        for (const mutation of mutations) {
-          if (mutation.type === 'attributes') {
-            const attributeName = mutation.attributeName;
-            if (attributeName && attributeName.includes('data-gr') || attributeName.includes('gramm')) {
-              needsCleanup = true;
-              break;
-            }
+      
+      // Add a style tag to prevent Grammarly elements from being displayed
+      if (!document.getElementById('grammarly-blocker')) {
+        const style = document.createElement('style');
+        style.id = 'grammarly-blocker';
+        style.textContent = `
+          grammarly-extension,
+          grammarly-button,
+          div[data-grammarly-part="button"],
+          .grammarly-desktop-integration,
+          div[data-grammarly-part="highlights"],
+          div[data-gramm="true"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            position: absolute !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
           }
-        }
-        
-        if (needsCleanup) {
-          removeProblematicAttributes();
-        }
-      });
-      
-      // Observe the entire document for attribute changes
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-new-gr-c-s-check-loaded', 'data-gr-ext-installed', 'data-gr-ext-id'],
-        subtree: true,
-        childList: true
-      });
-      
-      return observer;
+        `;
+        document.head.appendChild(style);
+      }
     };
     
     // Run immediately
     removeProblematicAttributes();
     
-    // Set state to indicate we're now client-side
+    // Set up mutation observer to prevent Grammarly from adding attributes back
+    const observer = new MutationObserver((mutations) => {
+      let shouldCleanup = false;
+      
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && 
+            (mutation.attributeName?.startsWith('data-gr-') || 
+             mutation.attributeName?.startsWith('data-gramm') ||
+             mutation.attributeName?.includes('grammarly'))) {
+          shouldCleanup = true;
+        }
+        
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 && // Element node
+                (node.tagName?.toLowerCase() === 'grammarly-extension' ||
+                 node.tagName?.toLowerCase() === 'grammarly-button' ||
+                 node.hasAttribute?.('data-grammarly-part'))) {
+              shouldCleanup = true;
+            }
+          });
+        }
+      });
+      
+      if (shouldCleanup) {
+        removeProblematicAttributes();
+      }
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeFilter: [
+        'data-new-gr-c-s-check-loaded',
+        'data-gr-ext-installed',
+        'data-gr-ext-id',
+        'data-grammarly-source',
+        'grammarly',
+        'data-grammarly'
+      ]
+    });
+    
+    // Set client-side flag
     setIsClient(true);
     
-    // Only run once to avoid potential performance issues
-    if (!initialized.current) {
-      initialized.current = true;
-      
-      // Set up the observer
-      const observer = setupMutationObserver();
-      
-      // Set up periodic cleanup for additional safety
-      const interval = setInterval(removeProblematicAttributes, 2000);
-      
-      // Cleanup function
-      return () => {
-        clearInterval(interval);
-        observer.disconnect();
-      };
-    }
+    return () => {
+      observer.disconnect();
+    };
   }, []);
   
-  // During SSR and first render, return a placeholder with the same general structure
-  // This helps prevent major layout shifts during hydration
+  // Return null during SSR
   if (!isClient) {
-    return (
-      <div style={{ visibility: 'hidden', minHeight: '100vh' }} suppressHydrationWarning={true}>
-        {/* Empty placeholder */}
-      </div>
-    );
+    return null;
   }
   
   // Once on client-side, render the actual content
