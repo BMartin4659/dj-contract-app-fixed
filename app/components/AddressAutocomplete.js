@@ -151,9 +151,15 @@ export default function AddressAutocomplete({
       <input
         type="text"
         placeholder={placeholder}
-        className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${className}`}
+        className={`field-input ${className}`}
         style={{
-          fontSize: '16px', // Prevent zoom on iOS
+          width: '100%',
+          padding: 'clamp(12px, 2vw, 16px)',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          fontSize: 'clamp(16px, 2.5vw, 18px)',
+          backgroundColor: 'white',
+          marginBottom: '1rem',
           ...style
         }}
       />
@@ -171,9 +177,15 @@ export default function AddressAutocomplete({
         placeholder={placeholder}
         required={required}
         autoComplete="address-line1"
-        className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${className}`}
+        className={`field-input ${className}`}
         style={{
-          fontSize: '16px', // Prevent zoom on iOS
+          width: '100%',
+          padding: 'clamp(12px, 2vw, 16px)',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          fontSize: 'clamp(16px, 2.5vw, 18px)',
+          backgroundColor: 'white',
+          marginBottom: '1rem',
           ...style
         }}
       />

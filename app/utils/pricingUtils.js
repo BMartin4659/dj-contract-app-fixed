@@ -44,31 +44,24 @@ export const calculateDepositAmount = (total) => {
   return Math.round(total * 0.5);
 };
 
-// Handle CashApp URL formatting and redirection
+// We won't use a direct URL for CashApp as deep linking isn't working reliably
 export const getCashAppInfo = () => {
   const baseURL = PAYMENT_URLS.CASHAPP;
   const username = baseURL.includes('$') ? baseURL.split('cash.app/').pop() : 'LiveCity';
   
-  // Format the CashApp URL - using the most reliable format
-  const formatPaymentUrl = () => {
+  // Format the CashApp payment URL properly
+  // Cash App now uses a simpler format
+  const formatPaymentUrl = (amount = 0) => {
     // Remove $ if it exists at the beginning
     const cleanUsername = username.startsWith('$') ? username.substring(1) : username;
+    
+    // Use the official format for Cash App
     return `https://cash.app/$${cleanUsername}`;
   };
   
   return {
     username: username,
-    url: formatPaymentUrl(),
+    url: baseURL,
     formatPaymentUrl
   };
-};
-
-// Helper function to handle CashApp redirection
-export const handleCashAppRedirect = () => {
-  const { url } = getCashAppInfo();
-  if (typeof window !== 'undefined') {
-    window.open(url, '_blank', 'noopener,noreferrer');
-    return true;
-  }
-  return false;
 }; 

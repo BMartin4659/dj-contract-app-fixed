@@ -38,7 +38,6 @@ import { useRouter } from 'next/navigation';
 import { useFormContext } from '../contexts/FormContext';
 import { getBasePriceV2 } from '../utils/weddingEventTypes';
 import SongSelector from '../components/SongSelector';
-import CustomDatePickerField from '../components/CustomDatePickerField';
 
 // Add CSS for animation
 const animationStyles = `
@@ -446,44 +445,25 @@ export default function WeddingAgendaForm() {
     // Contact info validation - make phone optional
     if (!formData.email) newErrors.email = 'Required';
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
+    // Phone is now optional - removed the requirement
     
     // Make entrance music optional
     if (formData.entranceSong === undefined) formData.entranceSong = '';
     
-    // Timeline validation
-    const timelineFields = [
-      'cocktailHourTime',
-      'grandEntranceTime',
-      'firstDanceTime',
-      'dinnerTime',
-      'toastsTime',
-      'parentDancesTime',
-      'cakeCuttingTime',
-      'openDancingTime',
-      'lastDanceTime'
-    ];
+    // Very flexible timeline validation - just check that at least one timeline element is specified
+    const hasAnyTimelineEvent = formData.cocktailHourTime || 
+                               formData.grandEntranceTime || 
+                               formData.firstDanceTime || 
+                               formData.dinnerTime || 
+                               formData.toastsTime ||
+                               formData.parentDancesTime ||
+                               formData.cakeCuttingTime ||
+                               formData.openDancingTime ||
+                               formData.lastDanceTime;
     
-    // Get all filled timeline events
-    const filledEvents = timelineFields
-      .map(field => ({ field, time: formData[field] }))
-      .filter(event => event.time);
-    
-    // Check for minimum 30-minute gaps between events
-    for (let i = 0; i < filledEvents.length - 1; i++) {
-      const currentTime = convertToMinutes(filledEvents[i].time);
-      const nextTime = convertToMinutes(filledEvents[i + 1].time);
-      
-      if (nextTime - currentTime < 30) {
-        newErrors.timeline = 'Timeline events must be at least 30 minutes apart';
-        break;
-      }
-    }
-    
-    // Check if any timeline events are specified (optional)
-    const hasAnyTimelineEvent = filledEvents.length > 0;
-    
-    // Make timeline optional - only warn if completely empty
+    // Make timeline optional too - only warn if completely empty
     if (!hasAnyTimelineEvent) {
+      // Don't make this a hard error, just a warning
       console.log('Warning: No timeline events specified, but allowing submission');
     }
     
@@ -639,38 +619,29 @@ export default function WeddingAgendaForm() {
     // Find the current field index
     const currentIndex = fields.indexOf(currentField);
     
-    // Get all filled times before the current field
-    const prevTimes = fields
-      .slice(0, currentIndex)
-      .map(field => formData[field])
-      .filter(time => time);
-
-    // Get all filled times after the current field
-    const nextTimes = fields
-      .slice(currentIndex + 1)
-      .map(field => formData[field])
-      .filter(time => time);
+    // Get the field before
+    const prevField = currentIndex > 0 ? fields[currentIndex - 1] : null;
+    // Get the field after 
+    const nextField = currentIndex < fields.length - 1 ? fields[currentIndex + 1] : null;
+    
+    // Get times from prev and next fields
+    const prevTime = prevField ? formData[prevField] : null;
+    const nextTime = nextField ? formData[nextField] : null;
     
     // If no constraints, return all options
-    if (prevTimes.length === 0 && nextTimes.length === 0) return timeOptions;
+    if (!prevTime && !nextTime) return timeOptions;
     
     // Filter based on constraints
     return timeOptions.filter(time => {
       const timeMinutes = convertToMinutes(time);
       
-      // Check if time has at least 30 minutes gap with previous times
-      const hasValidGapWithPrev = prevTimes.every(prevTime => {
-        const prevMinutes = convertToMinutes(prevTime);
-        return timeMinutes >= (prevMinutes + 30); // Must be at least 30 minutes after
-      });
+      // Check if time is after previous field
+      const isAfterPrev = !prevTime || timeMinutes >= convertToMinutes(prevTime);
       
-      // Check if time has at least 30 minutes gap with next times
-      const hasValidGapWithNext = nextTimes.every(nextTime => {
-        const nextMinutes = convertToMinutes(nextTime);
-        return timeMinutes <= (nextMinutes - 30); // Must be at least 30 minutes before
-      });
+      // Check if time is before next field
+      const isBeforeNext = !nextTime || timeMinutes <= convertToMinutes(nextTime);
       
-      return hasValidGapWithPrev && hasValidGapWithNext;
+      return isAfterPrev && isBeforeNext;
     });
   };
 
@@ -821,7 +792,7 @@ export default function WeddingAgendaForm() {
             <div style={{ 
               maxWidth: '800px',
               width: '96%',
-              margin: '4rem auto 3rem auto'  /* Increased top margin from 2rem to 4rem */
+              margin: '2rem auto 3rem auto'
             }}>
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" id="wedding-form" style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
@@ -864,21 +835,30 @@ export default function WeddingAgendaForm() {
                   </div>
                   
                   <h1 style={{
-                    fontSize: 'clamp(52px, 12.94vw, 93px)', // Increased by 15% from clamp(45px, 11.25vw, 81px)
-                    fontFamily: "'Hugh is Life Personal Use', sans-serif",
-                    fontWeight: '300',
-                    margin: '20px auto',
+                    fontSize: 'clamp(20px, 5vw, 36px)',
+                    fontWeight: 'bold',
+                    margin: '10px auto',
                     color: '#000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    lineHeight: '1.2',
+                    gap: isMobile ? '4px' : '8px',
+                    lineHeight: '1.1',
                     maxWidth: '100%',
                     textAlign: 'center',
-                    padding: '0 15px',
-                    textTransform: 'capitalize'
+                    flexWrap: 'nowrap',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden'
                   }}>
-                    Wedding Agenda
+                    <span style={{ 
+                      fontSize: 'clamp(20px, 5vw, 36px)',
+                      flexShrink: 0
+                    }}>📝</span>
+                    <span style={{
+                      fontSize: 'clamp(16px, 4.5vw, 32px)',
+                      fontWeight: 'bold',
+                      letterSpacing: isMobile ? '-0.5px' : '0px'
+                    }}>WEDDING AGENDA</span>
                   </h1>
                 </div>
                 
@@ -926,24 +906,20 @@ export default function WeddingAgendaForm() {
                       fontSize: 'clamp(16px, 2.5vw, 18px)'
                     }}>
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <FaCalendarAlt className="text-purple-500 mr-3" style={{ marginRight: '10px' }} /> Wedding Date *
+                        <FaCalendarAlt className="text-blue-500 mr-3" style={{ marginRight: '10px' }} /> Wedding Date *
                       </span>
                     </label>
-                    <div className="w-full" style={{ minWidth: '100%' }}>
-                      <CustomDatePickerField
-                        selectedDate={formData.weddingDate ? new Date(formData.weddingDate) : null}
-                        onChange={(date) => {
-                          if (date && !isNaN(date.getTime())) {
-                            setFormData(prev => ({ ...prev, weddingDate: date.toISOString() }));
-                            setErrors(prev => ({ ...prev, weddingDate: '' }));
-                          }
-                        }}
-                        placeholder="Select date"
-                      />
-                    </div>
-                    {errors.weddingDate && (
-                      <p className="text-red-500 text-sm mt-1">{errors.weddingDate}</p>
-                    )}
+                    <ReactDatePickerField
+                      id="weddingDate"
+                      name="weddingDate"
+                      selectedDate={formData.weddingDate}
+                      onChange={(date) => {
+                        setFormData(prev => ({ ...prev, weddingDate: date }));
+                        setErrors(prev => ({ ...prev, weddingDate: '' }));
+                      }}
+                      placeholder="Select date"
+                      error={errors.weddingDate}
+                    />
                   </div>
                 </div>
 
