@@ -66,7 +66,7 @@ export default function WeddingEventTypeDropdown({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full">
       <div className="relative">
         <select
           value={selected}
@@ -77,7 +77,7 @@ export default function WeddingEventTypeDropdown({
             backgroundColor: 'white',
             width: '100%',
             padding: 'clamp(12px, 2vw, 16px)',
-            marginBottom: '1rem',
+            marginBottom: '0.5rem',
             borderRadius: '8px',
             border: error ? '1px solid #ef4444' : '1px solid #ccc',
             color: 'black',
