@@ -21,7 +21,8 @@ import {
   FaMicrophoneAlt,
   FaAddressCard,
   FaUserFriends,
-  FaBan
+  FaBan,
+  FaChevronDown
 } from 'react-icons/fa';
 import Image from 'next/image';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -39,6 +40,7 @@ import { useFormContext } from '../contexts/FormContext';
 import { getBasePriceV2 } from '../utils/weddingEventTypes';
 import SongSelector from '../components/SongSelector';
 import { useIsMobile } from '../hooks/useIsMobile';
+import Select from 'react-select';
 
 // Add CSS for animation
 const animationStyles = `
@@ -147,16 +149,19 @@ const SectionHeader = ({ icon, label, color = 'text-blue-500' }) => (
 export default function WeddingAgendaForm() {
   // Get form context
   const { contractFormData, weddingAgendaData, updateWeddingAgendaData, updateContractFormData, isClient: contextIsClient } = useFormContext();
-  
+  const router = useRouter();
+  const isMobile = useIsMobile();
   const [eventType, setEventType] = useState('Wedding');
   const [basePrice, setBasePrice] = useState(1000);
+  const [errors, setErrors] = useState({});
+  const [fontLoaded, setFontLoaded] = useState(false);
   
   // Initial form data structure
   const initialFormData = {
     eventType: 'Wedding',
     brideName: '',
     groomName: '',
-    weddingDate: '',
+    weddingDate: null,
     email: '',
     phone: '',
     // Wedding party fields
@@ -201,64 +206,110 @@ export default function WeddingAgendaForm() {
     specialInstructions: '',
   };
   
-  // Initialize form data with context data if available, and pre-fill from contract form
-  const [formData, setFormData] = useState(() => {
-    const mergedData = { ...initialFormData, ...weddingAgendaData };
-    
-    // Pre-fill from contract form data if available
-    if (contractFormData.clientName && !mergedData.brideName && !mergedData.groomName) {
-      // Try to split client name into bride/groom names
-      const nameParts = contractFormData.clientName.split(' ');
-      if (nameParts.length >= 2) {
-        mergedData.brideName = nameParts[0];
-        mergedData.groomName = nameParts.slice(1).join(' ');
-      } else {
-        mergedData.brideName = contractFormData.clientName;
-      }
-    }
-    
-    if (contractFormData.email && !mergedData.email) {
-      mergedData.email = contractFormData.email;
-    }
-    
-    if (contractFormData.contactPhone && !mergedData.phone) {
-      mergedData.phone = contractFormData.contactPhone;
-    }
-    
-    if (contractFormData.eventDate && !mergedData.weddingDate) {
-      mergedData.weddingDate = contractFormData.eventDate;
-    }
-    
-    return mergedData;
-  });
-  const [errors, setErrors] = useState({});
-  const formRef = useRef();
+  const [formData, setFormData] = useState(initialFormData);
+  const formRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const router = useRouter();
-  const isMobile = useIsMobile();
+  const [weddingDate, setWeddingDate] = useState(null);
 
-  // Sync form data to context when form data changes (in useEffect to avoid render-time updates)
-  useEffect(() => {
-    if (contextIsClient && formData && Object.keys(formData).length > 0) {
-      // Only update context if there are actual differences to avoid infinite loops
-      const currentContextData = weddingAgendaData || {};
-      const hasChanges = Object.keys(formData).some(key => 
-        formData[key] !== currentContextData[key]
-      );
-      
-      if (hasChanges) {
-        updateWeddingAgendaData(formData);
-        
-        // Also save to localStorage as backup
-        try {
-          localStorage.setItem('djWeddingAgendaData', JSON.stringify(formData));
-        } catch (error) {
-          console.error('Error saving wedding agenda to localStorage:', error);
-        }
-      }
+  const handleEventTypeChange = (selected) => {
+    setEventType(selected);
+  };
+
+  const handleWeddingDateChange = (date) => {
+    setWeddingDate(date);
+    if (date) {
+      setErrors(prev => ({ ...prev, weddingDate: '' }));
     }
-  }, [formData, updateWeddingAgendaData, contextIsClient, weddingAgendaData]);
+  };
+
+  // Font loading effect to prevent FOUT
+  useEffect(() => {
+    const loadFont = async () => {
+      try {
+        // Check if font is already loaded
+        if (document.fonts.check('1em "Hugh is Life Personal Use"')) {
+          setFontLoaded(true);
+          return;
+        }
+
+        // Preload the font
+        const font = new FontFace(
+          'Hugh is Life Personal Use',
+          'url(/fonts/hugh-is-life.ttf) format("truetype")'
+        );
+        
+        await font.load();
+        document.fonts.add(font);
+        
+        // Small delay to ensure font is fully ready
+        setTimeout(() => {
+          setFontLoaded(true);
+        }, 100);
+      } catch (error) {
+        console.error('Error loading font:', error);
+        // Fallback: show content after timeout even if font fails
+        setTimeout(() => {
+          setFontLoaded(true);
+        }, 1000);
+      }
+    };
+
+    loadFont();
+  }, []);
+
+  // Initialize form data from context if available - only runs when weddingAgendaData changes
+  useEffect(() => {
+    if (weddingAgendaData) {
+      setFormData(prevData => {
+        // Only update if the data is different
+        const contextDate = weddingAgendaData.weddingDate ? new Date(weddingAgendaData.weddingDate) : null;
+        const currentDate = prevData.weddingDate ? new Date(prevData.weddingDate) : null;
+        
+        // Compare dates
+        const datesEqual = (!contextDate && !currentDate) || 
+          (contextDate && currentDate && contextDate.getTime() === currentDate.getTime());
+        
+        // If data hasn't changed, return previous state
+        if (datesEqual && JSON.stringify(prevData) === JSON.stringify(weddingAgendaData)) {
+          return prevData;
+        }
+        
+        // Return new state with updated date
+        return {
+          ...prevData,
+          ...weddingAgendaData,
+          weddingDate: contextDate
+        };
+      });
+    }
+  }, [weddingAgendaData]);
+
+  // Memoize the date change handler
+  const handleDateChange = useCallback((date) => {
+    try {
+      const validDate = date ? new Date(date) : null;
+      if (validDate && !isNaN(validDate.getTime())) {
+        setFormData(prev => ({ ...prev, weddingDate: validDate }));
+        setErrors(prev => ({ ...prev, weddingDate: '' }));
+      } else {
+        setFormData(prev => ({ ...prev, weddingDate: null }));
+      }
+    } catch (error) {
+      console.error('Date conversion error:', error);
+      setFormData(prev => ({ ...prev, weddingDate: null }));
+    }
+  }, []);
+
+  // Sync form data to context - use debounce to prevent excessive updates
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (updateWeddingAgendaData) {
+        updateWeddingAgendaData(formData);
+      }
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData, updateWeddingAgendaData]);
 
   // Sync with contract form data whenever it changes
   useEffect(() => {
@@ -375,18 +426,8 @@ export default function WeddingAgendaForm() {
   
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
-      return newData;
-    });
-    
-    // If event type is changing, update state
-    if (name === 'eventType' && typeof value === 'string') {
-      setEventType(value);
-    }
-    
-    // Clear any errors for this field
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   // Handler for wedding party array fields (bridesmaids, groomsmen)
@@ -545,7 +586,7 @@ export default function WeddingAgendaForm() {
       eventType: 'Wedding',
       brideName: '',
       groomName: '',
-      weddingDate: '',
+      weddingDate: null,
       email: '',
       phone: '',
       // Wedding party fields
@@ -706,6 +747,14 @@ export default function WeddingAgendaForm() {
 
         <div className="min-h-screen flex items-center justify-center p-4">
           <style jsx global>{`
+            @font-face {
+              font-family: 'Hugh is Life Personal Use';
+              src: url('/fonts/hugh-is-life.ttf') format('truetype');
+              font-weight: normal;
+              font-style: normal;
+              font-display: block;
+            }
+
             ${animationStyles}
             
             /* Mobile-specific adjustments only */
@@ -782,14 +831,15 @@ export default function WeddingAgendaForm() {
           <div className="max-w-4xl mx-auto">
             <div style={{ 
               maxWidth: '800px',
-              width: '96%',
-              margin: '2rem auto 3rem auto'
+              width: isMobile ? '100%' : '96%',
+              margin: '2rem auto 3rem auto',
+              padding: isMobile ? '0 4px' : '0'
             }}>
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" id="wedding-form" style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                padding: isMobile ? '1rem' : '2.5rem',
+                padding: isMobile ? '1rem 0.75rem' : '2.5rem',
                 borderRadius: isMobile ? '8px' : '20px',
-                width: isMobile ? '98%' : '100%',
+                width: '100%',
                 marginBottom: '50px',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)'
@@ -799,14 +849,13 @@ export default function WeddingAgendaForm() {
                   textAlign: 'center',
                   marginBottom: '30px',
                   position: 'relative',
-                  maxWidth: '100%',
-                  padding: isMobile ? '0 8px' : '0 10px',
-                  overflow: 'hidden'
+                  padding: isMobile ? '20px 8px' : '30px 10px',
+                  overflow: 'visible'
                 }}>
                   <div style={{
                     width: isMobile ? '120px' : '150px',
                     height: isMobile ? '120px' : '150px',
-                    margin: '0 auto 15px',
+                    margin: '0 auto 25px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -825,38 +874,51 @@ export default function WeddingAgendaForm() {
                     />
                   </div>
                   
-                  <h1 style={{
-                    fontSize: 'clamp(20px, 5vw, 36px)',
-                    fontWeight: 'bold',
-                    margin: '10px auto',
-                    color: '#000',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: isMobile ? '4px' : '8px',
-                    lineHeight: '1.1',
-                    maxWidth: '100%',
-                    textAlign: 'center',
-                    flexWrap: 'nowrap',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden'
-                  }}>
-                    <span style={{ 
-                      fontSize: 'clamp(20px, 5vw, 36px)',
-                      flexShrink: 0
-                    }}>📝</span>
-                    <span style={{
-                      fontSize: 'clamp(16px, 4.5vw, 32px)',
-                      fontWeight: 'bold',
-                      letterSpacing: isMobile ? '-0.5px' : '0px'
-                    }}>WEDDING AGENDA</span>
-                  </h1>
+                  {fontLoaded ? (
+                    <h1 style={{
+                      fontFamily: "'Hugh is Life Personal Use', sans-serif",
+                      fontSize: 'clamp(54px, 13.5vw, 97px)',
+                      fontWeight: '300',
+                      color: '#000',
+                      textAlign: 'center',
+                      margin: '0 auto',
+                      padding: '0 20px',
+                      lineHeight: '1.2',
+                      maxWidth: '100%',
+                      overflow: 'visible',
+                      textTransform: 'capitalize',
+                      opacity: 1,
+                      transition: 'opacity 0.3s ease-in-out'
+                    }}>
+                      Wedding Agenda
+                    </h1>
+                  ) : (
+                    <div style={{
+                      height: 'clamp(65px, 16.2vw, 116px)', // Match the h1 height
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto',
+                      padding: '0 20px'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        border: '3px solid #f3f3f3',
+                        borderTop: '3px solid #0070f3',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }}></div>
+                    </div>
+                  )}
                 </div>
-                
-                {/* Spacer div */}
+
+
+
+                {/* Spacer div with increased margin */}
                 <div style={{ 
                   height: '20px', 
-                  marginBottom: '20px', 
+                  marginBottom: '40px', 
                   borderBottom: '1px solid #e0e0e0',
                   opacity: 0.5
                 }} className="section-divider"></div>
@@ -904,12 +966,10 @@ export default function WeddingAgendaForm() {
                       id="weddingDate"
                       name="weddingDate"
                       selectedDate={formData.weddingDate}
-                      onChange={(date) => {
-                        setFormData(prev => ({ ...prev, weddingDate: date }));
-                        setErrors(prev => ({ ...prev, weddingDate: '' }));
-                      }}
+                      onChange={handleDateChange}
                       placeholder="Select date"
                       error={errors.weddingDate}
+                      minDate={new Date()}
                     />
                   </div>
                 </div>

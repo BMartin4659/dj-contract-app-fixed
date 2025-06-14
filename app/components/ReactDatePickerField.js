@@ -21,26 +21,26 @@ const CustomInput = forwardRef(({ value, onClick, placeholder }, ref) => (
       backgroundColor: 'white',
       border: '1px solid #ccc',
       borderRadius: '8px',
-      padding: '12px 16px',
-      fontSize: '16px', // Prevent zoom on iOS
+      padding: 'clamp(12px, 2vw, 16px)',
+      fontSize: 'clamp(16px, 2.5vw, 18px)',
       color: '#000',
-      marginBottom: '1rem',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
-      minHeight: '44px', // Better touch target
-      WebkitTapHighlightColor: 'transparent',
-      WebkitTouchCallout: 'none',
-      WebkitUserSelect: 'none',
-      userSelect: 'none',
-      touchAction: 'manipulation'
+      boxSizing: 'border-box',
+      marginBottom: '0.5rem'
     }}
   >
-    <span style={{ color: value ? '#000' : '#6b7280' }}>
+    <span style={{ 
+      color: value ? '#000' : '#6b7280',
+      fontSize: 'clamp(16px, 2.5vw, 18px)',
+      flex: 1,
+      marginRight: '8px'
+    }}>
       {value || placeholder || 'Select a date'}
     </span>
-    <FaCalendarAlt style={{ color: '#6366f1', fontSize: '1.2rem' }} />
+    <FaCalendarAlt style={{ color: '#6366f1', fontSize: '1.2rem', flexShrink: 0 }} />
   </div>
 ));
 
@@ -56,15 +56,31 @@ const ReactDatePickerField = ({
 }) => {
   const [isClient, setIsClient] = useState(false);
 
-  // Client-side detection
+  // Client-side detection - only runs once on mount
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Memoize date validation to prevent unnecessary recalculations
+  const { validDate, isValid } = React.useMemo(() => {
+    const validDate = selectedDate ? new Date(selectedDate) : null;
+    const isValid = validDate && !isNaN(validDate.getTime());
+    return { validDate: isValid ? validDate : null, isValid };
+  }, [selectedDate]);
+
+  // Memoize date change handler
+  const handleDateChange = React.useCallback((date) => {
+    if (date && !isNaN(date.getTime())) {
+      onChange(date);
+    } else {
+      onChange(null);
+    }
+  }, [onChange]);
+
   // Render fallback on server side to prevent hydration issues
   if (!isClient) {
     return (
-      <div className="relative w-full" style={{ width: '100%', marginBottom: '1rem', display: 'block' }}>
+      <div className="relative w-full">
         <div 
           className="datepicker-input"
           style={{
@@ -72,19 +88,23 @@ const ReactDatePickerField = ({
             backgroundColor: 'white',
             border: '1px solid #ccc',
             borderRadius: '8px',
-            padding: '12px 16px',
-            fontSize: '16px',
+            padding: 'clamp(12px, 2vw, 16px)',
+            fontSize: 'clamp(16px, 2.5vw, 18px)',
             color: '#6b7280',
-            marginBottom: '1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             cursor: 'pointer',
-            minHeight: '44px'
+            boxSizing: 'border-box',
+            marginBottom: '0.5rem'
           }}
         >
-          <span>{placeholder || 'Select event date'}</span>
-          <FaCalendarAlt style={{ color: '#6366f1', fontSize: '1.2rem' }} />
+          <span style={{ 
+            flex: 1,
+            marginRight: '8px',
+            fontSize: 'clamp(16px, 2.5vw, 18px)'
+          }}>{placeholder || 'Select event date'}</span>
+          <FaCalendarAlt style={{ color: '#6366f1', fontSize: '1.2rem', flexShrink: 0 }} />
         </div>
         {error && (
           <p className="text-red-500 text-xs italic mt-1">{error}</p>
@@ -94,32 +114,18 @@ const ReactDatePickerField = ({
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" style={{ width: '100%' }}>
       <DatePicker
-        selected={selectedDate}
-        onChange={onChange}
+        selected={validDate}
+        onChange={handleDateChange}
         customInput={<CustomInput />}
         dateFormat={dateFormat}
         minDate={minDate}
         placeholderText={placeholder}
         popperPlacement="bottom-start"
-        popperModifiers={[
-          {
-            name: "offset",
-            options: {
-              offset: [0, 8]
-            }
-          },
-          {
-            name: "preventOverflow",
-            options: {
-              boundary: "viewport",
-              padding: 8
-            }
-          }
-        ]}
+        className="w-full"
         popperProps={{
-          strategy: "fixed"
+          strategy: "absolute"
         }}
       />
       {error && (
@@ -128,6 +134,26 @@ const ReactDatePickerField = ({
       
       {/* Simplified global styles */}
       <style jsx global>{`
+        .react-datepicker-wrapper {
+          width: 100% !important;
+          display: block;
+        }
+        
+        .react-datepicker__input-container {
+          width: 100% !important;
+          display: block;
+        }
+        
+        .datepicker-input {
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        
+        .react-datepicker-popper {
+          width: max-content !important;
+          z-index: 9999 !important;
+        }
+        
         .date-picker-calendar {
           background: white !important;
           border-radius: 12px !important;

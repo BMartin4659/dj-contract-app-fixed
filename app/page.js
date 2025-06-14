@@ -1224,6 +1224,7 @@ export default function DJContractForm() {
     clientName: '',
     email: '',
     contactPhone: '',
+    clientPhone: '',
     eventType: '',
     guestCount: '100',
     venueName: '',
@@ -1410,23 +1411,23 @@ Live City DJ Contract Terms and Conditions:
     const newEventType = e.target ? e.target.value : e;
     console.log('Event type changed to:', newEventType);
     
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        eventType: newEventType
-      };
-      
-      // Save to context for persistence
+    const newData = {
+      ...formData,
+      eventType: newEventType
+    };
+    
+    setFormData(newData);
+    
+    // Save to context for persistence - moved outside setState
+    setTimeout(() => {
       updateContractFormData(newData);
-      
-      return newData;
-    });
+    }, 0);
     
     // Update base price based on event type
     const newBasePrice = getBasePriceForEventType(newEventType);
     setBasePrice(newBasePrice);
     console.log('Base price updated to:', newBasePrice, 'for event type:', newEventType);
-  }, [getBasePriceForEventType, updateContractFormData]);
+  }, [formData, getBasePriceForEventType, updateContractFormData]);
 
   // Handler for base price updates
   const handleBasePriceUpdate = useCallback((price) => {
@@ -1526,12 +1527,19 @@ Live City DJ Contract Terms and Conditions:
     // Calculate additional hours based on time difference
     const additionalHours = calculateAdditionalHours(formData.startTime, endTime);
     
-    // Update form data with both new end time and calculated additional hours
-    setFormData((prev) => ({ 
-      ...prev, 
+    const newData = { 
+      ...formData, 
       endTime,
       additionalHours
-    }));
+    };
+    
+    // Update form data with both new end time and calculated additional hours
+    setFormData(newData);
+    
+    // Update context - deferred to avoid setState during render
+    setTimeout(() => {
+      updateContractFormData(newData);
+    }, 0);
   };
   
   // Set isClient to true when running on client side and force reload context data
@@ -2055,6 +2063,11 @@ Live City DJ Contract Terms and Conditions:
     // Validate phone format
     if (formData.contactPhone && !validatePhone(formData.contactPhone)) {
       errors.contactPhone = 'Please enter a valid phone number';
+    }
+    
+    // Validate client phone format if provided
+    if (formData.clientPhone && !validatePhone(formData.clientPhone)) {
+      errors.clientPhone = 'Please enter a valid phone number';
     }
     
     // Validate venue location
@@ -3384,8 +3397,8 @@ Live City DJ Contract Terms and Conditions:
                   opacity: 0.5
                 }} className="section-divider"></div>
                 
-                {/* Client Information Section */}
-                <div className="form-grid-1col">
+                {/* Client Information Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   <div>
                     <label style={{
                       ...labelStyle,
@@ -3413,7 +3426,7 @@ Live City DJ Contract Terms and Conditions:
                   <div>
                     <label style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        {fieldIcons['email']} Email:
+                        {fieldIcons['email']} Email *
                       </span>
                     </label>
                     <input
@@ -3424,8 +3437,13 @@ Live City DJ Contract Terms and Conditions:
                       className="field-input"
                       value={formData.email || ''}
                       onChange={handleChange}
+                      placeholder="your@email.com"
                     />
                   </div>
+                </div>
+
+                {/* Phone Information Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   <div>
                     <label style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
@@ -3446,10 +3464,29 @@ Live City DJ Contract Terms and Conditions:
                       <p className="text-red-500 text-xs italic">{formErrors.contactPhone}</p>
                     )}
                   </div>
+                  <div>
+                    <label style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <FaPhoneAlt style={{ color: '#10b981', marginRight: '8px' }} /> Client Phone
+                      </span>
+                    </label>
+                    <input
+                      name="clientPhone"
+                      type="tel"
+                      style={inputStyle}
+                      className="field-input"
+                      value={formData.clientPhone || ''}
+                      onChange={handleChange}
+                      placeholder="(123) 456-7890"
+                    />
+                    {formErrors.clientPhone && (
+                      <p className="text-red-500 text-xs italic">{formErrors.clientPhone}</p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Two-column grid for event details - changed to single column */}
-                <div className="form-grid-1col">
+                {/* Event Details Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   <div>
                     <label style={{
                       ...labelStyle,
@@ -3469,7 +3506,7 @@ Live City DJ Contract Terms and Conditions:
                   <div>
                     <label style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        {fieldIcons['guestCount']} Guest Count:
+                        {fieldIcons['guestCount']} Guest Count *
                       </span>
                     </label>
                     <input
@@ -3480,77 +3517,18 @@ Live City DJ Contract Terms and Conditions:
                       className="field-input"
                       value={formData.guestCount || ''}
                       onChange={handleChange}
+                      placeholder="Number of guests"
                     />
                   </div>
                 </div>
 
-                {/* Two-column grid for venue information - changed to single column */}
-                <div className="form-grid-1col">
-                  <div>
-                    <label style={labelStyle} className="field-label">
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        {fieldIcons['venueName']} Venue Name:
-                      </span>
-                    </label>
-                    <input
-                      name="venueName"
-                      type="text"
-                      required
-                      style={inputStyle}
-                      className="field-input"
-                      value={formData.venueName || ''}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle} className="field-label">
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        {venueLocationIcon} Venue Location:
-                      </span>
-                    </label>
-                    <AddressAutocomplete
-                      value={formData.venueLocation || ''}
-                      onChange={handleChange}
-                      name="venueLocation"
-                      placeholder="Enter venue address"
-                      required={true}
-                      className="field-input"
-                    />
-                  </div>
-                </div>
-
-                {/* Two-column grid for date and time selection - changed to single column */}
-                <div className="form-grid-1col">
-                  {/* Event Date */}
-                  <div>
-                    <label style={labelStyle} className="field-label">
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FaCalendarAlt style={{ color: '#6366f1' }} /> Event Date *
-                      </span>
-                    </label>
-                    
-                    {/* Replace CustomDatePicker with ReactDatePickerField */}
-                    <ReactDatePickerField
-                      key={`date-picker-${formData.eventType}`}
-                      selectedDate={formData.eventDate ? new Date(formData.eventDate) : null}
-                      onChange={(date) => {
-                        handleChange({
-                          target: {
-                            name: 'eventDate',
-                            value: date ? date.toISOString().split('T')[0] : ''
-                          }
-                        });
-                      }}
-                      errorMessage={formErrors.eventDate}
-                      minDate={new Date()}
-                    />
-                  </div>
-
+                {/* Time Selection Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   {/* Start Time */}
                   <div>
                     <label style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        {timeIcons['startTime']} Start Time:
+                        {timeIcons['startTime']} Start Time *
                       </span>
                     </label>
                     <select
@@ -3590,44 +3568,107 @@ Live City DJ Contract Terms and Conditions:
                       ))}
                     </select>
                   </div>
+
+                  {/* End Time */}
+                  <div>
+                    <label style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {timeIcons['endTime']} End Time *
+                      </span>
+                    </label>
+                    <select
+                      name="endTime"
+                      value={formData.endTime || ''}
+                      onChange={(e) => handleEndTimeChange(e.target.value)}
+                      required
+                      disabled={!formData.startTime}
+                      style={inputStyle}
+                      className="field-input"
+                    >
+                      <option value="">Select end time</option>
+                      {formData.startTime &&
+                        timeOptions
+                          .filter((t) => convertToMinutes(t) > convertToMinutes(formData.startTime))
+                          .map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                    </select>
+                    {formData.startTime && formData.endTime && (
+                      <div style={{
+                        fontSize: '0.9rem',
+                        color: formData.additionalHours > 0 ? '#0070f3' : '#666',
+                        marginTop: '0.5rem',
+                        fontWeight: formData.additionalHours > 0 ? '500' : 'normal'
+                      }}>
+                        {formData.additionalHours > 0 
+                          ? `${calculateHoursBetween(formData.startTime, formData.endTime).toFixed(1)} hour event (+${formData.additionalHours} additional hours)`
+                          : `${calculateHoursBetween(formData.startTime, formData.endTime).toFixed(1)} hour event (base package)`}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* End Time */}
-                <div>
-                  <label style={labelStyle} className="field-label">
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
-                      {timeIcons['endTime']} End Time:
-                    </span>
-                  </label>
-                  <select
-                    name="endTime"
-                    value={formData.endTime || ''}
-                    onChange={(e) => handleEndTimeChange(e.target.value)}
-                    required
-                    disabled={!formData.startTime}
-                    style={inputStyle}
-                    className="field-input"
-                  >
-                    <option value="">Select end time</option>
-                    {formData.startTime &&
-                      timeOptions
-                        .filter((t) => convertToMinutes(t) > convertToMinutes(formData.startTime))
-                        .map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                  </select>
-                  {formData.startTime && formData.endTime && (
-                    <div style={{
-                      fontSize: '0.9rem',
-                      color: formData.additionalHours > 0 ? '#0070f3' : '#666',
-                      marginTop: '0.5rem',
-                      fontWeight: formData.additionalHours > 0 ? '500' : 'normal'
-                    }}>
-                      {formData.additionalHours > 0 
-                        ? `${calculateHoursBetween(formData.startTime, formData.endTime).toFixed(1)} hour event (+${formData.additionalHours} additional hours)`
-                        : `${calculateHoursBetween(formData.startTime, formData.endTime).toFixed(1)} hour event (base package)`}
-                    </div>
-                  )}
+                {/* Two-column grid for venue information - changed to single column */}
+                <div className="form-grid-1col">
+                  <div>
+                    <label style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['venueName']} Venue Name:
+                      </span>
+                    </label>
+                    <input
+                      name="venueName"
+                      type="text"
+                      required
+                      style={inputStyle}
+                      className="field-input"
+                      value={formData.venueName || ''}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {venueLocationIcon} Venue Location:
+                      </span>
+                    </label>
+                    <AddressAutocomplete
+                      value={formData.venueLocation || ''}
+                      onChange={handleChange}
+                      name="venueLocation"
+                      placeholder="Enter venue address"
+                      required={true}
+                      className="field-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Event Date Section */}
+                <div className="form-grid-1col" style={{ marginBottom: '2.5rem' }}>
+                  {/* Event Date */}
+                  <div>
+                    <label style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FaCalendarAlt style={{ color: '#6366f1' }} /> Event Date *
+                      </span>
+                    </label>
+                    
+                    {/* Replace CustomDatePicker with ReactDatePickerField */}
+                    <ReactDatePickerField
+                      key={`date-picker-${formData.eventType}`}
+                      selectedDate={formData.eventDate ? new Date(formData.eventDate) : null}
+                      onChange={(date) => {
+                        handleChange({
+                          target: {
+                            name: 'eventDate',
+                            value: date ? date.toISOString().split('T')[0] : ''
+                          }
+                        });
+                      }}
+                      errorMessage={formErrors.eventDate}
+                      minDate={new Date()}
+                    />
+                  </div>
                 </div>
 
                 {/* Additional Services Header */}

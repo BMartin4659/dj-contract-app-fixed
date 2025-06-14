@@ -265,7 +265,7 @@ export default function EventTypeDropdown({
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="mt-3 text-green-400 text-sm font-medium"
+            className="mt-3 text-green-700 text-sm font-medium"
           >
             {priceNote}
           </motion.div>
