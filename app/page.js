@@ -114,6 +114,10 @@ import { useIsMobile } from './hooks/useIsMobile';
 // Import the optimized address autocomplete component
 import AddressAutocomplete from './components/AddressAutocomplete';
 
+// Import the iTunes playlist browser component
+import ItunesPlaylistBrowser from './components/ItunesPlaylistBrowser';
+import PlaylistViewerModal from './components/PlaylistViewerModal';
+
 // Dynamic import for client-only component with no SSR
 import dynamic from 'next/dynamic';
 
@@ -262,6 +266,15 @@ const PAYMENT_URLS = {
   CASHAPP: process.env.NEXT_PUBLIC_CASHAPP_URL || 'https://cash.app/$LiveCity',
   PAYPAL: process.env.NEXT_PUBLIC_PAYPAL_URL || 'https://paypal.me/bmartin4659'
 };
+
+// Fix Cash App URL if it's missing the username due to environment variable parsing issues
+if (PAYMENT_URLS.CASHAPP === 'https://cash.app/' || PAYMENT_URLS.CASHAPP === 'https://cash.app') {
+  PAYMENT_URLS.CASHAPP = 'https://cash.app/$LiveCity';
+}
+
+// Debug logging
+console.log('PAYMENT_URLS loaded:', PAYMENT_URLS);
+console.log('Raw env var NEXT_PUBLIC_CASHAPP_URL:', process.env.NEXT_PUBLIC_CASHAPP_URL);
 
 // We won't use a direct URL for CashApp as deep linking isn't working reliably
 const getCashAppInfo = () => {
@@ -1242,6 +1255,7 @@ export default function DJContractForm() {
     otherMusicPreference: '',
     streamingService: '',
     playlistLink: '',
+    itunesPlaylist: [],
     agreeToTerms: false,
     notes: '',
     signerName: '',
@@ -1341,6 +1355,8 @@ Live City DJ Contract Terms and Conditions:
   const [confirmationMessage, setConfirmationMessage] = useState(null);
   const [showGenreModal, setShowGenreModal] = useState(false);
   const [showPlaylistHelp, setShowPlaylistHelp] = useState(false);
+  const [showItunesPlaylistBrowser, setShowItunesPlaylistBrowser] = useState(false);
+  const [showPlaylistViewer, setShowPlaylistViewer] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
@@ -2284,7 +2300,14 @@ Live City DJ Contract Terms and Conditions:
       if (paymentMethod === 'Venmo') {
         window.location.replace(PAYMENT_URLS.VENMO);
       } else if (paymentMethod === 'CashApp') {
-        window.location.replace(PAYMENT_URLS.CASHAPP);
+        console.log('CashApp URL being used:', PAYMENT_URLS.CASHAPP);
+        console.log('Environment variable NEXT_PUBLIC_CASHAPP_URL:', process.env.NEXT_PUBLIC_CASHAPP_URL);
+        
+        // Add a small delay to ensure the console logs are visible
+        setTimeout(() => {
+          console.log('Redirecting to Cash App...');
+          window.location.href = PAYMENT_URLS.CASHAPP;
+        }, 100);
       } else if (paymentMethod === 'PayPal') {
         window.location.replace(PAYMENT_URLS.PAYPAL);
       }
@@ -4082,6 +4105,156 @@ Live City DJ Contract Terms and Conditions:
                       </div>
                     )}
                   </div>
+
+                  {/* iTunes Playlist Creator */}
+                  <div style={{ marginTop: '2rem', marginBottom: '1rem' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      marginBottom: '0.75rem',
+                      gap: '8px'
+                    }}>
+                      <p style={{ 
+                        color: '#333', 
+                        fontSize: '1rem', 
+                        fontWeight: '500',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        <span style={{ marginRight: '8px' }}>🎵</span>
+                        Create A Custom Playlist From Your DJ&apos;s Music Library
+                      </p>
+                      <FaInfoCircle
+                        style={{ 
+                          color: '#0070f3',
+                          cursor: 'pointer',
+                          fontSize: '1rem'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                                                     setModalText('Browse And Select Songs From DJ Bobby Drake\'s Extensive Music Library To Create Your Perfect Event Playlist. Choose From Thousands Of Tracks Across All Genres!');
+                        }}
+                        title="Click for more information about the iTunes playlist feature"
+                      />
+                    </div>
+                    
+                    <div style={{
+                      padding: '20px',
+                      borderRadius: '12px',
+                      border: '2px solid #e0e0e0',
+                      backgroundColor: 'white',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      marginBottom: '1.5rem'
+                    }}>
+                      {/* Song count display */}
+                      {formData.itunesPlaylist && formData.itunesPlaylist.length > 0 && (
+                        <div style={{ marginBottom: '15px' }}>
+                          <p style={{ 
+                            color: '#0070f3', 
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            margin: '0 0 5px 0'
+                          }}>
+                            {formData.itunesPlaylist.length} song{formData.itunesPlaylist.length !== 1 ? 's' : ''} selected
+                          </p>
+                          <p style={{ 
+                            color: '#666', 
+                            fontSize: '0.85rem',
+                            margin: 0 
+                          }}>
+                            Your custom playlist is ready
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Side-by-side buttons */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'center'
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowItunesPlaylistBrowser(true)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#0070f3',
+                            color: 'white',
+                            border: 'none',
+                            padding: '12px 20px',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor = '#0060df'}
+                          onMouseOut={(e) => e.target.style.backgroundColor = '#0070f3'}
+                        >
+                          <FaMusic style={{ fontSize: '0.9rem' }} />
+                          Browse Music Library
+                        </button>
+                        
+                        {formData.itunesPlaylist && formData.itunesPlaylist.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowPlaylistViewer(true)}
+                            style={{
+                              flex: 1,
+                              backgroundColor: '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              padding: '12px 20px',
+                              borderRadius: '8px',
+                              fontSize: '1rem',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              transition: 'background-color 0.2s ease'
+                            }}
+                            onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                            onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+                          >
+                            <FaList style={{ fontSize: '0.9rem' }} />
+                            View Playlist
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Help text */}
+                      {(!formData.itunesPlaylist || formData.itunesPlaylist.length === 0) && (
+                        <p style={{ 
+                          color: '#666', 
+                          fontStyle: 'italic', 
+                          margin: '15px 0 0 0',
+                          textAlign: 'center',
+                          fontSize: '0.9rem'
+                        }}>
+                          Browse the music library to start building your custom playlist
+                        </p>
+                      )}
+                    </div>
+                    
+                    <p style={{ 
+                      fontSize: '0.8rem', 
+                      color: '#666', 
+                      marginTop: '0.5rem',
+                      fontStyle: 'italic'
+                    }}>
+                                             Select songs from DJ Bobby Drake&apos;s professional Music library. Perfect for creating a custom playlist that matches your event&apos;s vibe!
+                    </p>
+                  </div>
                 </div>
 
                 {/* Compact Additional Hours Selector */}
@@ -4925,6 +5098,41 @@ Live City DJ Contract Terms and Conditions:
         )}
         {showSuccessMessage && <SuccessMessage />}
         {showErrorMessage && <ErrorMessage message={showErrorMessage} />}
+        
+        {/* iTunes Playlist Browser Modal */}
+        <ItunesPlaylistBrowser
+          isOpen={showItunesPlaylistBrowser}
+          onClose={() => setShowItunesPlaylistBrowser(false)}
+          selectedSongs={formData.itunesPlaylist}
+          onSongsChange={(songs) => {
+            const newData = { ...formData, itunesPlaylist: songs };
+            setFormData(newData);
+            
+            // Defer context update to avoid setState during render
+            setTimeout(() => {
+              updateContractFormData(newData);
+            }, 0);
+            
+            // Also save to localStorage as backup
+            try {
+              localStorage.setItem('djContractFormData', JSON.stringify(newData));
+            } catch (error) {
+              console.error('Error saving iTunes playlist to localStorage:', error);
+            }
+          }}
+          onViewPlaylist={() => {
+            setShowPlaylistViewer(true);
+          }}
+        />
+
+        {/* Playlist Viewer Modal */}
+        <PlaylistViewerModal
+          isOpen={showPlaylistViewer}
+          onClose={() => setShowPlaylistViewer(false)}
+          selectedSongs={formData.itunesPlaylist}
+          clientName={formData.clientName}
+        />
+        
         {/* Confirmation page handles payment instructions */}
       </div>
     </SuppressHydration>

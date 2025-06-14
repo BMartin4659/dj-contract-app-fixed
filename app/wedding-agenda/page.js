@@ -663,15 +663,15 @@ export default function WeddingAgendaForm() {
     // If no constraints, return all options
     if (!prevTime && !nextTime) return timeOptions;
     
-    // Filter based on constraints
+    // Filter based on constraints with 30-minute minimum gap
     return timeOptions.filter(time => {
       const timeMinutes = convertToMinutes(time);
       
-      // Check if time is after previous field
-      const isAfterPrev = !prevTime || timeMinutes >= convertToMinutes(prevTime);
+      // Check if time is at least 30 minutes after previous field
+      const isAfterPrev = !prevTime || timeMinutes >= (convertToMinutes(prevTime) + 30);
       
-      // Check if time is before next field
-      const isBeforeNext = !nextTime || timeMinutes <= convertToMinutes(nextTime);
+      // Check if time is at least 30 minutes before next field
+      const isBeforeNext = !nextTime || timeMinutes <= (convertToMinutes(nextTime) - 30);
       
       return isAfterPrev && isBeforeNext;
     });
@@ -687,8 +687,8 @@ export default function WeddingAgendaForm() {
                 <Image 
                   src="/wedding-agenda-logo.png" 
                   alt="Wedding Agenda Logo" 
-                  width={80} 
-                  height={80} 
+                  width={120} 
+                  height={120} 
                   className="mx-auto mb-4 rounded-full"
                   unoptimized
                   priority
@@ -853,8 +853,8 @@ export default function WeddingAgendaForm() {
                   overflow: 'visible'
                 }}>
                   <div style={{
-                    width: isMobile ? '120px' : '150px',
-                    height: isMobile ? '120px' : '150px',
+                    width: isMobile ? '160px' : '200px',
+                    height: isMobile ? '160px' : '200px',
                     margin: '0 auto 25px',
                     display: 'flex',
                     alignItems: 'center',
@@ -863,8 +863,8 @@ export default function WeddingAgendaForm() {
                     <Image
                       src="/wedding-agenda-logo.png"
                       alt="Wedding Agenda Logo"
-                      width={isMobile ? 120 : 150}
-                      height={isMobile ? 120 : 150}
+                      width={isMobile ? 160 : 200}
+                      height={isMobile ? 160 : 200}
                       priority
                       style={{
                         width: '100%',
@@ -1783,6 +1783,8 @@ export default function WeddingAgendaForm() {
                 }}>
                   Please select appropriate times for the key events during your reception.
                   These times help us plan the flow of your event.
+                  <br />
+                  <strong style={{ color: '#d97706' }}>Note:</strong> Times must be at least 30 minutes apart to ensure proper event flow.
                 </div>
                 
                 {/* Reception Timeline - First Row */}

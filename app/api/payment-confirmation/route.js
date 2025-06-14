@@ -58,390 +58,446 @@ async function sendEmailConfirmation(bookingDetails) {
       formattedPlanningDate = 'Two weeks before your event';
     }
     
-    // Enhanced HTML content with comprehensive Pro Event Checklist
+    // Build email HTML content with email-safe table-based layout
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Booking Confirmation - DJ Bobby Drake</title>
-        <style>
-          body { 
-            font-family: 'Arial', sans-serif; 
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #f8fafc;
-          }
-          .container {
-            max-width: 650px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-          }
-          .header {
-            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-          }
-          .logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            display: block;
-            border: 3px solid rgba(255,255,255,0.3);
-          }
-          .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 700;
-          }
-          .content {
-            padding: 30px;
-          }
-          .success-badge {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 25px;
-          }
-          .success-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            display: block;
-          }
-          .section {
-            background-color: #f8fafc;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-left: 4px solid #6366f1;
-          }
-          .checklist-section {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 8px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border-left: 4px solid #0ea5e9;
-          }
-          .checklist-item {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            padding: 12px;
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-          }
-          .checklist-icon {
-            color: #10b981;
-            font-weight: bold;
-            margin-right: 12px;
-            font-size: 16px;
-            margin-top: 2px;
-          }
-          .checklist-content {
-            flex: 1;
-          }
-          .checklist-title {
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 4px;
-          }
-          .checklist-desc {
-            color: #6b7280;
-            font-size: 14px;
-          }
-          h2 {
-            color: #1f2937;
-            font-size: 20px;
-            margin: 0 0 15px 0;
-            font-weight: 600;
-          }
-          h3 {
-            color: #374151;
-            font-size: 18px;
-            margin: 0 0 15px 0;
-            font-weight: 600;
-          }
-          .detail-row {
-            display: flex;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #e5e7eb;
-          }
-          .detail-label {
-            font-weight: 600;
-            color: #4b5563;
-            width: 140px;
-            flex-shrink: 0;
-          }
-          .detail-value {
-            color: #1f2937;
-            flex: 1;
-          }
-          .contact-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-          }
-          .contact-button {
-            display: inline-block;
-            background: #6366f1;
-            color: white;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 8px;
-            transition: background 0.3s;
-          }
-          .contact-button:hover {
-            background: #4f46e5;
-          }
-          .footer {
-            background: #f9fafb;
-            padding: 20px;
-            text-align: center;
-            color: #6b7280;
-            font-size: 14px;
-            border-top: 1px solid #e5e7eb;
-          }
-          .timeline-item {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 3px solid #6366f1;
-          }
-          .timeline-time {
-            font-weight: 600;
-            color: #6366f1;
-            margin-bottom: 5px;
-          }
-          @media only screen and (max-width: 600px) {
-            .container {
-              margin: 10px;
-              border-radius: 8px;
-            }
-            .content {
-              padding: 20px;
-            }
-            .detail-row {
-              flex-direction: column;
-            }
-            .detail-label {
-              width: 100%;
-              margin-bottom: 4px;
-            }
+        <title>🎉 Your Wedding Ceremony & Reception is Confirmed - DJ Bobby Drake</title>
+        <!--[if mso]>
+        <noscript>
+          <xml>
+            <o:OfficeDocumentSettings>
+              <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+          </xml>
+        </noscript>
+        <![endif]-->
+        <style type="text/css">
+          /* Reset styles */
+          body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+          table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+          img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+          
+          /* Base styles */
+          body { margin: 0 !important; padding: 0 !important; background-color: #f5f5f5; }
+          table { border-collapse: collapse !important; }
+          .container { max-width: 600px; margin: 0 auto; }
+          
+          /* Responsive */
+          @media screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .mobile-padding { padding: 10px !important; }
+            .mobile-text { font-size: 14px !important; }
+            .mobile-header { font-size: 20px !important; }
           }
         </style>
       </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <img src="https://dj-contract-app.vercel.app/dj-bobby-drake-logo.png" alt="DJ Bobby Drake Logo" class="logo">
-            <h1>🎉 Booking Confirmed!</h1>
-            <p style="margin: 0; opacity: 0.9;">Thank you for choosing DJ Bobby Drake</p>
-          </div>
-          
-          <div class="content">
-            <div class="success-badge">
-              <span class="success-icon">✅</span>
-              <strong>Your ${bookingDetails.eventType || 'event'} is officially booked!</strong>
-              <div style="font-size: 14px; margin-top: 5px; opacity: 0.9;">
-                Confirmation sent on ${currentDate}
-              </div>
-            </div>
-            
-            <p style="font-size: 16px; margin-bottom: 25px;">
-              Dear <strong>${bookingDetails.clientName || 'Customer'}</strong>,
-            </p>
-            
-            <p>I'm absolutely thrilled that you've chosen DJ Bobby Drake for your upcoming ${bookingDetails.eventType || 'event'}! I'm excited to create an unforgettable experience for you and your guests.</p>
-            
-            <div class="section">
-              <h2>📅 Event Details</h2>
-              <div class="detail-row">
-                <div class="detail-label">Event Type:</div>
-                <div class="detail-value">${bookingDetails.eventType || 'TBD'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Date:</div>
-                <div class="detail-value">${bookingDetails.eventDate || 'TBD'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Venue:</div>
-                <div class="detail-value">${bookingDetails.venueName || 'TBD'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Location:</div>
-                <div class="detail-value">${bookingDetails.venueLocation || 'TBD'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Time:</div>
-                <div class="detail-value">${bookingDetails.startTime || 'TBD'} - ${bookingDetails.endTime || 'TBD'}</div>
-              </div>
-            </div>
-            
-            <div class="section">
-              <h2>💳 Payment Information</h2>
-              <div class="detail-row">
-                <div class="detail-label">Booking ID:</div>
-                <div class="detail-value">${bookingDetails.bookingId || bookingDetails.paymentId || 'N/A'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Amount Paid:</div>
-                <div class="detail-value" style="color: #059669; font-weight: 600;">${formattedAmount || 'N/A'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Payment Method:</div>
-                <div class="detail-value">${bookingDetails.paymentMethod || 'Stripe'}</div>
-              </div>
-              <div class="detail-row">
-                <div class="detail-label">Payment Date:</div>
-                <div class="detail-value">${currentDate}</div>
-              </div>
-            </div>
-            
-            <div class="checklist-section">
-              <h2>🎯 Pro Event Checklist - What Happens Next</h2>
-              <p style="margin-bottom: 20px; color: #374151;">Here's your complete roadmap to ensure your event is absolutely perfect:</p>
+      <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, Helvetica, sans-serif;">
+        
+        <!-- Main Container -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+          <tr>
+            <td align="center" style="padding: 20px 0;">
               
-              <div class="checklist-item">
-                <div class="checklist-icon">📋</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Music Preference Form</div>
-                  <div class="checklist-desc">I'll send you a detailed music preference form 4 weeks before your event to capture your must-play songs, do-not-play list, and special requests.</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">📞</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Pre-Event Planning Call</div>
-                  <div class="checklist-desc">Scheduled for ${formattedPlanningDate} - We'll discuss timeline, special announcements, and any last-minute details.</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">🏢</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Venue Coordination</div>
-                  <div class="checklist-desc">I'll contact your venue 1 week prior to confirm load-in times, power requirements, and setup logistics.</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">⚡</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Technical Requirements</div>
-                  <div class="checklist-desc">Ensure 2 dedicated power outlets within 50ft of DJ setup area. I'll bring all necessary extension cords and power strips.</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">🎵</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Equipment Setup</div>
-                  <div class="checklist-desc">I arrive 1-2 hours before your event start time for complete setup and sound testing.</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">💰</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Final Payment (if applicable)</div>
-                  <div class="checklist-desc">${bookingDetails.isDeposit ? 'Remaining balance due 7 days before your event via Venmo, CashApp, or cash.' : 'Payment complete! No additional charges.'}</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">📱</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Day-of Communication</div>
-                  <div class="checklist-desc">I'll text you my arrival time and provide my direct number for any last-minute coordination needs.</div>
-                </div>
-              </div>
-              
-              <div class="checklist-item">
-                <div class="checklist-icon">🎉</div>
-                <div class="checklist-content">
-                  <div class="checklist-title">Event Day Excellence</div>
-                  <div class="checklist-desc">Professional MC services, seamless music transitions, and reading the crowd to keep your dance floor packed!</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="section">
-              <h3>🎼 What's Included in Your Package:</h3>
-              <ul style="margin: 0; padding-left: 20px; color: #374151;">
-                <li>Professional DJ services for your entire event</li>
-                <li>High-quality sound system and wireless microphones</li>
-                <li>Extensive music library spanning all genres and decades</li>
-                <li>Professional MC and announcement services</li>
-                <li>Mood lighting and dance floor lighting</li>
-                <li>Backup equipment for peace of mind</li>
-                <li>Coordination with your other vendors</li>
-                <li>Unlimited music requests (appropriate for your event)</li>
-              </ul>
-            </div>
-            
-            <div class="contact-section">
-              <h3 style="margin-top: 0; color: #92400e;">Questions? Need to Make Changes?</h3>
-              <p style="margin-bottom: 15px; color: #92400e;">I'm here to help make your event perfect!</p>
-              <a href="tel:2038099414" class="contact-button">📞 Call (203) 809-9414</a>
-              <a href="mailto:therealdjbobbydrake@gmail.com" class="contact-button">✉️ Email Me</a>
-              <div style="margin-top: 15px; font-size: 14px; color: #92400e;">
-                <strong>Best times to reach me:</strong> Mon-Fri 10AM-6PM, Weekends 12PM-4PM
-              </div>
-            </div>
-            
-            <div style="background: #f0fdf4; border-radius: 8px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #22c55e;">
-              <h3 style="margin-top: 0; color: #166534;">🌟 Pro Tips for an Amazing Event:</h3>
-              <ul style="margin: 0; padding-left: 20px; color: #166534;">
-                <li><strong>Create a timeline:</strong> Share your event schedule with me 2 weeks prior</li>
-                <li><strong>Designate a point person:</strong> Choose someone to communicate with me during the event</li>
-                <li><strong>Consider your guests:</strong> Mix of ages? I'll curate the perfect playlist blend</li>
-                <li><strong>Special moments:</strong> Let me know about surprise announcements or dedications</li>
-                <li><strong>Backup plans:</strong> For outdoor events, discuss weather contingencies</li>
-              </ul>
-            </div>
-            
-            <p style="font-size: 16px; line-height: 1.6;">
-              I'm looking forward to making your ${bookingDetails.eventType || 'event'} truly special! 
-              Your satisfaction is my top priority, and I'm committed to exceeding your expectations.
-            </p>
-            
-            <p style="margin-bottom: 0;">
-              Best regards,<br>
-              <strong style="color: #6366f1; font-size: 18px;">DJ Bobby Drake</strong><br>
-              <span style="color: #6b7280;">Professional DJ & Entertainment Services</span><br>
-              <a href="mailto:therealdjbobbydrake@gmail.com" style="color: #6366f1;">therealdjbobbydrake@gmail.com</a><br>
-              <a href="tel:2038099414" style="color: #6366f1;">(203) 809-9414</a>
-            </p>
-          </div>
-          
-          <div class="footer">
-            <p style="margin: 0 0 10px 0;">
-              <strong>DJ Bobby Drake Entertainment</strong> | Professional DJ Services
-            </p>
-            <p style="margin: 0; font-size: 12px;">
-              © ${new Date().getFullYear()} DJ Bobby Drake. All rights reserved. | 
-              <a href="https://dj-contract-app.vercel.app" style="color: #6366f1;">Book Online</a>
-            </p>
-          </div>
-        </div>
+              <!-- Email Content -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 600px;">
+                
+                <!-- Header with Logo and DJ Info -->
+                <tr>
+                  <td style="background-color: #6366f1; padding: 40px 20px; text-align: center;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <img src="https://dj-contract-app.vercel.app/dj-bobby-drake-logo.png" alt="DJ Bobby Drake" width="80" height="80" style="border-radius: 50%; border: 3px solid #ffffff; margin: 0 auto 20px auto; display: block;">
+                          <h1 style="margin: 0 0 12px 0; color: #ffffff; font-size: 20px; font-weight: normal; font-family: Arial, Helvetica, sans-serif; line-height: 1.3;">DJ Bobby Drake</h1>
+                          <p style="margin: 0; color: #e0e7ff; font-size: 15px; font-family: Arial, Helvetica, sans-serif; line-height: 1.4;">Professional DJ & Entertainment Services</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Success Banner -->
+                <tr>
+                  <td style="background-color: #10b981; padding: 35px 20px; text-align: center;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <div style="font-size: 28px; margin-bottom: 15px; line-height: 1;">✅</div>
+                          <h2 style="margin: 0 0 12px 0; color: #ffffff; font-size: 20px; font-weight: normal; font-family: Arial, Helvetica, sans-serif; line-height: 1.3;">Payment Successful!</h2>
+                          <p style="margin: 0; color: #ffffff; font-size: 15px; font-family: Arial, Helvetica, sans-serif; line-height: 1.4;">Your booking is confirmed and we're ready to rock your event!</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                
+                <!-- Main Content -->
+                <tr>
+                  <td style="padding: 30px 20px;">
+                    
+                    <!-- Greeting -->
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.5; color: #374151; font-family: Arial, Helvetica, sans-serif;">
+                      Dear <strong>${bookingDetails.clientName || 'Customer'}</strong>,
+                    </p>
+                    
+                    <p style="margin: 0 0 25px 0; font-size: 16px; line-height: 1.5; color: #374151; font-family: Arial, Helvetica, sans-serif;">
+                      I'm absolutely thrilled that you've chosen DJ Bobby Drake for your upcoming ${bookingDetails.eventType || 'event'}! I'm excited to create an unforgettable experience for you and your guests.
+                    </p>
+                    
+                    <!-- Event Details Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                      <tr>
+                        <td style="background-color: #f8fafc; border-left: 4px solid #6366f1; padding: 20px; border-radius: 0 6px 6px 0;">
+                          <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 17px; font-weight: normal; font-family: Arial, Helvetica, sans-serif;">
+                            📅 Event Details
+                          </h3>
+                          
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Event Type:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.eventType || 'TBD'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Date:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.eventDate || 'TBD'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Time:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.startTime || 'TBD'} - ${bookingDetails.endTime || 'TBD'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Venue:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.venueName || 'TBD'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Location:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.venueLocation || 'TBD'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Payment Information Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                      <tr>
+                        <td style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 6px 6px 0;">
+                          <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 17px; font-weight: normal; font-family: Arial, Helvetica, sans-serif;">
+                            💳 Payment Information
+                          </h3>
+                          
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #fbbf24;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #92400e; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Booking ID:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.bookingId || bookingDetails.paymentId || 'N/A'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #fbbf24;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #92400e; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Amount Paid:</td>
+                                    <td style="color: #059669; font-size: 16px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">${formattedAmount || 'N/A'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0; border-bottom: 1px solid #fbbf24;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #92400e; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Payment Method:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.paymentMethod || 'Stripe'}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 8px 0;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30%" style="font-weight: bold; color: #92400e; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Payment Date:</td>
+                                    <td style="color: #1f2937; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${currentDate}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Pro Event Checklist Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                      <tr>
+                        <td style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 25px; border-radius: 0 6px 6px 0;">
+                          <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 17px; font-weight: normal; font-family: Arial, Helvetica, sans-serif;">
+                            🎯 Pro Event Checklist - What Happens Next
+                          </h3>
+                          <p style="margin: 0 0 20px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Here's your complete roadmap to ensure your event is absolutely perfect:</p>
+                          
+                          <!-- Checklist Items -->
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">📋</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Music Preference Form</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">I'll send you a detailed music preference form 4 weeks before your event to capture your must-play songs, do-not-play list, and special requests.</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">📞</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Pre-Event Planning Call</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Scheduled for ${formattedPlanningDate} - We'll discuss timeline, special announcements, and any last-minute details.</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">🏢</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Venue Coordination</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">I'll contact your venue 1 week prior to confirm load-in times, power requirements, and setup logistics.</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">⚡</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Technical Requirements</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Ensure 2 dedicated power outlets within 50ft of DJ setup area. I'll bring all necessary extension cords and power strips.</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">🎵</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Equipment Setup</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">I arrive 1-2 hours before your event start time for complete setup and sound testing.</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">💰</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Final Payment (if applicable)</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${bookingDetails.isDeposit ? 'Remaining balance due 7 days before your event via Venmo, CashApp, or cash.' : 'Payment complete! No additional charges.'}</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">📱</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Day-of Communication</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">I'll text you my arrival time and provide my direct number for any last-minute coordination needs.</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr><td style="height: 10px;"></td></tr>
+                            <tr>
+                              <td style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                  <tr>
+                                    <td width="30" style="vertical-align: top; padding-right: 12px;">
+                                      <span style="color: #10b981; font-weight: bold; font-size: 16px;">🎉</span>
+                                    </td>
+                                    <td style="vertical-align: top;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px; font-family: Arial, Helvetica, sans-serif;">Event Day Excellence</div>
+                                      <div style="color: #6b7280; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Professional MC services, seamless music transitions, and reading the crowd to keep your dance floor packed!</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- What's Included Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                      <tr>
+                        <td style="background-color: #f8fafc; border-left: 4px solid #6366f1; padding: 20px; border-radius: 0 6px 6px 0;">
+                          <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 17px; font-weight: normal; font-family: Arial, Helvetica, sans-serif;">
+                            🎼 What's Included in Your Package:
+                          </h3>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Professional DJ services for your entire event</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• High-quality sound system and wireless microphones</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Extensive music library spanning all genres and decades</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Professional MC and announcement services</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Mood lighting and dance floor lighting</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Backup equipment for peace of mind</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Coordination with your other vendors</td></tr>
+                            <tr><td style="padding: 4px 0; color: #374151; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• Unlimited music requests (appropriate for your event)</td></tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Contact Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                      <tr>
+                        <td style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 6px 6px 0; text-align: center;">
+                          <h3 style="margin: 0 0 15px 0; color: #92400e; font-size: 17px; font-weight: normal; font-family: Arial, Helvetica, sans-serif;">Questions? Need to Make Changes?</h3>
+                          <p style="margin: 0 0 15px 0; color: #92400e; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">I'm here to help make your event perfect!</p>
+                          
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                            <tr>
+                              <td>
+                                <a href="mailto:therealdjbobbydrake@gmail.com" style="display: inline-block; background: #6366f1; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 6px; font-weight: 600; font-family: Arial, Helvetica, sans-serif; font-size: 16px;">✉️ Email Me</a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Pro Tips Section -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                      <tr>
+                        <td style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; border-radius: 0 6px 6px 0;">
+                          <h3 style="margin: 0 0 20px 0; color: #166534; font-size: 17px; font-weight: normal; font-family: Arial, Helvetica, sans-serif;">
+                            🌟 Pro Tips for an Amazing Event:
+                          </h3>
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr><td style="padding: 4px 0; color: #166534; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• <strong>Create a timeline:</strong> Share your event schedule with me 2 weeks prior</td></tr>
+                            <tr><td style="padding: 4px 0; color: #166534; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• <strong>Designate a point person:</strong> Choose someone to communicate with me during the event</td></tr>
+                            <tr><td style="padding: 4px 0; color: #166534; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• <strong>Consider your guests:</strong> Mix of ages? I'll curate the perfect playlist blend</td></tr>
+                            <tr><td style="padding: 4px 0; color: #166534; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• <strong>Special moments:</strong> Let me know about surprise announcements or dedications</td></tr>
+                            <tr><td style="padding: 4px 0; color: #166534; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">• <strong>Backup plans:</strong> For outdoor events, discuss weather contingencies</td></tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Closing Message -->
+                    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #374151; font-family: Arial, Helvetica, sans-serif;">
+                      I'm looking forward to making your ${bookingDetails.eventType || 'event'} truly special! 
+                      Your satisfaction is my top priority, and I'm committed to exceeding your expectations.
+                    </p>
+                    
+                    <p style="margin: 0 0 30px 0; color: #374151; font-family: Arial, Helvetica, sans-serif; line-height: 1.6;">
+                      Best regards,<br><br>
+                      <span style="color: #1f2937; font-size: 16px;">DJ Bobby Drake</span><br>
+                      <span style="color: #6b7280; font-size: 14px;">Professional DJ & Entertainment Services</span><br>
+                      <a href="mailto:therealdjbobbydrake@gmail.com" style="color: #6366f1; font-size: 14px; text-decoration: none;">therealdjbobbydrake@gmail.com</a>
+                    </p>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; font-family: Arial, Helvetica, sans-serif;">
+                    <p style="margin: 0 0 10px 0;">
+                      <strong>DJ Bobby Drake Entertainment</strong> | Professional DJ Services
+                    </p>
+                    <p style="margin: 0; font-size: 12px;">
+                      © ${new Date().getFullYear()} DJ Bobby Drake. All rights reserved. | 
+                      <a href="https://dj-contract-app.vercel.app" style="color: #6366f1;">Book Online</a>
+                    </p>
+                  </td>
+                </tr>
+                
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
@@ -494,7 +550,6 @@ WHAT'S INCLUDED:
 - Unlimited music requests
 
 Questions? Contact me:
-Phone: (203) 809-9414
 Email: therealdjbobbydrake@gmail.com
 
 Best regards,

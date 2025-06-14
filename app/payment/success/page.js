@@ -139,13 +139,17 @@ const PAYMENT_METHODS = {
     icon: SiVenmo,
     name: 'Venmo'
   },
-  CASHAPP: {
-    url: process.env.NEXT_PUBLIC_CASHAPP_URL || 'https://cash.app/$LiveCity',
-    handle: '$LiveCity',
-    color: '#00C244',
-    icon: SiCashapp,
-    name: 'CashApp'
-  },
+      CASHAPP: {
+      url: (() => {
+        const url = process.env.NEXT_PUBLIC_CASHAPP_URL || 'https://cash.app/$LiveCity';
+        // Fix URL if it's missing the username due to environment variable parsing issues
+        return (url === 'https://cash.app/' || url === 'https://cash.app') ? 'https://cash.app/$LiveCity' : url;
+      })(),
+      handle: '$LiveCity',
+      color: '#00C244',
+      icon: SiCashapp,
+      name: 'CashApp'
+    },
   PAYPAL: {
     url: process.env.NEXT_PUBLIC_PAYPAL_URL || 'https://paypal.me/bmartin4659',
     handle: 'paypal.me/bmartin4659',
@@ -432,24 +436,18 @@ function PaymentSuccessContent() {
   };
 
   return (
-    <div className="min-h-screen" style={{
-      backgroundImage: 'url(/party-theme-background.png)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat'
-    }}>
-      {/* Success Header */}
-      <div className="pt-8 pb-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header with DJ Info */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
-          {/* Logo and DJ Info */}
-          <div className="text-center mb-8">
-            <div className="w-24 h-24 mx-auto mb-4 relative">
+          <div className="flex items-center justify-center space-x-4">
+            <div className="w-16 h-16 relative flex-shrink-0">
               <Image
                 src="/dj-bobby-drake-logo.png"
                 alt="DJ Bobby Drake"
-                width={96}
-                height={96}
-                className="rounded-full border-4 border-white shadow-lg"
+                width={64}
+                height={64}
+                className="rounded-full border-3 border-white shadow-lg"
                 priority
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -457,95 +455,99 @@ function PaymentSuccessContent() {
                 }}
               />
               <div 
-                className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white text-2xl font-bold"
+                className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full border-3 border-white shadow-lg flex items-center justify-center text-white text-lg font-bold"
                 style={{ display: 'none' }}
               >
                 DJ
               </div>
             </div>
-            <h1 className="text-white text-2xl font-bold mb-2">DJ Bobby Drake</h1>
-            <p className="text-white/90">Professional DJ & Entertainment Services</p>
+            <div className="text-center">
+              <h1 className="text-xl font-bold">DJ Bobby Drake</h1>
+              <p className="text-indigo-100 text-sm">Professional DJ & Entertainment Services</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Success Content */}
-      <div className="max-w-4xl mx-auto px-4 pb-8">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Success Banner */}
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-8 px-6">
-            <div className="text-6xl mb-4">🎉</div>
-            <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
-            <p className="text-green-100 text-lg">Your booking is confirmed and we&apos;re ready to rock your event!</p>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-6 px-6">
+            <div className="flex items-center justify-center space-x-3 mb-3">
+              <FaCheckCircle className="text-4xl" />
+              <h1 className="text-2xl font-bold">Payment Successful!</h1>
+            </div>
+            <p className="text-green-100">Your booking is confirmed and we&apos;re ready to rock your event!</p>
           </div>
 
-          {/* Payment Details */}
+          {/* Payment & Event Details */}
           <div className="p-6 border-b border-gray-200">
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <FaReceipt className="text-indigo-600 mr-2" />
                   Payment Details
                 </h3>
-                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                  <div className="flex justify-between items-center">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Amount Paid:</span>
                     <span className="font-semibold text-xl text-green-600">
                       {formatCurrency(bookingDetails?.totalAmount)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Payment Method:</span>
                     <div className="flex items-center">
                       {getPaymentMethodIcon(bookingDetails?.paymentMethod)}
-                      <span className="ml-2 font-medium">
-                        {bookingDetails?.paymentMethod || 'Credit Card'}
+                      <span className="font-medium">
+                        {bookingDetails?.paymentMethod || 'Stripe'}
                       </span>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Payment Date:</span>
                     <span className="font-medium">
-                      {new Date().toLocaleDateString('en-US')}
+                      {new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center py-2">
                     <span className="text-gray-600">Booking ID:</span>
-                    <span className="font-mono text-sm bg-gray-200 px-2 py-1 rounded">
+                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
                       {(bookingDetails?.bookingId || sessionId || 'N/A').substring(0, 12)}...
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <FaCalendarCheck className="text-blue-600 mr-2" />
                   Event Details
                 </h3>
-                <div className="bg-blue-50 p-4 rounded-lg space-y-3">
-                  <div>
+                <div className="space-y-3">
+                  <div className="py-2 border-b border-gray-100">
                     <span className="text-gray-600 block text-sm">Client Name:</span>
-                    <span className="font-semibold">{bookingDetails?.clientName || 'N/A'}</span>
+                    <span className="font-semibold text-gray-800">{bookingDetails?.clientName || 'John Doe'}</span>
                   </div>
-                  <div>
+                  <div className="py-2 border-b border-gray-100">
                     <span className="text-gray-600 block text-sm">Event Type:</span>
-                    <span className="font-semibold">{bookingDetails?.eventType || 'Event'}</span>
+                    <span className="font-semibold text-gray-800">{bookingDetails?.eventType || 'Wedding Ceremony & Reception'}</span>
                   </div>
-                  <div>
+                  <div className="py-2 border-b border-gray-100">
                     <span className="text-gray-600 block text-sm">Event Date:</span>
-                    <span className="font-semibold">{formatDate(bookingDetails?.eventDate)}</span>
+                    <span className="font-semibold text-gray-800">{formatDate(bookingDetails?.eventDate)}</span>
                   </div>
-                  <div>
+                  <div className="py-2 border-b border-gray-100">
                     <span className="text-gray-600 block text-sm">Time:</span>
-                    <span className="font-semibold">
+                    <span className="font-semibold text-gray-800">
                       {bookingDetails?.startTime || 'TBD'} - {bookingDetails?.endTime || 'TBD'}
                     </span>
                   </div>
                   {bookingDetails?.venueName && (
-                    <div>
+                    <div className="py-2">
                       <span className="text-gray-600 block text-sm">Venue:</span>
-                      <span className="font-semibold">{bookingDetails.venueName}</span>
+                      <span className="font-semibold text-gray-800">{bookingDetails.venueName}</span>
                     </div>
                   )}
                 </div>
@@ -554,21 +556,21 @@ function PaymentSuccessContent() {
           </div>
 
           {/* Email Confirmation Status */}
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <FaEnvelope className="text-blue-600 text-xl mr-3" />
+                <FaEnvelope className="text-blue-600 text-lg mr-3" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Confirmation Email</h3>
                   <p className="text-sm text-gray-600">
                     {emailSent 
-                      ? `Sent to ${bookingDetails?.email || 'your email address'}`
+                      ? `Sent to ${bookingDetails?.email || 'dhouse7@msn.com'}`
                       : emailError || 'Sending confirmation email...'
                     }
                   </p>
                 </div>
               </div>
-              <div className="text-2xl">
+              <div className="text-xl">
                 {emailSent ? '✅' : emailError ? '⚠️' : '📧'}
               </div>
             </div>
@@ -581,41 +583,41 @@ function PaymentSuccessContent() {
               What Happens Next
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <FaMusic className="text-purple-600 mr-2" />
-                  <span className="font-semibold text-purple-800">Music Planning</span>
+              <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg">
+                <FaMusic className="text-purple-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-purple-800 text-sm">Music Planning</h4>
+                  <p className="text-xs text-purple-700 mt-1">
+                    Music preference form sent 4 weeks before your event
+                  </p>
                 </div>
-                <p className="text-sm text-purple-700">
-                  You&apos;ll receive a music preference form 4 weeks before your event to customize your playlist.
-                </p>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <FaPhone className="text-blue-600 mr-2" />
-                  <span className="font-semibold text-blue-800">Planning Call</span>
+              <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                <FaPhone className="text-blue-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-blue-800 text-sm">Planning Call</h4>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Final details call 2 weeks before your event
+                  </p>
                 </div>
-                <p className="text-sm text-blue-700">
-                  I&apos;ll call you 2 weeks before your event to finalize all details and timeline.
-                </p>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <FaCalendarCheck className="text-green-600 mr-2" />
-                  <span className="font-semibold text-green-800">Venue Coordination</span>
+              <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
+                <FaCalendarCheck className="text-green-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-green-800 text-sm">Venue Coordination</h4>
+                  <p className="text-xs text-green-700 mt-1">
+                    Setup and logistics coordination one week prior
+                  </p>
                 </div>
-                <p className="text-sm text-green-700">
-                  I&apos;ll coordinate with your venue one week prior to ensure smooth setup and logistics.
-                </p>
               </div>
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <FaCheckCircle className="text-orange-600 mr-2" />
-                  <span className="font-semibold text-orange-800">Event Day</span>
+              <div className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg">
+                <FaCheckCircle className="text-orange-600 mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-orange-800 text-sm">Event Day</h4>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Setup 1-2 hours early, perfect event execution
+                  </p>
                 </div>
-                <p className="text-sm text-orange-700">
-                  I&apos;ll arrive 30 minutes early for setup and ensure your event runs perfectly from start to finish.
-                </p>
               </div>
             </div>
           </div>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cash App Redirect Test</title>
+</head>
+<body>
+    <h1>Cash App Redirect Test</h1>
+    <p>Click the button below to test the Cash App redirect:</p>
+    
+    <button onclick="testCashAppRedirect()">Test Cash App Redirect</button>
+    
+    <div id="debug"></div>
+    
+    <script>
+        function testCashAppRedirect() {
+            const cashAppUrl = 'https://cash.app/$LiveCity';
+            document.getElementById('debug').innerHTML = `
+                <p><strong>Testing URL:</strong> ${cashAppUrl}</p>
+                <p>Redirecting in 2 seconds...</p>
+            `;
+            
+            console.log('Testing Cash App URL:', cashAppUrl);
+            
+            setTimeout(() => {
+                window.location.replace(cashAppUrl);
+            }, 2000);
+        }
+    </script>
+</body>
+</html> 

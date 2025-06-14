@@ -14,6 +14,11 @@ export const PAYMENT_URLS = {
   PAYPAL: process.env.NEXT_PUBLIC_PAYPAL_URL || 'https://paypal.me/bmartin4659'
 };
 
+// Fix Cash App URL if it's missing the username due to environment variable parsing issues
+if (PAYMENT_URLS.CASHAPP === 'https://cash.app/' || PAYMENT_URLS.CASHAPP === 'https://cash.app') {
+  PAYMENT_URLS.CASHAPP = 'https://cash.app/$LiveCity';
+}
+
 // Calculate total price based on selected services and event details
 export const calculateTotal = (formData) => {
   let total = SERVICES.BASE;

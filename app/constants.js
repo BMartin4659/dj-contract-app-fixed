@@ -7,6 +7,11 @@ export const PAYMENT_URLS = {
   PAYPAL: process.env.NEXT_PUBLIC_PAYPAL_URL || 'https://paypal.me/bmartin4659'
 };
 
+// Fix Cash App URL if it's missing the username due to environment variable parsing issues
+if (PAYMENT_URLS.CASHAPP === 'https://cash.app/' || PAYMENT_URLS.CASHAPP === 'https://cash.app') {
+  PAYMENT_URLS.CASHAPP = 'https://cash.app/$LiveCity';
+}
+
 // Payment method icons and colors
 export const PAYMENT_ICONS = {
   VENMO: 'venmo',
