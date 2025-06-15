@@ -105,14 +105,16 @@ export default function AddressAutocomplete({
           
           script.onerror = (error) => {
             setDebugInfo(`Script error: ${error.message || 'Unknown error'}`);
-            reject(new Error('Failed to load Google Maps API'));
+            // Don't reject, just resolve false to prevent popup errors
+            resolve(false);
           };
           
           document.head.appendChild(script);
         });
       } catch (error) {
         setDebugInfo(`Load error: ${error.message}`);
-        throw error;
+        // Don't throw error, just return false to prevent popup errors
+        return false;
       }
     };
 
@@ -128,6 +130,12 @@ export default function AddressAutocomplete({
 
         setDebugInfo('Initializing autocomplete...');
 
+        // Suppress Google Maps error dialogs
+        const originalAlert = window.alert;
+        const originalConfirm = window.confirm;
+        window.alert = () => {};
+        window.confirm = () => true;
+
         const autocomplete = new window.google.maps.places.Autocomplete(
           inputRef.current,
           {
@@ -138,6 +146,12 @@ export default function AddressAutocomplete({
             bounds: null
           }
         );
+
+        // Restore original alert/confirm after initialization
+        setTimeout(() => {
+          window.alert = originalAlert;
+          window.confirm = originalConfirm;
+        }, 1000);
 
         // Enhanced place change listener
         autocomplete.addListener('place_changed', () => {
@@ -209,11 +223,12 @@ export default function AddressAutocomplete({
           }
           @media (max-width: 768px) {
             .pac-container {
-              position: absolute !important;
-              left: 0 !important;
-              right: 0 !important;
+              position: fixed !important;
+              left: 8px !important;
+              right: 8px !important;
               width: auto !important;
               max-width: none !important;
+              top: auto !important;
             }
             .pac-item {
               padding: 14px 16px !important;
@@ -236,7 +251,9 @@ export default function AddressAutocomplete({
         const errorMsg = `Autocomplete init error: ${err.message}`;
         setDebugInfo(errorMsg);
         console.error('Error initializing autocomplete:', err);
-        setError('Address suggestions temporarily unavailable');
+        // Don't show error to user, just fall back to regular input
+        setError(null);
+        setIsReady(true); // Allow regular text input
       }
     };
 
@@ -247,14 +264,18 @@ export default function AddressAutocomplete({
         if (loaded && isComponentMounted) {
           await initializeAutocomplete();
         } else {
-          setDebugInfo('Google Maps API failed to load');
-          setError('Unable to load address suggestions');
+          setDebugInfo('Google Maps API failed to load - using regular input');
+          // Don't show error, just use regular input
+          setError(null);
+          setIsReady(true);
         }
       } catch (err) {
         const errorMsg = `Setup error: ${err.message}`;
         setDebugInfo(errorMsg);
         console.error('Error setting up autocomplete:', err);
-        setError('Address suggestions temporarily unavailable');
+        // Don't show error, just use regular input
+        setError(null);
+        setIsReady(true);
       }
     };
 
@@ -389,12 +410,7 @@ export default function AddressAutocomplete({
       {!isReady && !error && (
         <p className="text-gray-500 text-xs mt-1">
           Loading address suggestions...
-          {debugInfo && <span className="block text-xs text-gray-400 mt-1">{debugInfo}</span>}
         </p>
-      )}
-      
-      {process.env.NODE_ENV === 'development' && debugInfo && (
-        <p className="text-xs text-blue-500 mt-1">Debug: {debugInfo}</p>
       )}
     </div>
   );
