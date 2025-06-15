@@ -148,8 +148,8 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 sm:p-4">
-      <div className="bg-white w-full h-full sm:rounded-lg sm:shadow-xl sm:max-w-6xl sm:h-[90vh] flex flex-col sm:max-h-screen">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 sm:p-4" style={{ overscrollBehavior: 'contain' }}>
+      <div className="bg-white w-full h-full sm:rounded-lg sm:shadow-xl sm:max-w-6xl sm:h-[90vh] flex flex-col sm:max-h-screen" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-white sticky top-0 z-10">
           <div className="flex-1 min-w-0">
@@ -296,7 +296,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
         </div>
 
         {/* Songs List */}
-        <div className="flex-1 overflow-auto overscroll-contain">
+        <div className="flex-1 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">

@@ -94,6 +94,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 /* Next.js root container - proper layout structure */
@@ -146,10 +147,25 @@ body {
 
   /* Clean body/html structure for mobile */
   body, html {
-    min-height: 100%;
+    min-height: 100vh;
     height: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    background-attachment: scroll !important;
+  }
+
+  /* Full-screen background for mobile */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('/dj-background-new.jpg') no-repeat center center;
+    background-size: cover;
+    z-index: -1;
+    will-change: auto;
   }
 
   /* Maintain proper structure on mobile */
@@ -157,18 +173,26 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
   }
 
   /* Flexible content area on mobile */
   .main-wrapper {
     flex: 1;
     padding: 0 5px;
+    position: relative;
+    z-index: 2;
   }
 
   /* Fix iOS-specific issues */
   @supports (-webkit-touch-callout: none) {
     body, #__next {
       min-height: -webkit-fill-available;
+    }
+    
+    html {
+      height: -webkit-fill-available;
     }
   }
 }
@@ -208,8 +232,9 @@ header a:hover {
 @media (max-width: 768px) {
   html {
     font-size: 16px;
-    height: 100%;
+    height: 100vh;
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -220,6 +245,8 @@ header a:hover {
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 
   input, select, textarea {
@@ -457,22 +484,6 @@ input[type="radio"] {
   /* Override all background-attachment fixed on mobile */
   body, html, .main-wrapper, .form-container {
     background-attachment: scroll !important;
-  }
-  
-  /* Create optimized fixed background for mobile */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: url('/dj-background-new.jpg') no-repeat center center;
-    background-size: cover;
-    z-index: -1000;
-    transform: translateZ(0); /* Force GPU acceleration */
-    will-change: auto; /* Prevent unnecessary layers */
-    pointer-events: none; /* Don't interfere with touch events */
   }
   
   /* Ensure form content doesn't have competing backgrounds */
@@ -1321,6 +1332,7 @@ h1, h2, h3, h4, h5, h6 {
     background-attachment: scroll !important;
     -webkit-overflow-scrolling: touch !important;
     overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
   }
   
   /* Force hardware acceleration and prevent tearing */
