@@ -222,27 +222,20 @@ export default function WeddingAgendaForm() {
   useEffect(() => {
     const loadFont = async () => {
       try {
-        // Check if Dancing Script font is already loaded
-        if (document.fonts.check('1em "Dancing Script"') || document.fonts.check('1em "Hugh is Life Personal Use"')) {
+        // Check if Hugh is Life Personal Use font is already loaded
+        if (document.fonts.check('1em "Hugh is Life Personal Use"')) {
           setFontLoaded(true);
           return;
         }
 
-        // Wait for Google Fonts to load Dancing Script
-        await document.fonts.load('500 1em "Dancing Script"');
-        
-        // Create a fallback font face for Hugh is Life Personal Use
+        // Preload the Hugh is Life Personal Use font
         const font = new FontFace(
           'Hugh is Life Personal Use',
-          'local("Dancing Script"), local("DancingScript-Regular")'
+          'url(/fonts/hugh-is-life.ttf) format("truetype")'
         );
         
-        try {
-          await font.load();
-          document.fonts.add(font);
-        } catch (e) {
-          console.log('Using Dancing Script as fallback');
-        }
+        await font.load();
+        document.fonts.add(font);
         
         // Small delay to ensure font is fully ready
         setTimeout(() => {
@@ -878,7 +871,7 @@ export default function WeddingAgendaForm() {
                   
                   {fontLoaded ? (
                     <h1 className="wedding-agenda-header" style={{
-                      fontFamily: "'Dancing Script', 'Hugh is Life Personal Use', cursive, sans-serif",
+                      fontFamily: "'Hugh is Life Personal Use', 'Dancing Script', cursive, sans-serif",
                       fontSize: isMobile ? 'clamp(42px, 11vw, 54px)' : 'clamp(54px, 8vw, 97px)',
                       fontWeight: '500',
                       color: '#000',
