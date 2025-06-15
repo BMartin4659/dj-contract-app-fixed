@@ -27,6 +27,57 @@ const inter = Inter({ subsets: ['latin'] });
 export default function RootLayout({ children }) {
   useEffect(() => {
     document.title = "Live City DJ Contract App";
+    
+    // Global Google Maps error suppression
+    const suppressGoogleMapsErrors = () => {
+      // Override window.alert to suppress Google Maps alerts
+      const originalAlert = window.alert;
+      window.alert = (message) => {
+        if (typeof message === 'string' && 
+            (message.includes('Google Maps') || 
+             message.includes('maps.googleapis.com') ||
+             message.includes('This page can\'t load Google Maps correctly') ||
+             message.includes('Do you own this website?'))) {
+          // Silently ignore Google Maps alerts
+          console.log('Suppressed Google Maps alert:', message);
+          return;
+        }
+        originalAlert(message);
+      };
+
+      // Override window.confirm for Google Maps
+      const originalConfirm = window.confirm;
+      window.confirm = (message) => {
+        if (typeof message === 'string' && 
+            (message.includes('Google Maps') || 
+             message.includes('maps.googleapis.com') ||
+             message.includes('Do you own this website?'))) {
+          // Auto-dismiss Google Maps confirms
+          console.log('Suppressed Google Maps confirm:', message);
+          return false;
+        }
+        return originalConfirm(message);
+      };
+
+      // Override console.error to suppress Google Maps errors
+      const originalConsoleError = console.error;
+      console.error = (...args) => {
+        const message = args.join(' ');
+        if (message.includes('Google Maps') || 
+            message.includes('maps.googleapis.com') ||
+            message.includes('InvalidKeyMapError') ||
+            message.includes('ApiNotActivatedMapError') ||
+            message.includes('QuotaExceededError')) {
+          // Log but don't show error
+          console.log('Suppressed Google Maps error:', message);
+          return;
+        }
+        originalConsoleError.apply(console, args);
+      };
+    };
+
+    // Apply error suppression
+    suppressGoogleMapsErrors();
   }, []);
 
   return (

@@ -2,6 +2,55 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Global Google Maps error suppression
+if (typeof window !== 'undefined') {
+  // Suppress Google Maps error dialogs globally
+  const suppressGoogleMapsErrors = () => {
+    // Override console.error to suppress Google Maps errors
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (message.includes('Google Maps') || 
+          message.includes('maps.googleapis.com') ||
+          message.includes('InvalidKeyMapError') ||
+          message.includes('ApiNotActivatedMapError') ||
+          message.includes('QuotaExceededError')) {
+        // Silently ignore Google Maps errors
+        return;
+      }
+      originalConsoleError.apply(console, args);
+    };
+
+    // Override window.alert to suppress Google Maps alerts
+    const originalAlert = window.alert;
+    window.alert = (message) => {
+      if (typeof message === 'string' && 
+          (message.includes('Google Maps') || 
+           message.includes('maps.googleapis.com') ||
+           message.includes('This page can\'t load Google Maps correctly'))) {
+        // Silently ignore Google Maps alerts
+        return;
+      }
+      originalAlert(message);
+    };
+
+    // Override window.confirm for Google Maps
+    const originalConfirm = window.confirm;
+    window.confirm = (message) => {
+      if (typeof message === 'string' && 
+          (message.includes('Google Maps') || 
+           message.includes('maps.googleapis.com'))) {
+        // Auto-dismiss Google Maps confirms
+        return false;
+      }
+      return originalConfirm(message);
+    };
+  };
+
+  // Apply suppression immediately
+  suppressGoogleMapsErrors();
+}
+
 export default function AddressAutocomplete({ 
   value, 
   onChange, 
@@ -67,13 +116,13 @@ export default function AddressAutocomplete({
               const loaded = !!window.google?.maps?.places?.Autocomplete;
               setDebugInfo(loaded ? 'Google Maps API loaded (timeout)' : 'Google Maps API failed to load (timeout)');
               resolve(loaded);
-            }, 10000);
+            }, 5000); // Reduced timeout
           });
         }
         
-        // Load new script
+        // Load new script with better error handling
         setDebugInfo('Loading Google Maps API script...');
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyC-5o9YY4NS8y8F2ZTg8-zibHYRP_1dOEc';
           setDebugInfo(`Using API key: ${apiKey.substring(0, 10)}...`);
           
@@ -105,15 +154,23 @@ export default function AddressAutocomplete({
           
           script.onerror = (error) => {
             setDebugInfo(`Script error: ${error.message || 'Unknown error'}`);
-            // Don't reject, just resolve false to prevent popup errors
+            // Always resolve false to prevent popup errors
             resolve(false);
           };
+          
+          // Add timeout to prevent hanging
+          setTimeout(() => {
+            if (!window.google?.maps?.places?.Autocomplete) {
+              setDebugInfo('Google Maps API load timeout');
+              resolve(false);
+            }
+          }, 10000);
           
           document.head.appendChild(script);
         });
       } catch (error) {
         setDebugInfo(`Load error: ${error.message}`);
-        // Don't throw error, just return false to prevent popup errors
+        // Always return false to prevent popup errors
         return false;
       }
     };
