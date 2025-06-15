@@ -16,10 +16,19 @@ export default function AddressAutocomplete({
   const [isClient, setIsClient] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Client-side detection
   useEffect(() => {
     setIsClient(true);
+    setIsMobile(window.innerWidth <= 768);
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -110,6 +119,13 @@ export default function AddressAutocomplete({
             componentRestrictions: { country: 'us' }
           });
           
+          // Add mobile-specific event listeners
+          inputRef.current.addEventListener('touchstart', (e) => {
+            // Prevent default to avoid iOS zoom
+            e.preventDefault();
+            inputRef.current.focus();
+          }, { passive: false });
+          
           // Force refresh autocomplete on mobile after initialization
           setTimeout(() => {
             if (autocompleteRef.current && window.google?.maps?.event) {
@@ -122,6 +138,8 @@ export default function AddressAutocomplete({
           if (!isComponentMounted) return;
           
           const place = autocomplete.getPlace();
+          console.log('Place selected:', place);
+          
           if (place?.formatted_address && onChange) {
             onChange({
               target: {
@@ -129,66 +147,84 @@ export default function AddressAutocomplete({
                 value: place.formatted_address
               }
             });
+          } else if (place?.name && onChange) {
+            // Fallback to place name if formatted_address is not available
+            onChange({
+              target: {
+                name: name,
+                value: place.name
+              }
+            });
           }
         });
 
         autocompleteRef.current = autocomplete;
         
-        // Mobile-specific styling for the dropdown
-        if (window.innerWidth <= 768) {
-          // Add mobile-specific CSS for Google autocomplete dropdown
-          const style = document.createElement('style');
-          style.textContent = `
+        // Add mobile-specific CSS for Google autocomplete dropdown
+        const style = document.createElement('style');
+        style.textContent = `
+          .pac-container {
+            z-index: 10000 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #ccc !important;
+            font-size: 16px !important;
+            position: absolute !important;
+            background: white !important;
+            margin-top: 4px !important;
+          }
+          .pac-item {
+            padding: 14px 16px !important;
+            border-bottom: 1px solid #eee !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+            min-height: 44px !important;
+            display: flex !important;
+            align-items: center !important;
+            font-size: 16px !important;
+          }
+          .pac-item:hover, .pac-item:focus {
+            background-color: #f5f5f5 !important;
+          }
+          .pac-item-selected {
+            background-color: #e3f2fd !important;
+          }
+          .pac-item-query {
+            font-size: 16px !important;
+            line-height: 1.4 !important;
+          }
+          @media (max-width: 768px) {
             .pac-container {
-              z-index: 9999 !important;
-              border-radius: 8px !important;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-              border: 1px solid #ccc !important;
-              font-size: 16px !important;
               position: fixed !important;
+              left: 8px !important;
+              right: 8px !important;
+              width: auto !important;
+              max-width: calc(100vw - 16px) !important;
+              z-index: 10001 !important;
+              top: auto !important;
+              bottom: auto !important;
+              transform: none !important;
+              margin-top: 0 !important;
             }
             .pac-item {
-              padding: 14px 16px !important;
-              border-bottom: 1px solid #eee !important;
-              cursor: pointer !important;
-              touch-action: manipulation !important;
-              -webkit-tap-highlight-color: transparent !important;
-              min-height: 44px !important;
-              display: flex !important;
-              align-items: center !important;
+              padding: 16px !important;
+              min-height: 48px !important;
+              font-size: 16px !important;
+              border-bottom: 1px solid #ddd !important;
             }
-            .pac-item:hover, .pac-item:focus {
-              background-color: #f5f5f5 !important;
-            }
-            .pac-item-selected {
-              background-color: #e3f2fd !important;
+            .pac-item:last-child {
+              border-bottom: none !important;
             }
             .pac-item-query {
               font-size: 16px !important;
-              line-height: 1.4 !important;
+              font-weight: 500 !important;
             }
-            @media (max-width: 768px) {
-              .pac-container {
-                max-width: calc(100vw - 32px) !important;
-                left: 16px !important;
-                right: 16px !important;
-                width: auto !important;
-                position: fixed !important;
-                top: auto !important;
-                bottom: auto !important;
-                transform: none !important;
-              }
-              .pac-item {
-                padding: 16px !important;
-                min-height: 48px !important;
-                font-size: 16px !important;
-              }
-            }
-          `;
-          if (!document.querySelector('#google-autocomplete-mobile-styles')) {
-            style.id = 'google-autocomplete-mobile-styles';
-            document.head.appendChild(style);
           }
+        `;
+        if (!document.querySelector('#google-autocomplete-mobile-styles')) {
+          style.id = 'google-autocomplete-mobile-styles';
+          document.head.appendChild(style);
         }
         
         setIsReady(true);
@@ -227,12 +263,24 @@ export default function AddressAutocomplete({
     if (onChange) {
       onChange(e);
     }
+    
+    // On mobile, manually trigger autocomplete after typing
+    if (window.innerWidth <= 768 && autocompleteRef.current && e.target.value.length > 2) {
+      setTimeout(() => {
+        if (window.google?.maps?.event) {
+          window.google.maps.event.trigger(autocompleteRef.current, 'focus');
+          window.google.maps.event.trigger(inputRef.current, 'keydown', {
+            keyCode: 40 // Down arrow to trigger dropdown
+          });
+        }
+      }, 300);
+    }
   };
 
   // Mobile-specific touch and focus handlers
   const handleInputFocus = (e) => {
     // On mobile, ensure the autocomplete dropdown is properly positioned
-    if (window.innerWidth <= 768 && autocompleteRef.current) {
+    if (window.innerWidth <= 768) {
       // Scroll input into view on mobile
       setTimeout(() => {
         e.target.scrollIntoView({ 
@@ -242,8 +290,20 @@ export default function AddressAutocomplete({
         });
         
         // Force refresh of autocomplete positioning
-        window.google?.maps?.event?.trigger(autocompleteRef.current, 'resize');
-      }, 300);
+        if (autocompleteRef.current && window.google?.maps?.event) {
+          window.google.maps.event.trigger(autocompleteRef.current, 'resize');
+        }
+        
+        // Position the dropdown relative to the input on mobile
+        const pacContainer = document.querySelector('.pac-container');
+        if (pacContainer) {
+          const inputRect = e.target.getBoundingClientRect();
+          pacContainer.style.top = `${inputRect.bottom + window.scrollY + 4}px`;
+          pacContainer.style.left = `8px`;
+          pacContainer.style.right = `8px`;
+          pacContainer.style.width = 'auto';
+        }
+      }, 100);
     }
   };
 
@@ -259,7 +319,9 @@ export default function AddressAutocomplete({
     setTimeout(() => {
       if (window.innerWidth <= 768 && autocompleteRef.current) {
         // Ensure dropdown positioning is reset
-        window.google?.maps?.event?.trigger(autocompleteRef.current, 'resize');
+        if (window.google?.maps?.event) {
+          window.google.maps.event.trigger(autocompleteRef.current, 'resize');
+        }
       }
     }, 150);
   };
