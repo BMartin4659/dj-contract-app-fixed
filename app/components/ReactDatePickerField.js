@@ -9,10 +9,32 @@ const CustomInput = forwardRef(({ value, onClick, placeholder }, ref) => (
   <div 
     className="datepicker-input"
     onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
       try {
+        // On mobile, ensure any virtual keyboard is dismissed
+        if (window.innerWidth <= 768 && document.activeElement) {
+          document.activeElement.blur();
+        }
         onClick(e);
       } catch (error) {
         console.error('Input click error:', error);
+      }
+    }}
+    onTouchStart={(e) => {
+      e.preventDefault();
+    }}
+    onTouchEnd={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        // On mobile, ensure any virtual keyboard is dismissed
+        if (window.innerWidth <= 768 && document.activeElement) {
+          document.activeElement.blur();
+        }
+        onClick(e);
+      } catch (error) {
+        console.error('Touch click error:', error);
       }
     }}
     ref={ref}
@@ -29,18 +51,24 @@ const CustomInput = forwardRef(({ value, onClick, placeholder }, ref) => (
       justifyContent: 'space-between',
       cursor: 'pointer',
       boxSizing: 'border-box',
-      marginBottom: '0.5rem'
+      marginBottom: '0.5rem',
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
+      WebkitTouchCallout: 'none',
+      WebkitUserSelect: 'none',
+      userSelect: 'none'
     }}
   >
     <span style={{ 
       color: value ? '#000' : '#6b7280',
       fontSize: 'clamp(16px, 2.5vw, 18px)',
       flex: 1,
-      marginRight: '8px'
+      marginRight: '8px',
+      pointerEvents: 'none'
     }}>
       {value || placeholder || 'Select a date'}
     </span>
-    <FaCalendarAlt style={{ color: '#6366f1', fontSize: '1.2rem', flexShrink: 0 }} />
+    <FaCalendarAlt style={{ color: '#6366f1', fontSize: '1.2rem', flexShrink: 0, pointerEvents: 'none' }} />
   </div>
 ));
 
@@ -216,16 +244,47 @@ const ReactDatePickerField = ({
             max-width: 90vw !important;
             left: 50% !important;
             margin-left: -160px !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+          }
+          
+          .react-datepicker {
+            width: 320px !important;
+            max-width: 90vw !important;
           }
           
           .react-datepicker-wrapper {
             width: 100% !important;
           }
           
+          .datepicker-input {
+            font-size: 16px !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+          
           .datepicker-input input {
             font-size: 16px !important;
             -webkit-appearance: none !important;
             appearance: none !important;
+          }
+          
+          /* Improve touch targets for mobile */
+          .react-datepicker__day {
+            width: 2.2rem !important;
+            height: 2.2rem !important;
+            line-height: 2.2rem !important;
+            margin: 0.2rem !important;
+            font-size: 14px !important;
+            touch-action: manipulation !important;
+          }
+          
+          .react-datepicker__navigation {
+            width: 40px !important;
+            height: 40px !important;
+            touch-action: manipulation !important;
           }
         }
       `}</style>

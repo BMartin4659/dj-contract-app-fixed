@@ -104,8 +104,18 @@ export default function AddressAutocomplete({
           // Disable strict bounds on mobile for better results
           autocomplete.setOptions({
             strictBounds: false,
-            bounds: null
+            bounds: null,
+            // Add mobile-specific options
+            types: ['establishment', 'geocode'],
+            componentRestrictions: { country: 'us' }
           });
+          
+          // Force refresh autocomplete on mobile after initialization
+          setTimeout(() => {
+            if (autocompleteRef.current && window.google?.maps?.event) {
+              window.google.maps.event.trigger(autocompleteRef.current, 'resize');
+            }
+          }, 500);
         }
 
         autocomplete.addListener('place_changed', () => {
@@ -135,17 +145,27 @@ export default function AddressAutocomplete({
               box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
               border: 1px solid #ccc !important;
               font-size: 16px !important;
+              position: fixed !important;
             }
             .pac-item {
-              padding: 12px 16px !important;
+              padding: 14px 16px !important;
               border-bottom: 1px solid #eee !important;
               cursor: pointer !important;
+              touch-action: manipulation !important;
+              -webkit-tap-highlight-color: transparent !important;
+              min-height: 44px !important;
+              display: flex !important;
+              align-items: center !important;
             }
-            .pac-item:hover {
+            .pac-item:hover, .pac-item:focus {
               background-color: #f5f5f5 !important;
             }
             .pac-item-selected {
               background-color: #e3f2fd !important;
+            }
+            .pac-item-query {
+              font-size: 16px !important;
+              line-height: 1.4 !important;
             }
             @media (max-width: 768px) {
               .pac-container {
@@ -153,6 +173,15 @@ export default function AddressAutocomplete({
                 left: 16px !important;
                 right: 16px !important;
                 width: auto !important;
+                position: fixed !important;
+                top: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+              }
+              .pac-item {
+                padding: 16px !important;
+                min-height: 48px !important;
+                font-size: 16px !important;
               }
             }
           `;
@@ -204,10 +233,17 @@ export default function AddressAutocomplete({
   const handleInputFocus = (e) => {
     // On mobile, ensure the autocomplete dropdown is properly positioned
     if (window.innerWidth <= 768 && autocompleteRef.current) {
+      // Scroll input into view on mobile
       setTimeout(() => {
+        e.target.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+        
         // Force refresh of autocomplete positioning
         window.google?.maps?.event?.trigger(autocompleteRef.current, 'resize');
-      }, 100);
+      }, 300);
     }
   };
 
@@ -216,6 +252,16 @@ export default function AddressAutocomplete({
     if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
       e.target.style.fontSize = '16px';
     }
+  };
+
+  const handleInputBlur = (e) => {
+    // Small delay to allow autocomplete selection to work
+    setTimeout(() => {
+      if (window.innerWidth <= 768 && autocompleteRef.current) {
+        // Ensure dropdown positioning is reset
+        window.google?.maps?.event?.trigger(autocompleteRef.current, 'resize');
+      }
+    }, 150);
   };
 
   // Render nothing on server-side to prevent hydration issues
@@ -256,6 +302,7 @@ export default function AddressAutocomplete({
         value={value || ''}
         onChange={handleInputChange}
         onFocus={handleInputFocus}
+        onBlur={handleInputBlur}
         onTouchStart={handleInputTouchStart}
         placeholder={placeholder}
         required={required}
@@ -273,9 +320,16 @@ export default function AddressAutocomplete({
           WebkitAppearance: 'none',
           appearance: 'none',
           touchAction: 'manipulation',
+          WebkitTapHighlightColor: 'transparent',
+          WebkitTouchCallout: 'none',
           // Prevent zoom on iOS
           ...(window?.innerWidth <= 768 && /iPad|iPhone|iPod/.test(navigator?.userAgent || '') ? {
             fontSize: '16px'
+          } : {}),
+          // Better mobile focus styles
+          ...(window?.innerWidth <= 768 ? {
+            minHeight: '44px',
+            lineHeight: '1.4'
           } : {}),
           ...style
         }}
