@@ -153,7 +153,22 @@ const ReactDatePickerField = ({
         popperPlacement="bottom-start"
         className="w-full"
         popperProps={{
-          strategy: "absolute"
+          strategy: "fixed",
+          modifiers: [
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 8
+              }
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['top-start', 'bottom-end', 'top-end']
+              }
+            }
+          ]
         }}
       />
       {error && (
@@ -182,13 +197,37 @@ const ReactDatePickerField = ({
           z-index: 9999 !important;
         }
         
-        .date-picker-calendar {
+        .react-datepicker {
           background: white !important;
           border-radius: 12px !important;
           box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
           border: none !important;
           max-width: 320px !important;
           width: 100% !important;
+          font-family: inherit !important;
+        }
+        
+        @media (max-width: 768px) {
+          .react-datepicker {
+            max-width: 280px !important;
+            font-size: 14px !important;
+          }
+          
+          .react-datepicker__header {
+            padding: 12px !important;
+          }
+          
+          .react-datepicker__day {
+            width: 2.2rem !important;
+            height: 2.2rem !important;
+            line-height: 2.2rem !important;
+            margin: 0.1rem !important;
+          }
+          
+          .react-datepicker__navigation {
+            width: 40px !important;
+            height: 40px !important;
+          }
         }
         
         .date-picker-calendar .react-datepicker__header {

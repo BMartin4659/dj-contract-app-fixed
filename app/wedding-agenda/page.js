@@ -216,12 +216,7 @@ export default function WeddingAgendaForm() {
     setEventType(selected);
   };
 
-  const handleWeddingDateChange = (date) => {
-    setWeddingDate(date);
-    if (date) {
-      setErrors(prev => ({ ...prev, weddingDate: '' }));
-    }
-  };
+
 
   // Font loading effect to prevent FOUT
   useEffect(() => {
@@ -745,14 +740,14 @@ export default function WeddingAgendaForm() {
           DEPLOY: 2025-01-31 17:00 - Wedding Fixes
         </div>
 
-        <div className="min-h-screen flex items-center justify-center" style={{ padding: isMobile ? '4px' : '1rem' }}>
+        <div className="min-h-screen flex items-center justify-center" style={{ padding: isMobile ? '2px' : '1rem' }}>
           <style jsx global>{`
             @font-face {
               font-family: 'Hugh is Life Personal Use';
               src: url('/fonts/hugh-is-life.ttf') format('truetype');
               font-weight: normal;
               font-style: normal;
-              font-display: block;
+              font-display: swap;
             }
 
             ${animationStyles}
@@ -831,14 +826,14 @@ export default function WeddingAgendaForm() {
           <div className="max-w-4xl mx-auto">
             <div style={{ 
               maxWidth: '800px',
-              width: isMobile ? 'calc(100vw - 8px)' : '96%',
+              width: isMobile ? 'calc(100vw - 4px)' : '96%',
               margin: '2rem auto 3rem auto',
-              padding: isMobile ? '0 4px' : '0'
+              padding: isMobile ? '0 2px' : '0'
             }}>
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" id="wedding-form" style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                padding: isMobile ? '1rem 0.5rem' : '2.5rem',
-                borderRadius: isMobile ? '4px' : '20px',
+                padding: isMobile ? '1rem 0.25rem' : '2.5rem',
+                borderRadius: isMobile ? '2px' : '20px',
                 width: '100%',
                 marginBottom: '50px',
                 backdropFilter: 'blur(10px)',
@@ -877,29 +872,30 @@ export default function WeddingAgendaForm() {
                   {fontLoaded ? (
                     <h1 style={{
                       fontFamily: "'Hugh is Life Personal Use', sans-serif",
-                      fontSize: 'clamp(54px, 13.5vw, 97px)',
+                      fontSize: isMobile ? 'clamp(42px, 11vw, 54px)' : 'clamp(54px, 8vw, 97px)',
                       fontWeight: '300',
                       color: '#000',
                       textAlign: 'center',
                       margin: '0 auto',
-                      padding: '0 20px',
-                      lineHeight: '1.2',
+                      padding: isMobile ? '0 8px' : '0 20px',
+                      lineHeight: '1.1',
                       maxWidth: '100%',
                       overflow: 'visible',
                       textTransform: 'capitalize',
                       opacity: 1,
-                      transition: 'opacity 0.3s ease-in-out'
+                      transition: 'opacity 0.3s ease-in-out',
+                      whiteSpace: 'nowrap'
                     }}>
                       Wedding Agenda
                     </h1>
                   ) : (
                     <div style={{
-                      height: 'clamp(65px, 16.2vw, 116px)', // Match the h1 height
+                      height: isMobile ? 'clamp(46px, 12.1vw, 59px)' : 'clamp(65px, 9.6vw, 116px)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       margin: '0 auto',
-                      padding: '0 20px'
+                      padding: isMobile ? '0 8px' : '0 20px'
                     }}>
                       <div style={{
                         width: '40px',
