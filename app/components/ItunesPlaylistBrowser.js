@@ -148,12 +148,12 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col max-h-screen">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 sm:p-4">
+      <div className="bg-white w-full h-full sm:rounded-lg sm:shadow-xl sm:max-w-6xl sm:h-[90vh] flex flex-col sm:max-h-screen">
         {/* Header */}
-        <div className="flex items-center justify-between p-3 sm:p-6 border-b">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-white sticky top-0 z-10">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">DJ Bobby Drake&apos;s Music Library</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">DJ Bobby Drake&apos;s Music Library</h2>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
               {loading ? 'Loading...' : `${filteredSongs.length} songs available`}
               {selectedSongs.length > 0 && (
@@ -165,14 +165,14 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl font-bold ml-2 flex-shrink-0"
+            className="text-gray-400 hover:text-gray-600 text-2xl font-bold ml-2 flex-shrink-0 p-2"
           >
             ×
           </button>
         </div>
 
         {/* Controls */}
-        <div className="p-3 sm:p-6 border-b bg-gray-50">
+        <div className="p-3 sm:p-6 border-b bg-gray-50 sticky top-[73px] sm:top-[97px] z-10">
           <div className="flex flex-col gap-3 sm:gap-4">
             {/* First Row: Mode Toggle and Search */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -296,7 +296,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
         </div>
 
         {/* Songs List */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto overscroll-contain">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -312,7 +312,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
               </div>
             </div>
           ) : (
-            <div className="p-3 sm:p-6">
+            <div className="p-3 sm:p-6 pb-20 sm:pb-6">
               <div className="space-y-1 sm:space-y-2">
                 {currentSongs.map((song) => {
                   const isSelected = selectedSongs.some(s => s.id === song.id);
@@ -394,7 +394,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
 
         {/* Pagination */}
         {!loading && filteredSongs.length > songsPerPage && (
-          <div className="p-3 sm:p-6 border-t bg-gray-50">
+          <div className="p-3 sm:p-6 border-t bg-gray-50 sticky bottom-[73px] sm:bottom-[97px] z-10">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredSongs.length)} of {filteredSongs.length} songs
@@ -423,7 +423,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
         )}
 
         {/* Footer */}
-        <div className="p-3 sm:p-6 border-t bg-gray-50">
+        <div className="p-3 sm:p-6 border-t bg-gray-50 sticky bottom-0 z-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
               Select songs to add to your playlist request
