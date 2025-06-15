@@ -745,7 +745,7 @@ export default function WeddingAgendaForm() {
           DEPLOY: 2025-01-31 17:00 - Wedding Fixes
         </div>
 
-        <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="min-h-screen flex items-center justify-center" style={{ padding: isMobile ? '4px' : '1rem' }}>
           <style jsx global>{`
             @font-face {
               font-family: 'Hugh is Life Personal Use';
@@ -831,14 +831,14 @@ export default function WeddingAgendaForm() {
           <div className="max-w-4xl mx-auto">
             <div style={{ 
               maxWidth: '800px',
-              width: isMobile ? '100%' : '96%',
+              width: isMobile ? 'calc(100vw - 8px)' : '96%',
               margin: '2rem auto 3rem auto',
               padding: isMobile ? '0 4px' : '0'
             }}>
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" id="wedding-form" style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                padding: isMobile ? '1rem 0.75rem' : '2.5rem',
-                borderRadius: isMobile ? '8px' : '20px',
+                padding: isMobile ? '1rem 0.5rem' : '2.5rem',
+                borderRadius: isMobile ? '4px' : '20px',
                 width: '100%',
                 marginBottom: '50px',
                 backdropFilter: 'blur(10px)',
