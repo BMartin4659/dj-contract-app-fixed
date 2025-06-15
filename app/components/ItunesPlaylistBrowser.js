@@ -172,10 +172,10 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
         </div>
 
         {/* Controls */}
-        <div className="p-2 sm:p-6 border-b bg-gray-50 flex-shrink-0">
-          <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="p-2 sm:p-4 border-b bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col gap-2 sm:gap-3">
             {/* First Row: Mode Toggle and Search */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               {/* Mode Toggle */}
               <div className="sm:w-48">
                 <div className="flex rounded-lg border border-gray-300 overflow-hidden">
@@ -221,7 +221,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
             </div>
             
             {/* Second Row: Filter, Sort, and Clear */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               {/* Genre/Playlist Filter */}
               <div className="flex-1 sm:max-w-xs">
                 <select
@@ -312,8 +312,8 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
               </div>
             </div>
           ) : (
-            <div className="p-2 sm:p-6">
-              <div className="space-y-1 sm:space-y-2">
+            <div className="p-1 sm:p-3">
+              <div className="space-y-1">
                 {currentSongs.map((song) => {
                   const isSelected = selectedSongs.some(s => s.id === song.id);
                   const sourceData = mode === 'playlists' ? PLAYLISTS[song.genreKey] : GENRES[song.genreKey];
@@ -325,10 +325,10 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
                     <div
                       key={uniqueKey}
                       onClick={() => handleSongToggle(song)}
-                      className={`p-2 sm:p-4 rounded-lg border cursor-pointer transition-all ${
+                      className={`p-3 sm:p-4 rounded-lg border cursor-pointer transition-all ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 bg-white'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -336,24 +336,24 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="flex-shrink-0">
                               <div
-                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
-                                style={{ backgroundColor: sourceData?.color || '#gray' }}
+                                className="w-3 h-3 sm:w-4 sm:h-4 rounded-full"
+                                style={{ backgroundColor: sourceData?.color || '#6B7280' }}
                                 title={song.genreDisplay}
                               ></div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                              <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                                 {song.title}
                               </h3>
-                              <p className="text-xs sm:text-sm text-gray-600 truncate">
+                              <p className="text-sm sm:text-base text-gray-700 truncate font-medium">
                                 {song.artist}
                                 {song.album && song.album !== 'Unknown Album' && (
-                                  <span className="text-gray-400 hidden sm:inline"> • {song.album}</span>
+                                  <span className="text-gray-500 hidden sm:inline font-normal"> • {song.album}</span>
                                 )}
                               </p>
                               <div className="flex items-center gap-1 sm:gap-2 mt-1">
                                 <span 
-                                  className="inline-block px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs rounded-full font-medium"
+                                  className="inline-block px-2 py-1 text-xs sm:text-sm rounded-full font-medium"
                                   style={{ 
                                     backgroundColor: sourceData?.color || '#6B7280',
                                     color: getTextColor(sourceData?.color || '#6B7280')
@@ -362,7 +362,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
                                   {song.genreDisplay || sourceData?.displayName || song.genre || 'Music'}
                                 </span>
                                 {song.playCount > 0 && (
-                                  <span className="text-xs text-gray-500 hidden sm:inline">
+                                  <span className="text-xs sm:text-sm text-gray-600 hidden sm:inline">
                                     {song.playCount} plays
                                   </span>
                                 )}
@@ -370,14 +370,14 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
                             </div>
                           </div>
                         </div>
-                        <div className="flex-shrink-0 ml-2 sm:ml-4">
-                          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center ${
+                        <div className="flex-shrink-0 ml-3 sm:ml-4">
+                          <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded border-2 flex items-center justify-center ${
                             isSelected
                               ? 'border-blue-500 bg-blue-500'
                               : 'border-gray-300'
                           }`}>
                             {isSelected && (
-                              <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                               </svg>
                             )}
@@ -394,8 +394,8 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
 
         {/* Pagination */}
         {!loading && filteredSongs.length > songsPerPage && (
-          <div className="p-2 sm:p-6 border-t bg-gray-50 flex-shrink-0">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="p-2 sm:p-3 border-t bg-gray-50 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
               <p className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredSongs.length)} of {filteredSongs.length} songs
               </p>
@@ -423,12 +423,12 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
         )}
 
         {/* Footer */}
-        <div className="p-2 sm:p-6 border-t bg-gray-50 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-2 sm:p-3 border-t bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
               Select songs to add to your playlist request
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={onClose}
                 className="px-4 sm:px-6 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
