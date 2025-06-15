@@ -142,10 +142,10 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style={{ overscrollBehavior: 'contain' }}>
       <div className="bg-white w-full h-full sm:w-full sm:h-full sm:rounded-lg sm:shadow-xl sm:max-w-6xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-2 py-1 border-b bg-white flex-shrink-0">
+        {/* Fixed Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-white flex-shrink-0 z-10">
           <div className="flex-1 min-w-0">
-            <h2 className="text-base sm:text-xl font-bold text-gray-900 truncate">DJ Bobby Drake&apos;s Music Library</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">DJ Bobby Drake&apos;s Music Library</h2>
             <p className="text-sm text-gray-600">
               {loading ? 'Loading...' : `${filteredSongs.length} songs`}
               {selectedSongs.length > 0 && (
@@ -156,8 +156,8 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold ml-2 p-1">×</button>
         </div>
 
-        {/* Controls */}
-        <div className="px-2 py-1 border-b bg-gray-50 flex-shrink-0">
+        {/* Fixed Controls */}
+        <div className="px-3 py-2 border-b bg-gray-50 flex-shrink-0 z-10">
           <div className="flex flex-col gap-2">
             {/* Mode Toggle and Search */}
             <div className="flex flex-col sm:flex-row gap-2">
@@ -259,8 +259,8 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
           </div>
         </div>
 
-        {/* Songs List */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+        {/* Scrollable Content Area - This is the only part that scrolls */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -276,7 +276,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
               </div>
             </div>
           ) : (
-            <div className="p-1">
+            <div className="p-2">
               {currentSongs.map((song) => {
                 const isSelected = selectedSongs.some(s => s.id === song.id);
                 const sourceData = mode === 'playlists' ? PLAYLISTS[song.genreKey] : GENRES[song.genreKey];
@@ -344,11 +344,11 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
           )}
         </div>
 
-        {/* Footer */}
-        <div className="bg-white border-t flex-shrink-0">
+        {/* Fixed Footer */}
+        <div className="bg-white border-t flex-shrink-0 z-10">
           {/* Pagination */}
           {!loading && filteredSongs.length > songsPerPage && (
-            <div className="px-2 py-1 border-b bg-gray-50">
+            <div className="px-3 py-1 border-b bg-gray-50">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-700">{startIndex + 1}-{Math.min(endIndex, filteredSongs.length)} of {filteredSongs.length}</p>
                 <div className="flex items-center gap-1">
@@ -373,20 +373,20 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
           )}
 
           {/* Action Buttons */}
-          <div className="px-2 py-1">
+          <div className="px-3 py-2">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600 hidden sm:block">Select songs for your playlist</p>
-              <div className="flex gap-1 w-full sm:w-auto">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <button
                   onClick={onClose}
-                  className="px-2 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 {selectedSongs.length > 0 && onViewPlaylist && (
                   <button
                     onClick={() => { onViewPlaylist(); }}
-                    className="px-2 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+                    className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -396,7 +396,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
                 )}
                 <button
                   onClick={onClose}
-                  className="px-2 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
                 >
                   Done ({selectedSongs.length})
                 </button>
