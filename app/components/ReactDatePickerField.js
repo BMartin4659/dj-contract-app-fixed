@@ -83,10 +83,19 @@ const ReactDatePickerField = ({
   error = null
 }) => {
   const [isClient, setIsClient] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Client-side detection - only runs once on mount
   useEffect(() => {
     setIsClient(true);
+    setIsMobile(window.innerWidth <= 768);
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Memoize date validation to prevent unnecessary recalculations
@@ -150,22 +159,34 @@ const ReactDatePickerField = ({
         dateFormat={dateFormat}
         minDate={minDate}
         placeholderText={placeholder}
-        popperPlacement="bottom-start"
+        popperPlacement={isMobile ? "bottom" : "bottom-start"}
         className="w-full"
+        popperContainer={({ children }) => (
+          <div className="react-datepicker-portal">
+            {children}
+          </div>
+        )}
         popperProps={{
-          strategy: "fixed",
+          strategy: "absolute",
           modifiers: [
             {
               name: 'preventOverflow',
               options: {
                 boundary: 'viewport',
-                padding: 8
+                padding: isMobile ? 16 : 8,
+                altBoundary: true
               }
             },
             {
               name: 'flip',
               options: {
-                fallbackPlacements: ['top-start', 'bottom-end', 'top-end']
+                fallbackPlacements: isMobile ? ['top', 'bottom'] : ['top-start', 'bottom-end', 'top-end']
+              }
+            },
+            {
+              name: 'offset',
+              options: {
+                offset: [0, isMobile ? 8 : 4]
               }
             }
           ]
@@ -194,6 +215,11 @@ const ReactDatePickerField = ({
         
         .react-datepicker-popper {
           width: max-content !important;
+          z-index: 9999 !important;
+        }
+        
+        .react-datepicker-portal {
+          position: relative !important;
           z-index: 9999 !important;
         }
         
@@ -277,19 +303,15 @@ const ReactDatePickerField = ({
         
         @media (max-width: 768px) {
           .react-datepicker-popper {
-            position: fixed !important;
             z-index: 10000 !important;
             width: auto !important;
             max-width: 90vw !important;
-            left: 50% !important;
-            margin-left: -160px !important;
-            top: 50% !important;
-            transform: translate(-50%, -50%) !important;
           }
           
           .react-datepicker {
-            width: 320px !important;
+            width: 280px !important;
             max-width: 90vw !important;
+            margin: 0 auto !important;
           }
           
           .react-datepicker-wrapper {
@@ -324,6 +346,15 @@ const ReactDatePickerField = ({
             width: 40px !important;
             height: 40px !important;
             touch-action: manipulation !important;
+          }
+          
+          /* Ensure proper positioning relative to input */
+          .react-datepicker-popper[data-placement^="bottom"] {
+            margin-top: 4px !important;
+          }
+          
+          .react-datepicker-popper[data-placement^="top"] {
+            margin-bottom: 4px !important;
           }
         }
       `}</style>
