@@ -44,7 +44,7 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
   const [currentPage, setCurrentPage] = useState(1);
   const [mode, setMode] = useState('genres'); // 'genres' or 'playlists'
   
-  const songsPerPage = 30; // Increased from 20 to show more songs per page
+  const songsPerPage = 10; // Reduced from 30 to show fewer songs per page
 
   // Load songs when component mounts, mode changes, or genre selection changes
   useEffect(() => {
