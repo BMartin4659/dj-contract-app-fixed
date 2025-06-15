@@ -222,20 +222,27 @@ export default function WeddingAgendaForm() {
   useEffect(() => {
     const loadFont = async () => {
       try {
-        // Check if font is already loaded
-        if (document.fonts.check('1em "Hugh is Life Personal Use"')) {
+        // Check if Dancing Script font is already loaded
+        if (document.fonts.check('1em "Dancing Script"') || document.fonts.check('1em "Hugh is Life Personal Use"')) {
           setFontLoaded(true);
           return;
         }
 
-        // Preload the font
+        // Wait for Google Fonts to load Dancing Script
+        await document.fonts.load('500 1em "Dancing Script"');
+        
+        // Create a fallback font face for Hugh is Life Personal Use
         const font = new FontFace(
           'Hugh is Life Personal Use',
-          'url(/fonts/hugh-is-life.ttf) format("truetype")'
+          'local("Dancing Script"), local("DancingScript-Regular")'
         );
         
-        await font.load();
-        document.fonts.add(font);
+        try {
+          await font.load();
+          document.fonts.add(font);
+        } catch (e) {
+          console.log('Using Dancing Script as fallback');
+        }
         
         // Small delay to ensure font is fully ready
         setTimeout(() => {
@@ -870,10 +877,10 @@ export default function WeddingAgendaForm() {
                   </div>
                   
                   {fontLoaded ? (
-                    <h1 style={{
-                      fontFamily: "'Hugh is Life Personal Use', sans-serif",
+                    <h1 className="wedding-agenda-header" style={{
+                      fontFamily: "'Dancing Script', 'Hugh is Life Personal Use', cursive, sans-serif",
                       fontSize: isMobile ? 'clamp(42px, 11vw, 54px)' : 'clamp(54px, 8vw, 97px)',
-                      fontWeight: '300',
+                      fontWeight: '500',
                       color: '#000',
                       textAlign: 'center',
                       margin: '0 auto',
@@ -884,7 +891,9 @@ export default function WeddingAgendaForm() {
                       textTransform: 'capitalize',
                       opacity: 1,
                       transition: 'opacity 0.3s ease-in-out',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      display: 'block',
+                      width: '100%'
                     }}>
                       Wedding Agenda
                     </h1>
@@ -895,7 +904,8 @@ export default function WeddingAgendaForm() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       margin: '0 auto',
-                      padding: isMobile ? '0 8px' : '0 20px'
+                      padding: isMobile ? '0 8px' : '0 20px',
+                      width: '100%'
                     }}>
                       <div style={{
                         width: '40px',

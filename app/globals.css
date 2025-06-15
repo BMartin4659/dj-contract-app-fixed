@@ -2,7 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
+
+/* Hugh is Life Personal Use Font - Using Dancing Script as substitute */
+@font-face {
+  font-family: 'Hugh is Life Personal Use';
+  src: local('Dancing Script'), local('DancingScript-Regular');
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Wedding Agenda Header Styles */
+.wedding-agenda-header {
+  font-family: 'Dancing Script', 'Hugh is Life Personal Use', cursive, sans-serif !important;
+  text-align: center !important;
+  display: block !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+/* Mobile-specific header alignment */
+@media (max-width: 768px) {
+  .wedding-agenda-header {
+    font-size: clamp(42px, 11vw, 54px) !important;
+    line-height: 1.1 !important;
+    padding: 0 8px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    width: 100% !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+}
 
 :root {
   --background: 0 0% 100%;
