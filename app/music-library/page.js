@@ -488,7 +488,7 @@ export default function MusicLibraryPage() {
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
                       Your Playlist
                     </h1>
-                    <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto rounded-full"></div>
+                    <div className="h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '110px' }}></div>
                   </div>
                   <button 
                     onClick={handleBackToContract}
@@ -503,37 +503,37 @@ export default function MusicLibraryPage() {
               </div>
 
               {/* Playlist Actions */}
-              <div className="mb-8">
+              <div className="mb-6 md:mb-8">
                 <div 
-                  className="rounded-lg p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
+                  className="rounded-lg p-3 md:p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
                   style={{ background: 'linear-gradient(135deg, #10b98125, #10b98110)' }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
-                        <FaList />
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
+                        <FaList className="text-sm md:text-base" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg">Playlist Summary</h3>
-                        <p className="text-gray-700 font-medium">{selectedSongs.length} songs selected</p>
+                        <h3 className="font-bold text-gray-900 text-base md:text-lg">Playlist Summary</h3>
+                        <p className="text-gray-700 font-medium text-sm md:text-base">{selectedSongs.length} songs selected</p>
                       </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                       <button
                         onClick={handleContinueAdding}
-                        className="px-5 py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm"
+                        className="px-3 py-2 md:px-5 md:py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm text-sm md:text-base"
                       >
                         Continue Adding Songs
                       </button>
                       <button
                         onClick={() => setSelectedSongs([])}
-                        className="px-5 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium shadow-md border-2 border-red-500"
+                        className="px-3 py-2 md:px-5 md:py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium shadow-md border-2 border-red-500 text-sm md:text-base"
                       >
                         Clear All
                       </button>
                       <button
                         onClick={handleBackToContract}
-                        className="px-5 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500"
+                        className="px-3 py-2 md:px-5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500 text-sm md:text-base"
                       >
                         Use These Songs
                       </button>
@@ -544,7 +544,7 @@ export default function MusicLibraryPage() {
 
               {/* Quick Navigation */}
               <div className="mb-8">
-                <div className="flex border-b-2 border-gray-300 bg-gray-50 rounded-t-lg">
+                <div className="flex gap-4 justify-center">
                   <button
                     onClick={() => {
                       setViewMode('library');
@@ -553,9 +553,9 @@ export default function MusicLibraryPage() {
                       setActiveTab('genres');
                       setCurrentPage(1);
                     }}
-                    className="px-8 py-4 font-bold text-sm border-b-2 transition-colors flex-1 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                    className="px-6 py-3 font-semibold text-sm rounded-lg border-2 bg-purple-600 text-white border-purple-500 hover:bg-purple-700 hover:shadow-md transition-all duration-200 flex items-center gap-2 shadow-sm"
                   >
-                    <FaCompactDisc className="inline mr-2" /> Browse Genres
+                    <FaGuitar className="text-base" /> Browse Genres
                   </button>
                   <button
                     onClick={() => {
@@ -565,9 +565,9 @@ export default function MusicLibraryPage() {
                       setActiveTab('playlists');
                       setCurrentPage(1);
                     }}
-                    className="px-8 py-4 font-bold text-sm border-b-2 transition-colors flex-1 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                    className="px-6 py-3 font-semibold text-sm rounded-lg border-2 bg-green-600 text-white border-green-500 hover:bg-green-700 hover:shadow-md transition-all duration-200 flex items-center gap-2 shadow-sm"
                   >
-                    <FaList className="inline mr-2" /> Browse Playlists
+                    <FaHeadphones className="text-base" /> Browse Playlists
                   </button>
                 </div>
               </div>
@@ -719,7 +719,7 @@ export default function MusicLibraryPage() {
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
                       Music Library
                     </h1>
-                    <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
+                    <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
                   </div>
                   <button 
                     onClick={handleBackToContract}
@@ -749,7 +749,7 @@ export default function MusicLibraryPage() {
 
               {/* Quick Navigation */}
               <div className="mb-8">
-                <div className="flex border-b-2 border-gray-300 bg-gray-50 rounded-t-lg">
+                <div className="flex gap-4 justify-center">
                   <button
                     onClick={() => {
                       setSelectedCategory(null);
@@ -757,9 +757,9 @@ export default function MusicLibraryPage() {
                       setActiveTab('genres');
                       setCurrentPage(1);
                     }}
-                    className="px-8 py-4 font-bold text-sm border-b-2 transition-colors flex-1 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                    className="px-6 py-3 font-semibold text-sm rounded-lg border-2 bg-purple-500 text-white border-purple-400 hover:bg-purple-600 hover:shadow-lg transition-all duration-200 flex items-center gap-2 shadow-md"
                   >
-                    <FaCompactDisc className="inline mr-2" /> Browse Genres
+                    <FaGuitar className="text-base" /> Browse Genres
                   </button>
                   <button
                     onClick={() => {
@@ -768,46 +768,46 @@ export default function MusicLibraryPage() {
                       setActiveTab('playlists');
                       setCurrentPage(1);
                     }}
-                    className="px-8 py-4 font-bold text-sm border-b-2 transition-colors flex-1 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                    className="px-6 py-3 font-semibold text-sm rounded-lg border-2 bg-green-500 text-white border-green-400 hover:bg-green-600 hover:shadow-lg transition-all duration-200 flex items-center gap-2 shadow-md"
                   >
-                    <FaList className="inline mr-2" /> Browse Playlists
+                    <FaHeadphones className="text-base" /> Browse Playlists
                   </button>
                 </div>
               </div>
 
                           {/* Selected Songs Summary */}
             {selectedSongs.length > 0 && (
-              <div className="mb-8">
+              <div className="mb-6 md:mb-8">
                 <div 
-                  className="rounded-lg p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
+                  className="rounded-lg p-3 md:p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
                   style={{ background: 'linear-gradient(135deg, #10b98125, #10b98110)' }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
-                        <FaList />
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
+                        <FaList className="text-sm md:text-base" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg">Your Playlist</h3>
-                        <p className="text-gray-700 font-medium">{selectedSongs.length} songs selected</p>
+                        <h3 className="font-bold text-gray-900 text-base md:text-lg">Your Playlist</h3>
+                        <p className="text-gray-700 font-medium text-sm md:text-base">{selectedSongs.length} songs selected</p>
                       </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                       <button
                         onClick={handleViewPlaylist}
-                        className="px-5 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500"
+                        className="px-3 py-2 md:px-5 md:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500 text-sm md:text-base"
                       >
                         View Playlist
                       </button>
                       <button
                         onClick={() => setSelectedSongs([])}
-                        className="px-5 py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm"
+                        className="px-3 py-2 md:px-5 md:py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm text-sm md:text-base"
                       >
                         Clear All
                       </button>
                       <button
                         onClick={handleBackToContract}
-                        className="px-5 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500"
+                        className="px-3 py-2 md:px-5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500 text-sm md:text-base"
                       >
                         Use These Songs
                       </button>
@@ -945,7 +945,7 @@ export default function MusicLibraryPage() {
                   <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
                     Music Library
                   </h1>
-                  <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
+                  <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
                 </div>
               </div>
                              <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
@@ -967,69 +967,69 @@ export default function MusicLibraryPage() {
               </div>
             </div>
 
-            {/* Navigation Tabs */}
+            {/* Navigation Buttons */}
             <div className="mb-8">
-              <div className="flex border-b-2 border-gray-300 bg-gray-50 rounded-t-lg">
+              <div className="flex gap-4 justify-center">
                 <button
                   onClick={() => handleTabChange('genres')}
-                  className={`px-8 py-4 font-bold text-sm border-b-2 transition-colors flex-1 ${
+                  className={`px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
                     activeTab === 'genres'
-                      ? 'border-blue-500 text-blue-700 bg-white'
-                      : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
+                      : 'bg-white text-gray-900 border-purple-400 hover:bg-purple-50 hover:border-purple-600 hover:shadow-lg'
                   }`}
                 >
-                  <FaCompactDisc className="inline mr-2" /> Genres
+                  <FaGuitar className="text-lg" /> Music Genres
                 </button>
                 <button
                   onClick={() => handleTabChange('playlists')}
-                  className={`px-8 py-4 font-bold text-sm border-b-2 transition-colors flex-1 ${
+                  className={`px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
                     activeTab === 'playlists'
-                      ? 'border-blue-500 text-blue-700 bg-white'
-                      : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      ? 'bg-green-600 text-white border-green-600 shadow-lg'
+                      : 'bg-white text-gray-900 border-green-400 hover:bg-green-50 hover:border-green-600 hover:shadow-lg'
                   }`}
                 >
-                  <FaList className="inline mr-2" /> Playlists
+                  <FaHeadphones className="text-lg" /> Curated Playlists
                 </button>
               </div>
             </div>
 
             {/* Selected Songs Summary */}
             {selectedSongs.length > 0 && (
-              <div className="mb-8">
+              <div className="mb-6 md:mb-8">
                 <div 
-                  className="rounded-lg p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
+                  className="rounded-lg p-3 md:p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
                   style={{ background: 'linear-gradient(135deg, #10b98125, #10b98110)' }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
-                        <FaList />
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
+                        <FaList className="text-sm md:text-base" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg">Your Playlist</h3>
-                        <p className="text-gray-700 font-medium">{selectedSongs.length} songs selected</p>
+                        <h3 className="font-bold text-gray-900 text-base md:text-lg">Your Playlist</h3>
+                        <p className="text-gray-700 font-medium text-sm md:text-base">{selectedSongs.length} songs selected</p>
                       </div>
                     </div>
-                                         <div className="flex gap-3">
-                       <button
-                         onClick={handleViewPlaylist}
-                         className="px-5 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500"
-                       >
-                         View Playlist
-                       </button>
-                       <button
-                         onClick={() => setSelectedSongs([])}
-                         className="px-5 py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm"
-                       >
-                         Clear All
-                       </button>
-                       <button
-                         onClick={handleBackToContract}
-                         className="px-5 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500"
-                       >
-                         Use These Songs
-                       </button>
-                     </div>
+                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                      <button
+                        onClick={handleViewPlaylist}
+                        className="px-3 py-2 md:px-5 md:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500 text-sm md:text-base"
+                      >
+                        View Playlist
+                      </button>
+                      <button
+                        onClick={() => setSelectedSongs([])}
+                        className="px-3 py-2 md:px-5 md:py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm text-sm md:text-base"
+                      >
+                        Clear All
+                      </button>
+                      <button
+                        onClick={handleBackToContract}
+                        className="px-3 py-2 md:px-5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500 text-sm md:text-base"
+                      >
+                        Use These Songs
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

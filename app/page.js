@@ -1217,6 +1217,29 @@ const BookingConfirmationPage = ({ formData, onSendEmail, onBookAgain }) => {
 export default function DJContractForm() {
   const isMobile = useIsMobile();
   const router = useRouter();
+
+  // Add responsive styles for music library buttons
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .music-library-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      @media (min-width: 480px) {
+        .music-library-buttons {
+          flex-direction: row;
+          align-items: center;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   
   // Get form context (now returns default values if not available)
   const { contractFormData, weddingAgendaData, updateContractFormData, isClient: contextIsClient } = useFormContext();
@@ -1879,10 +1902,12 @@ Live City DJ Contract Terms and Conditions:
           hasChanges = true;
         }
         
-        // If we made changes, save to context
+        // If we made changes, save to context (deferred to avoid setState during render)
         if (hasChanges) {
           console.log('Contract form updated with wedding agenda data:', updatedData);
-          updateContractFormData(updatedData);
+          setTimeout(() => {
+            updateContractFormData(updatedData);
+          }, 0);
         }
         
         return hasChanges ? updatedData : prev;
@@ -4164,7 +4189,7 @@ Live City DJ Contract Terms and Conditions:
                     </div>
                     
                     <div style={{
-                      padding: '20px',
+                      padding: 'clamp(12px, 4vw, 20px)',
                       borderRadius: '12px',
                       border: '2px solid #e0e0e0',
                       backgroundColor: 'white',
@@ -4176,10 +4201,10 @@ Live City DJ Contract Terms and Conditions:
                     }}>
                       {/* Song count display */}
                       {formData.selectedMusicLibrarySongs && formData.selectedMusicLibrarySongs.length > 0 && (
-                        <div style={{ marginBottom: '15px' }}>
+                        <div style={{ marginBottom: 'clamp(10px, 3vw, 15px)' }}>
                           <p style={{ 
                             color: '#0070f3', 
-                            fontSize: '1rem',
+                            fontSize: 'clamp(0.85rem, 3vw, 1rem)',
                             fontWeight: '600',
                             margin: '0 0 5px 0'
                           }}>
@@ -4187,7 +4212,7 @@ Live City DJ Contract Terms and Conditions:
                           </p>
                           <p style={{ 
                             color: '#666', 
-                            fontSize: '0.85rem',
+                            fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
                             margin: 0 
                           }}>
                             Your custom playlist is ready
@@ -4195,11 +4220,10 @@ Live City DJ Contract Terms and Conditions:
                         </div>
                       )}
                       
-                      {/* Side-by-side buttons */}
-                      <div style={{
+                      {/* Responsive buttons layout */}
+                      <div className="music-library-buttons" style={{
                         display: 'flex',
-                        gap: '12px',
-                        alignItems: 'center'
+                        gap: 'clamp(8px, 2vw, 12px)'
                       }}>
                         <Link
                           href="/music-library"
@@ -4208,22 +4232,23 @@ Live City DJ Contract Terms and Conditions:
                             backgroundColor: '#0070f3',
                             color: 'white',
                             border: 'none',
-                            padding: '12px 20px',
+                            padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 20px)',
                             borderRadius: '8px',
-                            fontSize: '1rem',
+                            fontSize: 'clamp(0.85rem, 3vw, 1rem)',
                             fontWeight: '500',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px',
+                            gap: 'clamp(6px, 1.5vw, 8px)',
                             transition: 'background-color 0.2s ease',
-                            textDecoration: 'none'
+                            textDecoration: 'none',
+                            minHeight: '44px'
                           }}
                           onMouseOver={(e) => e.target.style.backgroundColor = '#0060df'}
                           onMouseOut={(e) => e.target.style.backgroundColor = '#0070f3'}
                         >
-                          <FaMusic style={{ fontSize: '0.9rem' }} />
+                          <FaMusic style={{ fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }} />
                           Browse Music Library
                         </Link>
                         
@@ -4235,22 +4260,23 @@ Live City DJ Contract Terms and Conditions:
                               backgroundColor: '#28a745',
                               color: 'white',
                               border: 'none',
-                              padding: '12px 20px',
+                              padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 20px)',
                               borderRadius: '8px',
-                              fontSize: '1rem',
+                              fontSize: 'clamp(0.85rem, 3vw, 1rem)',
                               fontWeight: '500',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              gap: '8px',
+                              gap: 'clamp(6px, 1.5vw, 8px)',
                               transition: 'background-color 0.2s ease',
-                              textDecoration: 'none'
+                              textDecoration: 'none',
+                              minHeight: '44px'
                             }}
                             onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
                             onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
                           >
-                            <FaList style={{ fontSize: '0.9rem' }} />
+                            <FaList style={{ fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }} />
                             View Playlist
                           </Link>
                         )}
