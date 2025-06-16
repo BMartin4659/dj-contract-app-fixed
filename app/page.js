@@ -114,8 +114,7 @@ import { useIsMobile } from './hooks/useIsMobile';
 // Import the optimized address autocomplete component
 import AddressAutocomplete from './components/AddressAutocomplete';
 
-// Import the playlist viewer component
-import PlaylistViewerModal from './components/PlaylistViewerModal';
+
 
 // Dynamic import for client-only component with no SSR
 import dynamic from 'next/dynamic';
@@ -1217,83 +1216,109 @@ const BookingConfirmationPage = ({ formData, onSendEmail, onBookAgain }) => {
 
 export default function DJContractForm() {
   const isMobile = useIsMobile();
-  
   const router = useRouter();
   
   // Get form context (now returns default values if not available)
   const { contractFormData, weddingAgendaData, updateContractFormData, isClient: contextIsClient } = useFormContext();
   
-  // Debug: Log context values on every render
-  console.log('Contract form render - Context values:', {
-    contractFormData,
-    contextIsClient,
-    contractFormDataKeys: Object.keys(contractFormData),
-    hasUpdateFunction: typeof updateContractFormData === 'function'
-  });
-  
-  // Initial form data with blank values
+  // Initial form data structure for reference
   const initialFormData = {
-    clientName: '',
+    // Personal Information
+    name: '',
     email: '',
-    contactPhone: '',
-    clientPhone: '',
-    eventType: '',
-    guestCount: '100',
-    venueName: '',
-    venueLocation: '',
+    phone: '',
     eventDate: '',
-    startTime: '',
-    endTime: '',
+    eventType: '',
+    startTime: '6:00 PM',
+    endTime: '11:00 PM',
+    
+    // Event Details
+    guestCount: '',
+    venue: '',
+    venueAddress: '',
+    
+    // Services
     lighting: false,
     photography: false,
     videoVisuals: false,
     additionalHours: 0,
-    paymentAmount: 'deposit',
-    paymentMethod: 'Stripe',
-    musicPreferences: [],
-    otherMusicPreference: '',
-    streamingService: '',
-    playlistLink: '',
-    itunesPlaylist: [],
-    agreeToTerms: false,
-    notes: '',
-    signerName: '',
-    bookingId: '' // To store the booking ID when created
+    
+    // Playlist - Updated to use the new music library system
+    selectedMusicLibrarySongs: [], // New: Songs from the music library
+    
+    // Genre preferences (keeping for legacy compatibility)
+    preferredGenres: [],
+    musicPreferences: [], // Music genre preferences
+    
+    // Payment
+    paymentAmount: 'deposit', // 'deposit' or 'full'
+    paymentMethod: '',
+    
+    // Additional
+    specialRequests: '',
+    
+    // System
+    bookingId: ''
   };
-
-  // Initialize form data with the initial values, but check localStorage first
-  const [formData, setFormData] = useState(() => {
-    // Only check localStorage on client side
-    if (typeof window !== 'undefined') {
-      try {
-        const savedData = localStorage.getItem('djContractFormData');
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          console.log('Initializing form with saved data:', parsedData);
-          // Ensure all string fields have string values (not undefined)
-          const sanitizedData = {};
-          Object.keys(initialFormData).forEach(key => {
-            if (typeof initialFormData[key] === 'string') {
-              sanitizedData[key] = parsedData[key] || initialFormData[key] || '';
-            } else if (typeof initialFormData[key] === 'boolean') {
-              sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : initialFormData[key];
-            } else if (typeof initialFormData[key] === 'number') {
-              sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : initialFormData[key];
-            } else if (Array.isArray(initialFormData[key])) {
-              sanitizedData[key] = Array.isArray(parsedData[key]) ? parsedData[key] : initialFormData[key];
-            } else {
-              sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : initialFormData[key];
-            }
-          });
-          return sanitizedData;
-        }
-      } catch (error) {
-        console.error('Error loading saved data during initialization:', error);
-      }
-    }
-    console.log('Initializing form with default data');
-    return initialFormData;
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    // Personal Information
+    name: '',
+    email: '',
+    phone: '',
+    eventDate: '',
+    eventType: '',
+    startTime: '6:00 PM',
+    endTime: '11:00 PM',
+    
+    // Event Details
+    guestCount: '',
+    venue: '',
+    venueAddress: '',
+    
+    // Services
+    lighting: false,
+    photography: false,
+    videoVisuals: false,
+    additionalHours: 0,
+    
+    // Playlist - Updated to use the new music library system
+    selectedMusicLibrarySongs: [], // New: Songs from the music library
+    
+    // Genre preferences (keeping for legacy compatibility)
+    preferredGenres: [],
+    musicPreferences: [], // Music genre preferences
+    
+    // Payment
+    paymentAmount: 'deposit', // 'deposit' or 'full'
+    paymentMethod: '',
+    
+    // Additional
+    specialRequests: '',
+    
+    // System
+    bookingId: ''
   });
+
+  // Load any existing music library songs from localStorage
+  useEffect(() => {
+    try {
+      const savedSongs = localStorage.getItem('musicLibrarySelectedSongs');
+      if (savedSongs) {
+        const parsedSongs = JSON.parse(savedSongs);
+        // Ensure parsedSongs is an array before setting
+        if (Array.isArray(parsedSongs)) {
+          setFormData(prev => ({
+            ...prev,
+            selectedMusicLibrarySongs: parsedSongs
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading music library songs:', error);
+    }
+  }, []);
   
   // Terms and conditions text
   const termsAndConditionsText = `
@@ -1355,7 +1380,7 @@ Live City DJ Contract Terms and Conditions:
   const [showGenreModal, setShowGenreModal] = useState(false);
   const [showPlaylistHelp, setShowPlaylistHelp] = useState(false);
 
-  const [showPlaylistViewer, setShowPlaylistViewer] = useState(false);
+
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
@@ -3954,7 +3979,7 @@ Live City DJ Contract Terms and Conditions:
                       </span>
                     </div>
                     
-                    {formData.musicPreferences.length > 0 ? (
+                    {(formData.musicPreferences?.length || 0) > 0 ? (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {musicGenres
                           .filter(genre => formData.musicPreferences.includes(genre.id))
@@ -4150,7 +4175,7 @@ Live City DJ Contract Terms and Conditions:
                       marginBottom: '1.5rem'
                     }}>
                       {/* Song count display */}
-                      {formData.itunesPlaylist && formData.itunesPlaylist.length > 0 && (
+                      {formData.selectedMusicLibrarySongs && formData.selectedMusicLibrarySongs.length > 0 && (
                         <div style={{ marginBottom: '15px' }}>
                           <p style={{ 
                             color: '#0070f3', 
@@ -4158,7 +4183,7 @@ Live City DJ Contract Terms and Conditions:
                             fontWeight: '600',
                             margin: '0 0 5px 0'
                           }}>
-                            {formData.itunesPlaylist.length} song{formData.itunesPlaylist.length !== 1 ? 's' : ''} selected
+                            {(formData.selectedMusicLibrarySongs?.length || 0)} song{(formData.selectedMusicLibrarySongs?.length || 0) !== 1 ? 's' : ''} selected
                           </p>
                           <p style={{ 
                             color: '#666', 
@@ -4202,10 +4227,9 @@ Live City DJ Contract Terms and Conditions:
                           Browse Music Library
                         </Link>
                         
-                        {formData.itunesPlaylist && formData.itunesPlaylist.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowPlaylistViewer(true)}
+                        {formData.selectedMusicLibrarySongs && formData.selectedMusicLibrarySongs.length > 0 && (
+                          <Link
+                            href="/music-library?view=playlist"
                             style={{
                               flex: 1,
                               backgroundColor: '#28a745',
@@ -4220,19 +4244,20 @@ Live City DJ Contract Terms and Conditions:
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '8px',
-                              transition: 'background-color 0.2s ease'
+                              transition: 'background-color 0.2s ease',
+                              textDecoration: 'none'
                             }}
                             onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
                             onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
                           >
                             <FaList style={{ fontSize: '0.9rem' }} />
                             View Playlist
-                          </button>
+                          </Link>
                         )}
                       </div>
                       
                       {/* Help text */}
-                      {(!formData.itunesPlaylist || formData.itunesPlaylist.length === 0) && (
+                      {(!formData.selectedMusicLibrarySongs || formData.selectedMusicLibrarySongs.length === 0) && (
                         <p style={{ 
                           color: '#666', 
                           fontStyle: 'italic', 
@@ -5100,13 +5125,7 @@ Live City DJ Contract Terms and Conditions:
         
 
 
-        {/* Playlist Viewer Modal */}
-        <PlaylistViewerModal
-          isOpen={showPlaylistViewer}
-          onClose={() => setShowPlaylistViewer(false)}
-          selectedSongs={formData.itunesPlaylist}
-          clientName={formData.clientName}
-        />
+
         
         {/* Confirmation page handles payment instructions */}
       </div>
