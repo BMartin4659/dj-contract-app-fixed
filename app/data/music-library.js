@@ -605,13 +605,14 @@ export async function loadAllSongs() {
   const allSongs = [];
   const seenTrackIds = new Set(); // Track IDs we've already seen
   const genreKeys = Object.keys(GENRES);
+  let duplicateCount = 0;
   
   console.log(`Loading songs from ${genreKeys.length} genres...`);
   
   for (const genreKey of genreKeys) {
     const songs = await loadGenreSongs(genreKey);
     // Add genre information to each song and deduplicate
-            const songsWithGenre = songs
+    const songsWithGenre = songs
       .map(song => ({
         ...song,
         genreKey,
@@ -620,7 +621,7 @@ export async function loadAllSongs() {
       .filter(song => {
         // Only include songs we haven't seen before
         if (seenTrackIds.has(song.id)) {
-          console.log(`Skipping duplicate song: ${song.title} by ${song.artist} (ID: ${song.id})`);
+          duplicateCount++;
           return false;
         }
         seenTrackIds.add(song.id);
@@ -630,6 +631,9 @@ export async function loadAllSongs() {
   }
   
   console.log(`Total songs loaded: ${allSongs.length} (deduplicated)`);
+  if (duplicateCount > 0) {
+    console.log(`Removed ${duplicateCount} duplicate songs from genres`);
+  }
   return allSongs;
 }
 
@@ -638,6 +642,7 @@ export async function loadAllPlaylistSongs() {
   const allSongs = [];
   const seenTrackIds = new Set(); // Track IDs we've already seen
   const playlistKeys = Object.keys(PLAYLISTS);
+  let duplicateCount = 0;
   
   console.log(`Loading songs from ${playlistKeys.length} playlists...`);
   
@@ -655,7 +660,7 @@ export async function loadAllPlaylistSongs() {
       .filter(song => {
         // Only include songs we haven't seen before
         if (seenTrackIds.has(song.id)) {
-          console.log(`Skipping duplicate song: ${song.title} by ${song.artist} (ID: ${song.id})`);
+          duplicateCount++;
           return false;
         }
         seenTrackIds.add(song.id);
@@ -665,6 +670,9 @@ export async function loadAllPlaylistSongs() {
   }
   
   console.log(`Total playlist songs loaded: ${allSongs.length} (deduplicated)`);
+  if (duplicateCount > 0) {
+    console.log(`Removed ${duplicateCount} duplicate songs from playlists`);
+  }
   return allSongs;
 }
 

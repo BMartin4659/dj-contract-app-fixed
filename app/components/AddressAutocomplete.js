@@ -196,7 +196,7 @@ export default function AddressAutocomplete({
         const autocomplete = new window.google.maps.places.Autocomplete(
           inputRef.current,
           {
-            types: ['address', 'establishment'],
+            types: ['address'],
             componentRestrictions: { country: 'us' },
             fields: ['formatted_address', 'name', 'place_id', 'geometry'],
             strictBounds: false,

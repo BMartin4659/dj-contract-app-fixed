@@ -114,8 +114,7 @@ import { useIsMobile } from './hooks/useIsMobile';
 // Import the optimized address autocomplete component
 import AddressAutocomplete from './components/AddressAutocomplete';
 
-// Import the iTunes playlist browser component
-import ItunesPlaylistBrowser from './components/ItunesPlaylistBrowser';
+// Import the playlist viewer component
 import PlaylistViewerModal from './components/PlaylistViewerModal';
 
 // Dynamic import for client-only component with no SSR
@@ -1355,7 +1354,7 @@ Live City DJ Contract Terms and Conditions:
   const [confirmationMessage, setConfirmationMessage] = useState(null);
   const [showGenreModal, setShowGenreModal] = useState(false);
   const [showPlaylistHelp, setShowPlaylistHelp] = useState(false);
-  const [showItunesPlaylistBrowser, setShowItunesPlaylistBrowser] = useState(false);
+
   const [showPlaylistViewer, setShowPlaylistViewer] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(null);
@@ -4177,9 +4176,8 @@ Live City DJ Contract Terms and Conditions:
                         gap: '12px',
                         alignItems: 'center'
                       }}>
-                        <button
-                          type="button"
-                          onClick={() => setShowItunesPlaylistBrowser(true)}
+                        <Link
+                          href="/music-library"
                           style={{
                             flex: 1,
                             backgroundColor: '#0070f3',
@@ -4194,14 +4192,15 @@ Live City DJ Contract Terms and Conditions:
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '8px',
-                            transition: 'background-color 0.2s ease'
+                            transition: 'background-color 0.2s ease',
+                            textDecoration: 'none'
                           }}
                           onMouseOver={(e) => e.target.style.backgroundColor = '#0060df'}
                           onMouseOut={(e) => e.target.style.backgroundColor = '#0070f3'}
                         >
                           <FaMusic style={{ fontSize: '0.9rem' }} />
                           Browse Music Library
-                        </button>
+                        </Link>
                         
                         {formData.itunesPlaylist && formData.itunesPlaylist.length > 0 && (
                           <button
@@ -5099,31 +5098,7 @@ Live City DJ Contract Terms and Conditions:
         {showSuccessMessage && <SuccessMessage />}
         {showErrorMessage && <ErrorMessage message={showErrorMessage} />}
         
-        {/* iTunes Playlist Browser Modal */}
-        <ItunesPlaylistBrowser
-          isOpen={showItunesPlaylistBrowser}
-          onClose={() => setShowItunesPlaylistBrowser(false)}
-          selectedSongs={formData.itunesPlaylist}
-          onSongsChange={(songs) => {
-            const newData = { ...formData, itunesPlaylist: songs };
-            setFormData(newData);
-            
-            // Defer context update to avoid setState during render
-            setTimeout(() => {
-              updateContractFormData(newData);
-            }, 0);
-            
-            // Also save to localStorage as backup
-            try {
-              localStorage.setItem('djContractFormData', JSON.stringify(newData));
-            } catch (error) {
-              console.error('Error saving iTunes playlist to localStorage:', error);
-            }
-          }}
-          onViewPlaylist={() => {
-            setShowPlaylistViewer(true);
-          }}
-        />
+
 
         {/* Playlist Viewer Modal */}
         <PlaylistViewerModal
