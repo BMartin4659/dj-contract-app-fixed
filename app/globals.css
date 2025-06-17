@@ -122,7 +122,6 @@ body {
   background-size: cover !important;
   background-position: center center !important;
   background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
   color: #333;
   position: relative;
   display: flex;
@@ -999,7 +998,7 @@ html, body, .form-container, .main-content, #__next {
 .mobile-background, 
 .ios-background-fix,
 body::before {
-  background-attachment: fixed !important;
+  background-attachment: scroll !important;
 }
 
 /* Payment Confirmation Banner */
