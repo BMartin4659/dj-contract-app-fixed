@@ -848,9 +848,9 @@ export default function WeddingAgendaForm() {
                   overflow: 'visible'
                 }}>
                   <div style={{
-                    width: isMobile ? '160px' : '200px',
-                    height: isMobile ? '160px' : '200px',
-                    margin: '0 auto 25px',
+                    width: isMobile ? '120px' : '200px',
+                    height: isMobile ? '120px' : '200px',
+                    margin: '0 auto 20px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -858,8 +858,8 @@ export default function WeddingAgendaForm() {
                     <Image
                       src="/wedding-agenda-logo.png"
                       alt="Wedding Agenda Logo"
-                      width={isMobile ? 160 : 200}
-                      height={isMobile ? 160 : 200}
+                      width={isMobile ? 120 : 200}
+                      height={isMobile ? 120 : 200}
                       priority
                       style={{
                         width: '100%',
@@ -872,7 +872,7 @@ export default function WeddingAgendaForm() {
                   {fontLoaded ? (
                     <h1 className="wedding-agenda-header" style={{
                       fontFamily: "'Hugh is Life Personal Use', 'Dancing Script', cursive, sans-serif",
-                      fontSize: isMobile ? 'clamp(42px, 11vw, 54px)' : 'clamp(54px, 8vw, 97px)',
+                      fontSize: isMobile ? 'clamp(52px, 13vw, 68px)' : 'clamp(54px, 8vw, 97px)',
                       fontWeight: '500',
                       color: '#000',
                       textAlign: 'center',
@@ -892,7 +892,7 @@ export default function WeddingAgendaForm() {
                     </h1>
                   ) : (
                     <div style={{
-                      height: isMobile ? 'clamp(46px, 12.1vw, 59px)' : 'clamp(65px, 9.6vw, 116px)',
+                      height: isMobile ? 'clamp(57px, 14.3vw, 75px)' : 'clamp(65px, 9.6vw, 116px)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

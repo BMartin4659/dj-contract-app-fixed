@@ -247,6 +247,7 @@ export default function AddressAutocomplete({
             margin-top: 4px !important;
             max-height: 300px !important;
             overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
           }
           .pac-item {
             padding: 12px 16px !important;
@@ -259,6 +260,8 @@ export default function AddressAutocomplete({
             align-items: center !important;
             font-size: 16px !important;
             transition: background-color 0.2s ease !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
           }
           .pac-item:hover, .pac-item:focus {
             background-color: #f8f9fa !important;
@@ -281,16 +284,25 @@ export default function AddressAutocomplete({
           @media (max-width: 768px) {
             .pac-container {
               position: fixed !important;
-              left: 8px !important;
-              right: 8px !important;
+              left: 16px !important;
+              right: 16px !important;
               width: auto !important;
               max-width: none !important;
               top: auto !important;
+              bottom: auto !important;
+              max-height: 50vh !important;
+              border-radius: 12px !important;
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
             }
             .pac-item {
-              padding: 14px 16px !important;
-              min-height: 48px !important;
+              padding: 16px 20px !important;
+              min-height: 56px !important;
               font-size: 16px !important;
+              line-height: 1.3 !important;
+            }
+            .pac-item-query {
+              font-size: 16px !important;
+              line-height: 1.3 !important;
             }
           }
         `;
@@ -364,14 +376,38 @@ export default function AddressAutocomplete({
     // Reset typing state when focusing
     setUserTyping(false);
     
-    // On mobile, ensure proper positioning
+    // On mobile, ensure proper positioning and prevent zoom
     if (window.innerWidth <= 768) {
+      // Prevent zoom on iOS
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        e.target.style.fontSize = '16px';
+      }
+      
+      // Scroll into view with better positioning
       setTimeout(() => {
         e.target.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'center',
           inline: 'nearest'
         });
+        
+        // Ensure autocomplete dropdown appears in viewport
+        const rect = e.target.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        
+        // If there's more space above, position dropdown above
+        if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+          // Add class to position dropdown above
+          setTimeout(() => {
+            const dropdown = document.querySelector('.pac-container');
+            if (dropdown) {
+              dropdown.style.bottom = `${viewportHeight - rect.top + 8}px`;
+              dropdown.style.top = 'auto';
+            }
+          }, 100);
+        }
       }, 100);
     }
   };

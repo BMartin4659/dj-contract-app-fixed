@@ -1889,3 +1889,120 @@ input, select, textarea {
   will-change: transform;
 }
 
+/* Enhanced Mobile Input Field Support */
+@media (max-width: 768px) {
+  /* Ensure all input fields are properly interactive on mobile */
+  input[type="text"],
+  input[type="email"], 
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    /* Prevent iOS zoom while maintaining accessibility */
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+    
+    /* Ensure proper touch interaction */
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    
+    /* Ensure text selection works */
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    
+    /* Remove any potential blocking styles */
+    pointer-events: auto !important;
+    
+    /* Ensure proper box model */
+    box-sizing: border-box !important;
+    
+    /* Minimum touch target size */
+    min-height: 44px !important;
+    
+    /* Ensure proper appearance */
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    
+    /* Ensure proper focus behavior */
+    outline: none !important;
+    border: 1px solid #ccc !important;
+    border-radius: 8px !important;
+    
+    /* Proper padding for mobile */
+    padding: 12px 16px !important;
+    
+    /* Ensure proper background */
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  /* Enhanced focus states for mobile */
+  input[type="text"]:focus,
+  input[type="email"]:focus, 
+  input[type="tel"]:focus,
+  input[type="number"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #0070f3 !important;
+    box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2) !important;
+    outline: none !important;
+    background-color: white !important;
+  }
+  
+  /* Ensure field containers don't block interaction */
+  .field-input {
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure labels don't interfere */
+  .field-label {
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+  
+  /* Ensure form containers allow interaction */
+  .form-container,
+  .grid,
+  .form-grid-1col {
+    pointer-events: auto !important;
+  }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  input[type="text"],
+  input[type="email"], 
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    /* Prevent iOS zoom */
+    font-size: 16px !important;
+    
+    /* iOS specific touch handling */
+    -webkit-touch-callout: default !important;
+    -webkit-user-select: text !important;
+    
+    /* Ensure iOS doesn't interfere with input */
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+  }
+}
+
+/* Additional mobile input fixes */
+@media (max-width: 480px) {
+  input[type="text"],
+  input[type="email"], 
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    /* Larger touch targets for small screens */
+    min-height: 48px !important;
+    padding: 14px 16px !important;
+    font-size: 16px !important;
+  }
+}
+

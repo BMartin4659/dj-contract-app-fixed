@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaMusic, FaArrowLeft, FaSearch, FaList, FaHome, FaHeart, FaCompactDisc, FaRadiation, FaGuitar, FaMicrophone, FaHeadphones, FaDrum, FaStar, FaFire, FaPlay } from 'react-icons/fa';
+import { FaMusic, FaArrowLeft, FaSearch, FaList, FaHome, FaHeart, FaCompactDisc, FaRadiation, FaGuitar, FaMicrophone, FaHeadphones, FaDrum, FaStar, FaFire, FaPlay, FaTimes, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { 
   loadSongsByMode, 
   loadPlaylistSongs,
@@ -40,15 +40,15 @@ const CategoryCard = React.memo(({ title, color, type, onSelect, description, so
           style={{ backgroundColor: color }}
         >
           <FaMusic className="text-lg" />
-        </div>
+      </div>
         
         {/* Content */}
         <div className="flex-1">
           <h3 className="font-bold text-gray-900 text-lg tracking-tight">{title}</h3>
           <p className="text-gray-700 text-sm font-medium">{description}</p>
           {songCount && <span className="text-xs text-gray-600 mt-1 block font-semibold">{songCount} songs</span>}
-        </div>
-        
+    </div>
+    
         {/* Arrow */}
         <div className="text-gray-500">
           <FaPlay className="text-sm" />
@@ -135,11 +135,7 @@ const PaginationControls = React.memo(({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 mt-4">
-      <div className="text-sm text-gray-600">
-        Showing {startIndex}-{endIndex} of {totalSongs} songs
-      </div>
-      
+    <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-200 mt-4">
       <div className="flex items-center gap-2">
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -230,8 +226,17 @@ PaginationControls.displayName = 'PaginationControls';
 
 // Generate minimal placeholder data for instant loading
 const generatePlaceholderSongs = () => {
-  // Return empty array for faster initial load
-  return [];
+  // Return some sample songs with proper genreKey mappings for immediate color display
+  return [
+    { id: 'sample-1', title: "Blinding Lights", artist: "The Weeknd", album: "After Hours", genre: "Pop", genreKey: "pop", isPlaceholder: true },
+    { id: 'sample-2', title: "God's Plan", artist: "Drake", album: "Scorpion", genre: "Rap", genreKey: "rap-hiphop", isPlaceholder: true },
+    { id: 'sample-3', title: "Bohemian Rhapsody", artist: "Queen", album: "A Night at the Opera", genre: "Rock", genreKey: "rock", isPlaceholder: true },
+    { id: 'sample-4', title: "No Scrubs", artist: "TLC", album: "FanMail", genre: "R&B", genreKey: "rnb", isPlaceholder: true },
+    { id: 'sample-5', title: "One Love", artist: "Bob Marley", album: "Exodus", genre: "Reggae", genreKey: "reggae", isPlaceholder: true },
+    { id: 'sample-6', title: "Despacito", artist: "Luis Fonsi", album: "Vida", genre: "Latin", genreKey: "latin", isPlaceholder: true },
+    { id: 'sample-7', title: "Sweet Child O' Mine", artist: "Guns N' Roses", album: "Appetite for Destruction", genre: "Rock", genreKey: "rock", isPlaceholder: true },
+    { id: 'sample-8', title: "I Will Always Love You", artist: "Whitney Houston", album: "The Bodyguard", genre: "R&B", genreKey: "rnb", isPlaceholder: true }
+  ];
 };
 
 export default function MusicLibraryPage() {
@@ -247,7 +252,56 @@ export default function MusicLibraryPage() {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const [groupBy, setGroupBy] = useState('none'); // 'none', 'genre', 'artist'
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set()); // Track which groups are collapsed
   const songsPerPage = 20; // Reduced for form-style display
+
+  // Function to map genre names to genre keys
+  const mapGenreToKey = useCallback((genreName) => {
+    if (!genreName) return null;
+    
+    // Create a mapping of common genre names to our genre keys
+    const genreMapping = {
+      'pop': 'pop',
+      'rock': 'rock', 
+      'r&b': 'rnb',
+      'rnb': 'rnb',
+      'rhythm & blues': 'rnb',
+      'rap': 'rap-hiphop',
+      'hip-hop': 'rap-hiphop',
+      'hip hop': 'rap-hiphop',
+      'rap & hip-hop': 'rap-hiphop',
+      'reggae': 'reggae',
+      'latin': 'latin',
+      'christmas': 'christmas',
+      'holiday': 'christmas',
+      'urban': 'urban',
+      'classic rock': 'rock',
+      'dance': 'pop',
+      'electronic': 'pop',
+      'funk': 'urban',
+      'soul': 'rnb',
+      'disco': 'pop',
+      '80s': 'classic-80s',
+      'classic 80s': 'classic-80s',
+      'classic 80\'s': 'classic-80s',
+      'classic 80s music': 'classic-80s',
+      'classic 80\'s music': 'classic-80s',
+      'eighties': 'classic-80s',
+      'the eighties': 'classic-80s',
+      '1980s': 'classic-80s',
+      'rock / pop / ac': 'rock-pop-ac',
+      'rock-pop-ac': 'rock-pop-ac',
+      'adult contemporary': 'rock-pop-ac',
+      'alternative': 'rock',
+      'country': 'pop', // Map to pop as fallback
+      'jazz': 'pop', // Map to pop as fallback
+      'blues': 'rnb'
+    };
+    
+    const normalizedGenre = genreName.toLowerCase().trim();
+    return genreMapping[normalizedGenre] || null;
+  }, []);
 
   // Check for URL parameters and load saved songs
   useEffect(() => {
@@ -258,19 +312,58 @@ export default function MusicLibraryPage() {
       setViewMode('playlist');
     }
 
-    // Load saved songs from localStorage
+    // Load saved songs from localStorage and process them for genre keys
     try {
       const savedSongs = localStorage.getItem('musicLibrarySelectedSongs');
       if (savedSongs) {
         const parsedSongs = JSON.parse(savedSongs);
-        setSelectedSongs(parsedSongs);
+        
+        // Process saved songs to ensure they have proper genre keys
+        const processedSongs = parsedSongs.map(song => {
+          let processedSong = { ...song };
+          
+          // If no genreKey, try to map from genre name
+          if (!processedSong.genreKey && processedSong.genre) {
+            processedSong.genreKey = mapGenreToKey(processedSong.genre);
+          }
+          
+          // If still no genreKey, try to infer from playlist/album name
+          if (!processedSong.genreKey) {
+            const albumName = processedSong.album?.toLowerCase() || '';
+            if (albumName.includes('club anthems')) {
+              // 80s Club Anthems should be R&B genre (purple)
+              processedSong.genreKey = 'rnb';
+            } else if (albumName.includes('80s') || albumName.includes('eighties')) {
+              processedSong.genreKey = 'classic-80s';
+            } else if (albumName.includes('club') || albumName.includes('dance')) {
+              processedSong.genreKey = 'pop';
+            } else if (albumName.includes('hip hop') || albumName.includes('rap')) {
+              processedSong.genreKey = 'rap-hiphop';
+            } else if (albumName.includes('r&b') || albumName.includes('rnb')) {
+              processedSong.genreKey = 'rnb';
+            } else if (albumName.includes('rock')) {
+              processedSong.genreKey = 'rock';
+            } else if (albumName.includes('reggae')) {
+              processedSong.genreKey = 'reggae';
+            } else if (albumName.includes('latin')) {
+              processedSong.genreKey = 'latin';
+            } else {
+              // Default fallback
+              processedSong.genreKey = 'pop';
+            }
+          }
+          
+          return processedSong;
+        });
+        
+        setSelectedSongs(processedSongs);
       }
     } catch (error) {
       console.error('Error loading saved songs:', error);
     }
 
     loadRealSongsInBackground();
-  }, []);
+  }, [mapGenreToKey]);
 
   // Save selected songs to localStorage whenever they change
   useEffect(() => {
@@ -287,7 +380,7 @@ export default function MusicLibraryPage() {
       setTimeout(async () => {
         try {
           // Load real songs in background with reduced batch size
-          const [genreSongs, playlistSongs] = await Promise.all([
+      const [genreSongs, playlistSongs] = await Promise.all([
             loadSongsByMode('genres').catch(err => {
               console.error('Error loading genre songs:', err);
               return [];
@@ -300,13 +393,41 @@ export default function MusicLibraryPage() {
           
           // Combine and deduplicate songs more efficiently
           const songMap = new Map();
-          [...genreSongs, ...playlistSongs].forEach(song => {
+          
+          // Process genre songs
+          genreSongs.forEach(song => {
             if (!songMap.has(song.id)) {
-              songMap.set(song.id, song);
+              const genreKey = mapGenreToKey(song.genre);
+              const processedSong = {
+                ...song,
+                genreKey: genreKey,
+                sourceType: 'genre'
+              };
+              songMap.set(song.id, processedSong);
             }
           });
           
-          // Replace placeholder data with real data
+          // Process playlist songs
+          playlistSongs.forEach(song => {
+            if (!songMap.has(song.id)) {
+              // For playlist songs, use the actual genre for genreKey, not the playlist key
+              const actualGenreKey = mapGenreToKey(song.genre);
+              const processedSong = {
+                ...song,
+                genreKey: actualGenreKey, // Use actual genre, not playlist key
+                sourceType: 'playlist',
+                playlistKey: song.playlistKey // This should be the playlist key
+              };
+              songMap.set(song.id, processedSong);
+            } else {
+              // If song already exists from genre, add playlist info
+              const existingSong = songMap.get(song.id);
+              existingSong.playlistKey = song.playlistKey;
+              existingSong.sourceType = 'both'; // Available in both genres and playlists
+            }
+          });
+      
+      // Replace placeholder data with real data
           setSongs(Array.from(songMap.values()));
         } catch (innerError) {
           console.error('Error in background song loading:', innerError);
@@ -336,7 +457,7 @@ export default function MusicLibraryPage() {
     
     let songs = [];
     if (categoryType === 'playlist') {
-      songs = filteredSongs.filter(song => song.genreKey === selectedCategory);
+      songs = filteredSongs.filter(song => song.playlistKey === selectedCategory);
     } else if (categoryType === 'genre') {
       songs = filteredSongs.filter(song => song.genreKey === selectedCategory);
     }
@@ -345,18 +466,156 @@ export default function MusicLibraryPage() {
   }, [filteredSongs, selectedCategory, categoryType]);
 
   // Paginated category songs
+  // Group selected songs function
+  const groupSelectedSongs = useCallback((songs, groupType) => {
+    if (groupType === 'none') return { 'All Songs': songs };
+    
+    const groups = {};
+    
+    songs.forEach(song => {
+      let groupKey;
+      if (groupType === 'genre') {
+        groupKey = song.genreKey || song.genre || 'Unknown Genre';
+        // Convert genre key to display name if available
+        if (GENRES[groupKey]) {
+          groupKey = GENRES[groupKey].displayName;
+        }
+      } else {
+        groupKey = 'All Songs';
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(song);
+    });
+    
+    // Sort groups alphabetically and sort songs within each group
+    const sortedGroups = {};
+    Object.keys(groups).sort().forEach(key => {
+      sortedGroups[key] = groups[key].sort((a, b) => a.title.localeCompare(b.title));
+    });
+    
+    return sortedGroups;
+  }, []);
+
+  // Toggle group collapse state
+  const toggleGroup = useCallback((groupName) => {
+    setCollapsedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupName)) {
+        newSet.delete(groupName);
+      } else {
+        newSet.add(groupName);
+      }
+      return newSet;
+    });
+  }, []);
+
+  // Get genre-specific styling
+  const getGenreStyle = useCallback((groupName, groupType, song = null) => {
+    // If we have a song, try to get its genre style first
+    if (song) {
+      let songGenreKey = song.genreKey;
+      
+      // If no genreKey, try to map from genre name
+      if (!songGenreKey && song.genre) {
+        songGenreKey = mapGenreToKey(song.genre);
+      }
+      
+      // If still no genreKey, try to infer from album name
+      if (!songGenreKey) {
+        const albumName = song.album?.toLowerCase() || '';
+        if (albumName.includes('club anthems')) {
+          // 80s Club Anthems should be R&B genre (purple)
+          songGenreKey = 'rnb';
+        } else if (albumName.includes('80s') || albumName.includes('eighties')) {
+          songGenreKey = 'classic-80s';
+        } else if (albumName.includes('club') || albumName.includes('dance')) {
+          songGenreKey = 'pop';
+        } else if (albumName.includes('hip hop') || albumName.includes('rap')) {
+          songGenreKey = 'rap-hiphop';
+        } else if (albumName.includes('r&b') || albumName.includes('rnb')) {
+          songGenreKey = 'rnb';
+        } else if (albumName.includes('rock')) {
+          songGenreKey = 'rock';
+        } else if (albumName.includes('reggae')) {
+          songGenreKey = 'reggae';
+        } else if (albumName.includes('latin')) {
+          songGenreKey = 'latin';
+        } else {
+          // Default fallback
+          songGenreKey = 'pop';
+        }
+      }
+      
+      if (songGenreKey && GENRES[songGenreKey]) {
+        const genreData = GENRES[songGenreKey];
+        return {
+          color: genreData.color,
+          icon: genreData.icon || FaMusic,
+          bgGradient: `from-[${genreData.color}15] to-[${genreData.color}05]`,
+          borderColor: `border-[${genreData.color}]`,
+          textColor: 'text-gray-900',
+          subtextColor: 'text-gray-700',
+          iconColor: 'text-white'
+        };
+      }
+    }
+
+    // For "All Songs" or non-genre grouping without a song
+    if (groupType !== 'genre') {
+      return {
+        color: '#8B5CF6', // Purple for mixed content
+        icon: FaMusic,
+        bgGradient: 'from-purple-50 to-purple-100',
+        borderColor: 'border-purple-200',
+        textColor: 'text-purple-900',
+        subtextColor: 'text-purple-700',
+        iconColor: 'text-purple-600'
+      };
+    }
+
+    // Find the genre data by display name
+    const genreEntry = Object.entries(GENRES).find(([key, data]) => 
+      data.displayName === groupName
+    );
+    
+    if (genreEntry) {
+      const [genreKey, genreData] = genreEntry;
+      return {
+        color: genreData.color,
+        icon: genreData.icon || FaMusic,
+        bgGradient: `from-[${genreData.color}15] to-[${genreData.color}05]`,
+        borderColor: `border-[${genreData.color}]`,
+        textColor: 'text-gray-900',
+        subtextColor: 'text-gray-700',
+        iconColor: 'text-white'
+      };
+    }
+
+    // Default styling for unknown genres
+    return {
+      color: GENRES['pop']?.color || '#98D8C8',
+      icon: FaMusic,
+      bgGradient: `from-[${GENRES['pop']?.color || '#98D8C8'}15] to-[${GENRES['pop']?.color || '#98D8C8'}05]`,
+      borderColor: `border-[${GENRES['pop']?.color || '#98D8C8'}]`,
+      textColor: 'text-gray-900',
+      subtextColor: 'text-gray-700',
+      iconColor: 'text-white'
+    };
+  }, [mapGenreToKey]);
+
   const paginatedCategorySongs = useMemo(() => {
     const startIndex = (currentPage - 1) * songsPerPage;
     const endIndex = startIndex + songsPerPage;
     return categorySongs.slice(startIndex, endIndex);
   }, [categorySongs, currentPage, songsPerPage]);
 
-  // Paginated selected songs for playlist view
-  const paginatedSelectedSongs = useMemo(() => {
-    const startIndex = (currentPage - 1) * songsPerPage;
-    const endIndex = startIndex + songsPerPage;
-    return selectedSongs.slice(startIndex, endIndex);
-  }, [selectedSongs, currentPage, songsPerPage]);
+  // Grouped selected songs for playlist view
+  const groupedSelectedSongs = useMemo(() => {
+    return groupSelectedSongs(selectedSongs, groupBy);
+  }, [selectedSongs, groupBy, groupSelectedSongs]);
 
   // Pagination info
   const totalPages = Math.ceil((viewMode === 'playlist' ? selectedSongs.length : categorySongs.length) / songsPerPage);
@@ -372,10 +631,44 @@ export default function MusicLibraryPage() {
       if (isSelected) {
         return prev.filter(s => s.id !== song.id);
       } else {
-        return [...prev, song];
+        // Process the song to ensure it has proper genre key
+        let processedSong = { ...song };
+        
+        // If no genreKey, try to map from genre name
+        if (!processedSong.genreKey && processedSong.genre) {
+          processedSong.genreKey = mapGenreToKey(processedSong.genre);
+        }
+        
+        // If still no genreKey, try to infer from playlist/album name
+        if (!processedSong.genreKey) {
+          const albumName = processedSong.album?.toLowerCase() || '';
+          if (albumName.includes('club anthems')) {
+            // 80s Club Anthems should be R&B genre (purple)
+            processedSong.genreKey = 'rnb';
+          } else if (albumName.includes('80s') || albumName.includes('eighties')) {
+            processedSong.genreKey = 'classic-80s';
+          } else if (albumName.includes('club') || albumName.includes('dance')) {
+            processedSong.genreKey = 'pop';
+          } else if (albumName.includes('hip hop') || albumName.includes('rap')) {
+            processedSong.genreKey = 'rap-hiphop';
+          } else if (albumName.includes('r&b') || albumName.includes('rnb')) {
+            processedSong.genreKey = 'rnb';
+          } else if (albumName.includes('rock')) {
+            processedSong.genreKey = 'rock';
+          } else if (albumName.includes('reggae')) {
+            processedSong.genreKey = 'reggae';
+          } else if (albumName.includes('latin')) {
+            processedSong.genreKey = 'latin';
+          } else {
+            // Default fallback
+            processedSong.genreKey = 'pop';
+          }
+        }
+        
+        return [...prev, processedSong];
       }
     });
-  }, []);
+  }, [mapGenreToKey]);
 
   const handleBackToContract = useCallback(() => {
     // Save selected songs to both localStorage keys for consistency
@@ -476,27 +769,32 @@ export default function MusicLibraryPage() {
             }}>
               
               {/* Header */}
-              <div className="text-center mb-10">
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <button 
-                    onClick={handleContinueAdding}
-                    className="p-3 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300"
-                  >
-                    <FaArrowLeft className="text-gray-700 text-lg" />
-                  </button>
-                  <div className="flex-1">
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-                      Your Playlist
-                    </h1>
-                    <div className="h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '110px' }}></div>
-                  </div>
-                  <button 
-                    onClick={handleBackToContract}
-                    className="p-3 rounded-full bg-blue-200 hover:bg-blue-300 transition-colors shadow-sm border border-blue-300"
-                  >
-                    <FaHome className="text-blue-700 text-lg" />
-                  </button>
+              <div className="text-center mb-10 relative">
+                {/* Back Arrow Button - Positioned absolutely on the left */}
+                <button 
+                  onClick={handleContinueAdding}
+                  className="absolute left-0 top-0 w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300 flex items-center justify-center"
+                >
+                  <FaArrowLeft className="text-gray-700 text-base" />
+                </button>
+                
+                {/* Back to Contract Button - Positioned absolutely on the right */}
+                <button 
+                  onClick={handleBackToContract}
+                  className="absolute right-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                  title="Save your selected songs and return to the contract form"
+                >
+                  <span>Back to Contract</span>
+                </button>
+                
+                {/* Centered Header Content */}
+              <div className="mb-6">
+                  <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
+                    Your Playlist
+                  </h1>
+                  <div className="h-1 bg-gradient-to-r from-green-500 to-blue-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '110px' }}></div>
                 </div>
+                
                 <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
                   Review And Manage Your Selected Songs
                 </p>
@@ -513,10 +811,10 @@ export default function MusicLibraryPage() {
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
                         <FaList className="text-sm md:text-base" />
                       </div>
-                      <div>
+                    <div>
                         <h3 className="font-bold text-gray-900 text-base md:text-lg">Playlist Summary</h3>
                         <p className="text-gray-700 font-medium text-sm md:text-base">{selectedSongs.length} songs selected</p>
-                      </div>
+                    </div>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                       <button
@@ -533,9 +831,10 @@ export default function MusicLibraryPage() {
                       </button>
                       <button
                         onClick={handleBackToContract}
-                        className="px-3 py-2 md:px-5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500 text-sm md:text-base"
+                        className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-sm md:text-base"
+                        title="Save your selected songs and return to the contract form"
                       >
-                        Use These Songs
+                        <span>Save & Return to Contract</span>
                       </button>
                     </div>
                   </div>
@@ -569,9 +868,9 @@ export default function MusicLibraryPage() {
                   >
                     <FaHeadphones className="text-base" /> Browse Playlists
                   </button>
+                  </div>
                 </div>
-              </div>
-
+                
               {/* Section Header */}
               <div style={{
                 marginTop: '2rem',
@@ -579,82 +878,222 @@ export default function MusicLibraryPage() {
                 borderBottom: '3px solid #d1d5db',
                 position: 'relative'
               }} className="section-header">
-                <h3 style={{
-                  color: '#111827',
-                  fontSize: 'clamp(22px, 3vw, 28px)',
-                  fontWeight: '800',
-                  fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-                  letterSpacing: '-0.025em',
-                  backgroundColor: 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0 1rem 1rem 0',
-                  position: 'relative',
-                  marginBottom: '0'
-                }}>
-                  <FaHeart className="text-green-600 mr-4" style={{ marginRight: '12px', fontSize: '1.2em' }} /> 
-                  Your Selected Songs
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 style={{
+                    color: '#111827',
+                    fontSize: 'clamp(22px, 3vw, 28px)',
+                    fontWeight: '800',
+                    fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+                    letterSpacing: '-0.025em',
+                    backgroundColor: 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: '0'
+                  }}>
+                    <FaHeart className="text-green-600 mr-4" style={{ marginRight: '12px', fontSize: '1.2em' }} /> 
+                    Your Selected Songs
+                  </h3>
+                  
+                  {/* Group Dropdown */}
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="group-select" className="text-sm font-medium text-gray-700">Group by:</label>
+                    <select
+                      id="group-select"
+                      value={groupBy}
+                      onChange={(e) => setGroupBy(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    >
+                      <option value="none">No Grouping</option>
+                      <option value="genre">Group by Genre</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               
-              {/* Songs List */}
-              <div className="space-y-2">
-                {paginatedSelectedSongs.map((song, index) => (
-                  <div 
-                    key={`${song.id}-playlist`}
-                    className="flex items-center gap-3 p-3 rounded-lg border-2 bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all duration-200"
-                  >
-                    {/* Track Number */}
-                    <div className="w-8 text-center flex-shrink-0">
-                      <span className="text-sm text-gray-600 font-medium">{startIndex + index - 1}</span>
-                    </div>
-
-                    {/* Album Art */}
-                    <div 
-                      className="w-10 h-10 rounded-md flex items-center justify-center text-white flex-shrink-0 shadow-sm"
-                      style={{ backgroundColor: '#10b981' }}
-                    >
-                      <FaMusic className="text-sm" />
-                    </div>
-
-                    {/* Song Info */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-sm truncate text-gray-900">
-                        {song.title}
-                      </h4>
-                      <p className="text-sm truncate font-medium text-gray-700">
-                        {song.artist}
-                        {song.album && song.album !== 'Unknown Album' && (
-                          <span className="text-gray-500 ml-1">• {song.album}</span>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* Duration */}
-                    <div className="text-sm text-gray-600 flex-shrink-0 font-medium mr-3">
-                      3:45
-                    </div>
-
-                    {/* Remove Button */}
-                    <button
-                      onClick={() => handleSongToggle(song)}
-                      className="p-2 rounded-full bg-red-100 hover:bg-red-200 transition-colors text-red-600 hover:text-red-700"
-                      title="Remove from playlist"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+              {/* Grouped Songs List */}
+              <div className="space-y-4">
+                {Object.entries(groupedSelectedSongs).map(([groupName, songs]) => {
+                  const isCollapsed = collapsedGroups.has(groupName);
+                  const showGroupHeader = groupBy !== 'none';
+                  // Get the first song to determine genre style for the group
+                  const firstSong = songs[0];
+                  const genreStyle = getGenreStyle(groupName, groupBy, firstSong);
+                  const IconComponent = genreStyle.icon;
+                  
+                  return (
+                    <div key={groupName} className="space-y-2">
+                      {/* Group Header */}
+                      {showGroupHeader && (
+                        <div className="sticky top-0 z-10">
+                    <button 
+                            onClick={() => toggleGroup(groupName)}
+                            className="w-full flex items-center justify-between p-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md border-2"
+                            style={{
+                              background: `linear-gradient(135deg, ${genreStyle.color}15, ${genreStyle.color}05)`,
+                              borderColor: genreStyle.color,
+                              borderLeftWidth: '6px'
+                            }}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div 
+                                className="w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md"
+                                style={{ backgroundColor: genreStyle.color }}
+                              >
+                                <IconComponent className="text-lg" />
+                              </div>
+                              <div className="text-left">
+                                <h4 className="font-bold text-gray-900 text-lg tracking-tight">{groupName}</h4>
+                                <p className="text-sm text-gray-700 font-medium">
+                                  {songs.length} song{songs.length !== 1 ? 's' : ''} selected
+                                </p>
+                              </div>
+                            </div>
+                            <div 
+                              className="text-xl transition-transform duration-200"
+                              style={{ 
+                                color: genreStyle.color,
+                                transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)'
+                              }}
+                            >
+                              <FaChevronRight />
+                            </div>
                     </button>
                   </div>
-                ))}
+                      )}
+                      
+                      {/* Songs in Group */}
+                      {(!showGroupHeader || !isCollapsed) && (
+                        <div className="space-y-2 ml-0">
+                          {songs.map((song, index) => {
+                            // Get individual song's genre style with improved detection
+                            let songGenreKey = song.genreKey;
+                            
+                            // If no genreKey, try to map from genre name
+                            if (!songGenreKey && song.genre) {
+                              songGenreKey = mapGenreToKey(song.genre);
+                            }
+                            
+                            // If still no genreKey, try to infer from playlist/album name
+                            if (!songGenreKey) {
+                              const albumName = song.album?.toLowerCase() || '';
+                              const songTitle = song.title?.toLowerCase() || '';
+                              
+                              if (albumName.includes('club anthems')) {
+                                // 80s Club Anthems should be R&B genre (purple)
+                                songGenreKey = 'rnb';
+                              } else if (albumName.includes('80s') || albumName.includes('eighties')) {
+                                songGenreKey = 'classic-80s';
+                              } else if (albumName.includes('club') || albumName.includes('dance')) {
+                                songGenreKey = 'pop';
+                              } else if (albumName.includes('hip hop') || albumName.includes('rap')) {
+                                songGenreKey = 'rap-hiphop';
+                              } else if (albumName.includes('r&b') || albumName.includes('rnb')) {
+                                songGenreKey = 'rnb';
+                              } else if (albumName.includes('rock')) {
+                                songGenreKey = 'rock';
+                              } else if (albumName.includes('reggae')) {
+                                songGenreKey = 'reggae';
+                              } else if (albumName.includes('latin')) {
+                                songGenreKey = 'latin';
+                              } else {
+                                // Default fallback
+                                songGenreKey = 'pop';
+                              }
+                            }
+                            
+                            const songGenreData = songGenreKey && GENRES[songGenreKey] ? GENRES[songGenreKey] : null;
+                            const songGenreStyle = songGenreData ? {
+                              color: songGenreData.color,
+                              icon: songGenreData.icon || FaMusic
+                            } : {
+                              // Default to classic-80s for Club Anthems songs
+                              color: GENRES['classic-80s']?.color || '#F7DC6F',
+                              icon: FaMusic
+                            };
+                            const SongIconComponent = songGenreStyle.icon;
+                            
+                            return (
+                            <div 
+                              key={`${song.id}-playlist-${groupName}`}
+                              className="flex items-center gap-3 p-3 rounded-lg border-2 bg-white hover:bg-gray-50 hover:shadow-sm transition-all duration-200"
+                              style={{
+                                borderColor: songGenreStyle.color + '40',
+                                borderLeftWidth: '4px'
+                              }}
+                            >
+                              {/* Track Number */}
+                              <div className="w-8 text-center flex-shrink-0">
+                                <div 
+                                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                  style={{ backgroundColor: songGenreStyle.color }}
+                                >
+                                  {index + 1}
+                                </div>
+                  </div>
+                  
+                              {/* Album Art */}
+                              <div 
+                                className="w-10 h-10 rounded-md flex items-center justify-center text-white flex-shrink-0 shadow-sm"
+                                style={{ backgroundColor: songGenreStyle.color }}
+                              >
+                                <SongIconComponent className="text-sm" />
+                  </div>
+
+                              {/* Song Info */}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-sm truncate text-gray-900">
+                                  {song.title}
+                                </h4>
+                                <p className="text-sm truncate font-medium text-gray-700">
+                                  {song.artist}
+                                  {song.album && song.album !== 'Unknown Album' && (
+                                    <span className="text-gray-500 ml-1">• {song.album}</span>
+                                  )}
+                                  {songGenreData && (
+                                    <span 
+                                      className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold"
+                                      style={{ 
+                                        backgroundColor: songGenreStyle.color + '20',
+                                        color: songGenreStyle.color
+                                      }}
+                                    >
+                                      {songGenreData.displayName}
+                                    </span>
+                                  )}
+                                </p>
+                </div>
+
+                              {/* Duration */}
+                              <div className="text-sm text-gray-600 flex-shrink-0 font-medium mr-3">
+                                3:45
               </div>
               
+                              {/* Remove Button */}
+                              <button
+                                onClick={() => handleSongToggle(song)}
+                                className="p-2 rounded-full bg-red-100 hover:bg-red-200 transition-colors text-red-600 hover:text-red-700"
+                                title="Remove from playlist"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                  </div>
+                            );
+                          })}
+                  </div>
+                      )}
+                  </div>
+                  );
+                })}
+                </div>
+                
               {/* Empty State */}
               {selectedSongs.length === 0 && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FaHeart className="text-gray-400 text-xl" />
-                  </div>
+                </div>
                   <h3 className="text-lg font-semibold text-gray-600 mb-2">No songs in your playlist</h3>
                   <p className="text-gray-500 mb-4">Start adding songs from the music library</p>
                   <button
@@ -666,18 +1105,18 @@ export default function MusicLibraryPage() {
                 </div>
               )}
         
-              {/* Pagination */}
-              <PaginationControls
-                currentPage={currentPage}
-                totalPages={totalPages}
-                startIndex={startIndex}
-                endIndex={endIndex}
-                totalSongs={selectedSongs.length}
-                onPageChange={handlePageChange}
-              />
+              {/* Group Summary */}
+              {groupBy !== 'none' && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>{Object.keys(groupedSelectedSongs).length} group{Object.keys(groupedSelectedSongs).length !== 1 ? 's' : ''}</span>
+                    <span>{selectedSongs.length} total song{selectedSongs.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
       </div>
     );
   }
@@ -707,32 +1146,37 @@ export default function MusicLibraryPage() {
         }}>
               
               {/* Header */}
-              <div className="text-center mb-10">
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <button 
-                    onClick={handleBackToCategory}
-                    className="p-3 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300"
-                  >
-                    <FaArrowLeft className="text-gray-700 text-lg" />
-                  </button>
-                  <div className="flex-1">
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-                      Music Library
-                    </h1>
-                    <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
-                  </div>
-                  <button 
-                    onClick={handleBackToContract}
-                    className="p-3 rounded-full bg-blue-200 hover:bg-blue-300 transition-colors shadow-sm border border-blue-300"
-                  >
-                    <FaHome className="text-blue-700 text-lg" />
-                  </button>
-                </div>
+              <div className="text-center mb-10 relative">
+                {/* Back Arrow Button - Positioned absolutely on the left */}
+                <button 
+                  onClick={handleBackToCategory}
+                  className="absolute left-0 top-0 w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300 flex items-center justify-center"
+                >
+                  <FaArrowLeft className="text-gray-700 text-base" />
+                </button>
+                
+                {/* Back to Contract Button - Positioned absolutely on the right */}
+                <button 
+                  onClick={handleBackToContract}
+                  className="absolute right-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                  title="Save your selected songs and return to the contract form"
+                >
+                  <span>Back to Contract</span>
+                </button>
+                
+                {/* Centered Header Content */}
+                <div className="mb-6">
+                  <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
+                    Music Library
+                  </h1>
+                  <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
+                      </div>
+                
                 <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
                   Browse And Select Songs For Your Event
                 </p>
-              </div>
-
+                    </div>
+                    
               {/* Search Bar */}
               <div className="mb-8">
                 <div className="relative">
@@ -742,15 +1186,24 @@ export default function MusicLibraryPage() {
                     placeholder="Search songs, artists, albums..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder-gray-500 shadow-sm"
+                    className="w-full pl-12 pr-12 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder-gray-500 shadow-sm"
                   />
-                </div>
-              </div>
-
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+                      title="Clear search"
+                    >
+                      <FaTimes className="text-sm" />
+                    </button>
+                  )}
+                      </div>
+                      </div>
+                      
               {/* Quick Navigation */}
               <div className="mb-8">
                 <div className="flex gap-4 justify-center">
-                  <button
+                        <button 
                     onClick={() => {
                       setSelectedCategory(null);
                       setCategoryType(null);
@@ -798,22 +1251,23 @@ export default function MusicLibraryPage() {
                         className="px-3 py-2 md:px-5 md:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500 text-sm md:text-base"
                       >
                         View Playlist
-                      </button>
-                      <button
-                        onClick={() => setSelectedSongs([])}
+                        </button>
+                        <button
+                          onClick={() => setSelectedSongs([])}
                         className="px-3 py-2 md:px-5 md:py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm text-sm md:text-base"
-                      >
-                        Clear All
-                      </button>
-                      <button
-                        onClick={handleBackToContract}
-                        className="px-3 py-2 md:px-5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500 text-sm md:text-base"
-                      >
-                        Use These Songs
-                      </button>
+                        >
+                          Clear All
+                        </button>
+                        <button
+                          onClick={handleBackToContract}
+                        className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-sm md:text-base"
+                        title="Save your selected songs and return to the contract form"
+                        >
+                        <span>Save & Return to Contract</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
               </div>
             )}
 
@@ -844,7 +1298,7 @@ export default function MusicLibraryPage() {
                   /> 
                   {categoryData?.displayName || selectedCategory}
                 </h3>
-              </div>
+                      </div>
 
               {/* Category Info */}
               <div className="mb-6">
@@ -861,30 +1315,30 @@ export default function MusicLibraryPage() {
                       style={{ backgroundColor: categoryData?.color || '#6366f1' }}
                     >
                       <FaMusic />
-                    </div>
+                      </div>
                     <div>
                       <h4 className="font-semibold text-gray-800">{categoryData?.displayName}</h4>
                       <p className="text-gray-600 text-sm">{categorySongs.length} songs available</p>
                       <p className="text-gray-500 text-sm">{categoryData?.description}</p>
                     </div>
                   </div>
-                </div>
-              </div>
-              
+                      </div>
+                    </div>
+                    
               {/* Songs List */}
               <div className="space-y-2">
                 {paginatedCategorySongs.map((song, index) => (
-                  <SongListItem
-                    key={`${song.id}-${song.genreKey || 'unknown'}`}
-                    song={song}
+                            <SongListItem
+                              key={`${song.id}-${song.genreKey || 'unknown'}`}
+                              song={song}
                     index={startIndex + index - 1} // Adjust index for pagination
                     isSelected={selectedSongs.some(s => s.id === song.id)}
-                    onToggle={handleSongToggle}
+                              onToggle={handleSongToggle}
                     sourceData={categoryData}
-                  />
+                            />
                 ))}
-              </div>
-              
+                    </div>
+                    
               {/* Empty State */}
               {categorySongs.length === 0 && (
                 <div className="text-center py-12">
@@ -893,17 +1347,17 @@ export default function MusicLibraryPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-600 mb-2">No songs found</h3>
                   <p className="text-gray-500">Try adjusting your search terms</p>
-                </div>
-              )}
+              </div>
+            )}
 
               {/* Pagination */}
               <PaginationControls
-                currentPage={currentPage}
+              currentPage={currentPage}
                 totalPages={totalPages}
                 startIndex={startIndex}
                 endIndex={endIndex}
                 totalSongs={categorySongs.length}
-                onPageChange={handlePageChange}
+              onPageChange={handlePageChange}
               />
             </div>
           </div>
@@ -933,25 +1387,28 @@ export default function MusicLibraryPage() {
           }}>
             
             {/* Header */}
-            <div className="text-center mb-10">
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <button 
-                  onClick={handleBackToContract}
-                  className="p-3 rounded-full bg-blue-200 hover:bg-blue-300 transition-colors shadow-sm border border-blue-300"
-                >
-                  <FaHome className="text-blue-700 text-lg" />
-                </button>
-                <div className="flex-1">
-                  <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-                    Music Library
-                  </h1>
-                  <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
+            <div className="text-center mb-10 relative">
+              {/* Back to Contract Button - Positioned absolutely to not affect centering */}
+                  <button
+                    onClick={handleBackToContract}
+                className="absolute left-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                title="Save your selected songs and return to the contract form"
+                  >
+                <span>Back to Contract</span>
+                  </button>
+              
+              {/* Centered Header Content */}
+              <div className="mb-6">
+                <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
+                  Music Library
+                </h1>
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
                 </div>
-              </div>
-                             <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-                 Browse Genres And Playlists To Find The Perfect Music For Your Event
-               </p>
-            </div>
+              
+              <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+                Browse Genres And Playlists To Find The Perfect Music For Your Event
+              </p>
+                </div>
 
             {/* Search Bar */}
             <div className="mb-8">
@@ -962,10 +1419,19 @@ export default function MusicLibraryPage() {
                   placeholder="Search songs, artists, albums..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder-gray-500 shadow-sm"
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder-gray-500 shadow-sm"
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+                    title="Clear search"
+                  >
+                    <FaTimes className="text-sm" />
+                  </button>
+                )}
               </div>
-            </div>
+          </div>
 
             {/* Navigation Buttons */}
             <div className="mb-8">
@@ -990,11 +1456,11 @@ export default function MusicLibraryPage() {
                 >
                   <FaHeadphones className="text-lg" /> Curated Playlists
                 </button>
-              </div>
             </div>
+        </div>
 
-            {/* Selected Songs Summary */}
-            {selectedSongs.length > 0 && (
+          {/* Selected Songs Summary */}
+          {selectedSongs.length > 0 && (
               <div className="mb-6 md:mb-8">
                 <div 
                   className="rounded-lg p-3 md:p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
@@ -1005,10 +1471,10 @@ export default function MusicLibraryPage() {
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-green-500 flex items-center justify-center text-white shadow-md">
                         <FaList className="text-sm md:text-base" />
                       </div>
-                      <div>
+                <div>
                         <h3 className="font-bold text-gray-900 text-base md:text-lg">Your Playlist</h3>
                         <p className="text-gray-700 font-medium text-sm md:text-base">{selectedSongs.length} songs selected</p>
-                      </div>
+                </div>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                       <button
@@ -1017,23 +1483,24 @@ export default function MusicLibraryPage() {
                       >
                         View Playlist
                       </button>
-                      <button
-                        onClick={() => setSelectedSongs([])}
+                  <button
+                    onClick={() => setSelectedSongs([])}
                         className="px-3 py-2 md:px-5 md:py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm text-sm md:text-base"
-                      >
+                  >
                         Clear All
-                      </button>
-                      <button
-                        onClick={handleBackToContract}
-                        className="px-3 py-2 md:px-5 md:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-md border-2 border-blue-500 text-sm md:text-base"
-                      >
-                        Use These Songs
-                      </button>
+                  </button>
+                  <button
+                    onClick={handleBackToContract}
+                        className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-sm md:text-base"
+                        title="Save your selected songs and return to the contract form"
+                  >
+                        <span>Save & Return to Contract</span>
+                  </button>
                     </div>
-                  </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* Section Header */}
             <div style={{
@@ -1063,39 +1530,39 @@ export default function MusicLibraryPage() {
             {/* Categories Grid */}
             <div className="space-y-3">
               {activeTab === 'genres' && Object.entries(GENRES).map(([genreKey, genreData]) => {
-                const genreSongs = filteredSongs.filter(song => song.genreKey === genreKey);
-                if (genreSongs.length === 0) return null;
-                
-                return (
+                    const genreSongs = filteredSongs.filter(song => song.genreKey === genreKey);
+                // Show all genres, even if no songs are loaded yet (they'll load when clicked)
+                    
+                    return (
                   <CategoryCard
-                    key={genreKey}
-                    title={genreData.displayName}
-                    color={genreData.color}
-                    type="genre"
-                    onSelect={handleCategorySelect}
+                        key={genreKey}
+                        title={genreData.displayName}
+                        color={genreData.color}
+                        type="genre"
+                        onSelect={handleCategorySelect}
                     description={genreData.description}
                     songCount={genreSongs.length}
-                  />
-                );
-              })}
+                      />
+                    );
+                  })}
 
               {activeTab === 'playlists' && Object.entries(PLAYLISTS).map(([playlistKey, playlistData]) => {
-                const playlistSongs = filteredSongs.filter(song => song.genreKey === playlistKey);
-                if (playlistSongs.length === 0) return null;
-                
-                return (
+                const playlistSongs = filteredSongs.filter(song => song.playlistKey === playlistKey);
+                // Show all playlists, even if no songs are loaded yet (they'll load when clicked)
+                    
+                    return (
                   <CategoryCard
-                    key={playlistKey}
-                    title={playlistData.displayName}
-                    color={playlistData.color}
-                    type="playlist"
-                    onSelect={handleCategorySelect}
+                        key={playlistKey}
+                        title={playlistData.displayName}
+                        color={playlistData.color}
+                        type="playlist"
+                        onSelect={handleCategorySelect}
                     description={playlistData.description}
                     songCount={playlistSongs.length}
-                  />
-                );
-              })}
-            </div>
+                      />
+                    );
+                  })}
+                </div>
 
             {/* Empty State */}
             {filteredSongs.length === 0 && !loading && (

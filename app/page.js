@@ -1218,7 +1218,7 @@ export default function DJContractForm() {
   const isMobile = useIsMobile();
   const router = useRouter();
 
-  // Add responsive styles for music library buttons
+  // Add responsive styles for music library buttons and mobile optimizations
   React.useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -1233,11 +1233,57 @@ export default function DJContractForm() {
           align-items: center;
         }
       }
+      
+      /* Mobile modal optimizations */
+      @media (max-width: 768px) {
+        .genre-modal-content {
+          margin: 8px !important;
+          max-height: 95vh !important;
+          border-radius: 12px !important;
+        }
+        
+        .genre-modal-grid {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+          gap: 8px !important;
+        }
+        
+        .genre-modal-item {
+          padding: 12px 8px !important;
+          font-size: 14px !important;
+          min-height: 44px !important;
+        }
+        
+        /* Streaming service button optimizations */
+        .streaming-service-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 8px !important;
+        }
+        
+        .streaming-service-button {
+          flex-direction: column !important;
+          padding: 12px 8px !important;
+          gap: 4px !important;
+          min-height: 60px !important;
+        }
+        
+        .streaming-service-icon {
+          margin-right: 0 !important;
+          margin-bottom: 4px !important;
+        }
+        
+        .streaming-service-text {
+          font-size: 12px !important;
+          text-align: center !important;
+          line-height: 1.2 !important;
+        }
+      }
     `;
     document.head.appendChild(style);
     
     return () => {
-      document.head.removeChild(style);
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
   }, []);
   
@@ -1457,6 +1503,101 @@ Live City DJ Contract Terms and Conditions:
     
     console.log('Test data saved:', testData);
   };
+
+  // Debug function to clear all stored data
+  const debugClearData = () => {
+    console.log('Clearing all stored data...');
+    
+    // Clear localStorage
+    localStorage.removeItem('djContractFormData');
+    localStorage.removeItem('djWeddingAgendaData');
+    
+    // Reset form data to initial state
+    setFormData(initialFormData);
+    
+    // Clear context
+    updateContractFormData({});
+    
+    console.log('All data cleared');
+  };
+
+  // Debug function to test input field functionality
+  const debugTestInputs = () => {
+    console.log('🧪 Testing input field functionality...');
+    
+    // Test each critical input field
+    const testFields = ['clientName', 'email', 'contactPhone', 'venueName'];
+    
+    testFields.forEach(fieldName => {
+      const field = document.querySelector(`input[name="${fieldName}"]`);
+      if (field) {
+        const computedStyle = getComputedStyle(field);
+        console.log(`✅ Found ${fieldName} field:`, {
+          disabled: field.disabled,
+          readOnly: field.readOnly,
+          value: field.value,
+          style: {
+            pointerEvents: computedStyle.pointerEvents,
+            userSelect: computedStyle.userSelect,
+            display: computedStyle.display,
+            visibility: computedStyle.visibility,
+            zIndex: computedStyle.zIndex,
+            position: computedStyle.position
+          }
+        });
+        
+        // Test if field can receive focus
+        try {
+          field.focus();
+          console.log(`✅ ${fieldName} can receive focus`);
+          
+          // Test if field can accept input
+          const originalValue = field.value;
+          const testValue = 'TEST_INPUT_' + Date.now();
+          
+          // Simulate typing
+          field.value = testValue;
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+          
+          setTimeout(() => {
+            if (field.value === testValue) {
+              console.log(`✅ ${fieldName} accepts input - value set to: ${field.value}`);
+            } else {
+              console.error(`❌ ${fieldName} input was overridden - expected: ${testValue}, actual: ${field.value}`);
+            }
+            
+            // Restore original value
+            field.value = originalValue;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+          }, 100);
+          
+          field.blur();
+        } catch (error) {
+          console.error(`❌ ${fieldName} cannot receive focus:`, error);
+        }
+      } else {
+        console.error(`❌ ${fieldName} field not found`);
+      }
+    });
+    
+    // Check for any overlapping elements
+    console.log('🔍 Checking for overlapping elements...');
+    testFields.forEach(fieldName => {
+      const field = document.querySelector(`input[name="${fieldName}"]`);
+      if (field) {
+        const rect = field.getBoundingClientRect();
+        const elementAtPoint = document.elementFromPoint(rect.left + rect.width/2, rect.top + rect.height/2);
+        
+        if (elementAtPoint !== field) {
+          console.warn(`⚠️ ${fieldName} field may be covered by:`, elementAtPoint);
+        } else {
+          console.log(`✅ ${fieldName} field is not covered by other elements`);
+        }
+      }
+    });
+  };
   
   // Helper function to get base price for event type - USING CONSOLIDATED LOGIC
   const getBasePriceForEventType = useCallback((eventType) => {
@@ -1605,267 +1746,133 @@ Live City DJ Contract Terms and Conditions:
     }, 0);
   };
   
-  // Set isClient to true when running on client side and force reload context data
+  // Set isClient to true when running on client side and load initial data ONCE
   useEffect(() => {
     setIsClient(true);
     
-    // Force reload context data when component mounts (user navigates back)
+    // Load initial data only once when component mounts
     if (typeof window !== 'undefined') {
-      console.log('Component mounted, checking for saved form data...');
-      console.log('localStorage contents:', {
-        contractData: localStorage.getItem('djContractFormData'),
-        agendaData: localStorage.getItem('djWeddingAgendaData')
-      });
+      console.log('Component mounted, loading initial form data...');
       
-      // Small delay to ensure context is ready
-      setTimeout(() => {
+      // Only load data if form is currently empty
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isFormEmpty) {
         try {
           const savedData = localStorage.getItem('djContractFormData');
-          console.log('Raw localStorage data:', savedData);
+          console.log('Loading initial data from localStorage:', savedData);
           
           if (savedData) {
             const parsedData = JSON.parse(savedData);
             console.log('Found saved contract data on mount:', parsedData);
             
-            // Force update the form data
-            setFormData(prev => {
-              const mergedData = { ...prev, ...parsedData };
-              console.log('Previous form data:', prev);
-              console.log('Parsed saved data:', parsedData);
-              console.log('Force updating form data on mount:', mergedData);
-              return mergedData;
-            });
+            setFormData(parsedData);
             
             // Update base price if needed
             if (parsedData.eventType) {
               const newBasePrice = getBasePriceForEventType(parsedData.eventType);
               setBasePrice(newBasePrice);
-              console.log('Force updating base price on mount:', newBasePrice);
+              console.log('Initial base price set to:', newBasePrice);
             }
           } else {
             console.log('No saved data found in localStorage');
           }
         } catch (error) {
-          console.error('Error force loading data on mount:', error);
+          console.error('Error loading initial data on mount:', error);
         }
-      }, 100);
+      } else {
+        console.log('Form already has data, skipping initial load');
+      }
     }
-  }, [getBasePriceForEventType]);
+  }, []); // Empty dependency array - only run once on mount
   
-  // Listen for page visibility changes to reload data when user returns
+  // DISABLED: Aggressive page visibility reloading that interferes with user input
+  // This was causing input fields to reset while users were typing
+  /*
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && isClient) {
-        console.log('Page became visible, reloading form data...');
-        
-        try {
-          const savedData = localStorage.getItem('djContractFormData');
-          if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            console.log('Reloading contract data on visibility change:', parsedData);
-            
-            setFormData(prev => {
-              // Sanitize the data to prevent undefined values
-              const sanitizedData = {};
-              Object.keys(initialFormData).forEach(key => {
-                if (typeof initialFormData[key] === 'string') {
-                  sanitizedData[key] = parsedData[key] || prev[key] || '';
-                } else if (typeof initialFormData[key] === 'boolean') {
-                  sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-                } else if (typeof initialFormData[key] === 'number') {
-                  sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-                } else if (Array.isArray(initialFormData[key])) {
-                  sanitizedData[key] = Array.isArray(parsedData[key]) ? parsedData[key] : prev[key];
-                } else {
-                  sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-                }
-              });
-              console.log('Updated form data on visibility change:', sanitizedData);
-              return sanitizedData;
-            });
-            
-            if (parsedData.eventType) {
-              const newBasePrice = getBasePriceForEventType(parsedData.eventType);
-              setBasePrice(newBasePrice);
-            }
-          }
-        } catch (error) {
-          console.error('Error reloading data on visibility change:', error);
-        }
+      // Only reload if form is completely empty to avoid interfering with user input
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (!document.hidden && isClient && isFormEmpty) {
+        console.log('Page became visible and form is empty, reloading form data...');
+        // ... reloading logic would go here
       }
     };
     
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
-      
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
-  }, [isClient, getBasePriceForEventType]);
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName]);
+  */
   
-  // Listen for window focus to reload data when user navigates back
+  // DISABLED: Aggressive window focus reloading that interferes with user input
+  // This was causing input fields to reset while users were typing
+  /*
   useEffect(() => {
     const handleWindowFocus = () => {
-      if (isClient) {
-        console.log('Window focused, reloading form data...');
-        
-        try {
-          const savedData = localStorage.getItem('djContractFormData');
-          if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            console.log('Reloading contract data on window focus:', parsedData);
-            
-            setFormData(prev => {
-              // Sanitize the data to prevent undefined values
-              const sanitizedData = {};
-              Object.keys(initialFormData).forEach(key => {
-                if (typeof initialFormData[key] === 'string') {
-                  sanitizedData[key] = parsedData[key] || prev[key] || '';
-                } else if (typeof initialFormData[key] === 'boolean') {
-                  sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-                } else if (typeof initialFormData[key] === 'number') {
-                  sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-                } else if (Array.isArray(initialFormData[key])) {
-                  sanitizedData[key] = Array.isArray(parsedData[key]) ? parsedData[key] : prev[key];
-                } else {
-                  sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-                }
-              });
-              console.log('Updated form data on window focus:', sanitizedData);
-              return sanitizedData;
-            });
-            
-            if (parsedData.eventType) {
-              const newBasePrice = getBasePriceForEventType(parsedData.eventType);
-              setBasePrice(newBasePrice);
-            }
-          }
-        } catch (error) {
-          console.error('Error reloading data on window focus:', error);
-        }
+      // Only reload if form is completely empty to avoid interfering with user input
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isClient && isFormEmpty) {
+        console.log('Window focused and form is empty, reloading form data...');
+        // ... reloading logic would go here
       }
     };
     
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', handleWindowFocus);
-      
-      return () => {
-        window.removeEventListener('focus', handleWindowFocus);
-      };
+      return () => window.removeEventListener('focus', handleWindowFocus);
     }
-  }, [isClient, getBasePriceForEventType]);
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName]);
+  */
   
-  // Listen for localStorage changes from other tabs/windows
+  // DISABLED: Storage change listener that interferes with user input
+  // This was causing input fields to reset when localStorage was updated
+  /*
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'djContractFormData' && e.newValue && isClient) {
-        console.log('localStorage changed from another tab, reloading form data...');
+        // Only reload if form is completely empty to avoid interfering with user input
+        const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
         
-        try {
-          const parsedData = JSON.parse(e.newValue);
-          console.log('Reloading contract data from storage event:', parsedData);
-          
-          setFormData(prev => {
-            // Sanitize the data to prevent undefined values
-            const sanitizedData = {};
-            Object.keys(initialFormData).forEach(key => {
-              if (typeof initialFormData[key] === 'string') {
-                sanitizedData[key] = parsedData[key] || prev[key] || '';
-              } else if (typeof initialFormData[key] === 'boolean') {
-                sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-              } else if (typeof initialFormData[key] === 'number') {
-                sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-              } else if (Array.isArray(initialFormData[key])) {
-                sanitizedData[key] = Array.isArray(parsedData[key]) ? parsedData[key] : prev[key];
-              } else {
-                sanitizedData[key] = parsedData[key] !== undefined ? parsedData[key] : prev[key];
-              }
-            });
-            console.log('Updated form data from storage event:', sanitizedData);
-            return sanitizedData;
-          });
-          
-          if (parsedData.eventType) {
-            const newBasePrice = getBasePriceForEventType(parsedData.eventType);
-            setBasePrice(newBasePrice);
-          }
-        } catch (error) {
-          console.error('Error reloading data from storage event:', error);
+        if (isFormEmpty) {
+          console.log('localStorage changed from another tab and form is empty, reloading...');
+          // ... reloading logic would go here
         }
       }
     };
     
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', handleStorageChange);
-      
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-      };
+      return () => window.removeEventListener('storage', handleStorageChange);
     }
-  }, [isClient, getBasePriceForEventType]);
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName]);
+  */
   
-  // Sync with context data on mount and when context data changes
+  // DISABLED: Aggressive context sync that interferes with user input
+  // This was causing input fields to reset when context data changed
+  /*
   useEffect(() => {
     console.log('Context sync effect triggered:', { contextIsClient, contractFormData });
     
     if (contextIsClient) {
-      // Add a small delay to ensure localStorage has been loaded by the context
-      setTimeout(() => {
-        // Check localStorage directly as a fallback
-        try {
-          const savedData = localStorage.getItem('djContractFormData');
-          console.log('Direct localStorage check:', savedData);
-          
-          let dataToMerge = contractFormData;
-          
-          // If context data is empty but localStorage has data, use localStorage data
-          if ((!contractFormData || Object.keys(contractFormData).length === 0) && savedData) {
-            dataToMerge = JSON.parse(savedData);
-            console.log('Using localStorage data as fallback:', dataToMerge);
-          }
-          
-          if (dataToMerge && Object.keys(dataToMerge).length > 0) {
-            console.log('Syncing contract form with data:', dataToMerge);
-            setFormData(prev => {
-              // Sanitize the data to prevent undefined values
-              const sanitizedData = {};
-              Object.keys(initialFormData).forEach(key => {
-                if (typeof initialFormData[key] === 'string') {
-                  sanitizedData[key] = dataToMerge[key] || prev[key] || '';
-                } else if (typeof initialFormData[key] === 'boolean') {
-                  sanitizedData[key] = dataToMerge[key] !== undefined ? dataToMerge[key] : prev[key];
-                } else if (typeof initialFormData[key] === 'number') {
-                  sanitizedData[key] = dataToMerge[key] !== undefined ? dataToMerge[key] : prev[key];
-                } else if (Array.isArray(initialFormData[key])) {
-                  sanitizedData[key] = Array.isArray(dataToMerge[key]) ? dataToMerge[key] : prev[key];
-                } else {
-                  sanitizedData[key] = dataToMerge[key] !== undefined ? dataToMerge[key] : prev[key];
-                }
-              });
-              console.log('Previous form data:', prev);
-              console.log('Data to merge:', dataToMerge);
-              console.log('Sanitized merged data:', sanitizedData);
-              return sanitizedData;
-            });
-            
-            // Update base price if event type is loaded
-            if (dataToMerge.eventType) {
-              const newBasePrice = getBasePriceForEventType(dataToMerge.eventType);
-              setBasePrice(newBasePrice);
-              console.log('Base price updated to:', newBasePrice, 'for event type:', dataToMerge.eventType);
-            }
-          } else {
-            console.log('No contract form data available in context or localStorage');
-          }
-        } catch (error) {
-          console.error('Error in context sync effect:', error);
+      // Only sync if form is completely empty to avoid interfering with user input
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isFormEmpty && contractFormData && Object.keys(contractFormData).length > 0) {
+        console.log('Form is empty, syncing with context data:', contractFormData);
+        setFormData(contractFormData);
+        
+        if (contractFormData.eventType) {
+          const newBasePrice = getBasePriceForEventType(contractFormData.eventType);
+          setBasePrice(newBasePrice);
         }
-      }, 100); // Small delay to ensure context has loaded localStorage data
-    } else {
-      console.log('Context not yet client-side ready');
+      }
     }
-  }, [contextIsClient, contractFormData, getBasePriceForEventType]);
+  }, [contextIsClient, contractFormData, formData.clientName, formData.email, formData.contactPhone, formData.venueName, getBasePriceForEventType]);
+  */
 
   // Sync with wedding agenda data when available (for shared fields)
   useEffect(() => {
@@ -1915,46 +1922,21 @@ Live City DJ Contract Terms and Conditions:
     }
   }, [contextIsClient, weddingAgendaData, updateContractFormData]);
   
-  // Force reload data when component mounts (for navigation scenarios)
+  // DISABLED: Force reload on mount that could interfere with user input
+  // This was potentially causing issues with form data being overwritten
+  /*
   useEffect(() => {
     if (isClient) {
-      console.log('Component mounted, forcing data reload...');
+      // Only reload if form is completely empty
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
       
-      // Force reload from localStorage on mount
-      try {
-        const savedData = localStorage.getItem('djContractFormData');
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          console.log('Force reload on mount found data:', parsedData);
-          
-          setFormData(prev => {
-            // Only merge if the saved data has more information than current form
-            const hasMoreData = Object.keys(parsedData).some(key => 
-              parsedData[key] && parsedData[key] !== '' && 
-              (!prev[key] || prev[key] === '')
-            );
-            
-            if (hasMoreData) {
-              const mergedData = { ...prev, ...parsedData };
-              console.log('Force merging data on mount:', mergedData);
-              return mergedData;
-            } else {
-              console.log('Current form data is more complete, not overriding');
-              return prev;
-            }
-          });
-          
-          if (parsedData.eventType) {
-            const newBasePrice = getBasePriceForEventType(parsedData.eventType);
-            setBasePrice(newBasePrice);
-            console.log('Force updated base price on mount:', newBasePrice);
-          }
-        }
-      } catch (error) {
-        console.error('Error in force reload on mount:', error);
+      if (isFormEmpty) {
+        console.log('Component mounted and form is empty, loading data...');
+        // ... loading logic would go here
       }
     }
-  }, [isClient, getBasePriceForEventType]);
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName, getBasePriceForEventType]);
+  */
   
   // Update base price when event type changes
   useEffect(() => {
@@ -1972,7 +1954,16 @@ Live City DJ Contract Terms and Conditions:
 
 
   const handleChange = (e) => {
+    // Ensure we have a valid event and target
+    if (!e || !e.target) {
+      console.error('Invalid event or target in handleChange');
+      return;
+    }
+    
     const { name, type, value, checked } = e.target;
+    
+    // Debug logging for input issues
+    console.log(`handleChange called for ${name}:`, { type, value, checked });
     
     if (type === 'checkbox') {
       console.log(`Setting ${name} to ${checked} (checkbox)`);
@@ -1980,6 +1971,9 @@ Live City DJ Contract Terms and Conditions:
     
     setFormData((prev) => {
       let newData;
+      
+      console.log(`🔄 handleChange processing: ${name} = ${value} (type: ${type})`);
+      console.log('Previous form data:', prev);
       
       // Special handler for musicPreferences checkboxes
       if (name.startsWith('music_')) {
@@ -2008,19 +2002,21 @@ Live City DJ Contract Terms and Conditions:
         };
       }
       
-      console.log(`Updated formData ${name}:`, newData[name]);
-      console.log('Full form data being saved to context:', newData);
+      console.log(`✅ Updated formData ${name}:`, newData[name]);
+      console.log('New form data state:', newData);
       
       // Defer context update to avoid setState during render
       setTimeout(() => {
+        console.log('💾 Saving to context:', newData);
         updateContractFormData(newData);
       }, 0);
       
       // Also save directly to localStorage as backup
       try {
         localStorage.setItem('djContractFormData', JSON.stringify(newData));
+        console.log('💾 Saved to localStorage successfully');
       } catch (error) {
-        console.error('Error saving to localStorage:', error);
+        console.error('❌ Error saving to localStorage:', error);
       }
       
       return newData;
@@ -2484,7 +2480,30 @@ Live City DJ Contract Terms and Conditions:
     borderRadius: '8px',
     border: '1px solid #ccc',
     color: 'black',
-    fontSize: 'clamp(16px, 2.5vw, 18px)'
+    fontSize: 'clamp(16px, 2.5vw, 18px)',
+    // Mobile optimizations
+    minHeight: '44px',
+    lineHeight: '1.4',
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    touchAction: 'manipulation',
+    WebkitTapHighlightColor: 'transparent',
+    // Enhanced mobile input support
+    outline: 'none',
+    boxSizing: 'border-box',
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
+    // Prevent zoom on iOS with better logic
+    ...(typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator?.userAgent || '') ? {
+      fontSize: '16px',
+      WebkitTextSizeAdjust: '100%'
+    } : {}),
+    // Focus styles
+    '&:focus': {
+      borderColor: '#0070f3',
+      boxShadow: '0 0 0 2px rgba(0, 112, 243, 0.2)',
+      outline: 'none'
+    }
   };
 
   const iconStyle = {
@@ -2954,7 +2973,7 @@ Live City DJ Contract Terms and Conditions:
               Select the music genres you&apos;d like to hear at your event:
             </p>
             
-            <div style={{ 
+            <div className="genre-modal-grid" style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: '15px',
@@ -2963,6 +2982,7 @@ Live City DJ Contract Terms and Conditions:
               {musicGenres.map(genre => (
                 <div key={genre.id} 
                   onClick={() => toggleGenre(genre.id)}
+                  className="genre-modal-item"
                   style={{
                     padding: '15px',
                     borderRadius: '8px',
@@ -2972,10 +2992,13 @@ Live City DJ Contract Terms and Conditions:
                     cursor: 'pointer',
                     backgroundColor: selectedGenres.includes(genre.id) ? 'rgba(0, 112, 243, 0.08)' : 'white',
                     transition: 'all 0.2s ease',
-                    transform: selectedGenres.includes(genre.id) ? 'scale(1.02)' : 'scale(1)',
                     boxShadow: selectedGenres.includes(genre.id) 
                       ? '0 6px 14px rgba(0, 112, 243, 0.15)' 
-                      : '0 2px 5px rgba(0,0,0,0.05)'
+                      : '0 2px 5px rgba(0,0,0,0.05)',
+                    // Mobile touch optimization
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
+                    minHeight: '44px'
                   }}
                 >
                   <div style={{
@@ -3445,10 +3468,44 @@ Live City DJ Contract Terms and Conditions:
                           padding: '8px 16px',
                           fontSize: '14px',
                           cursor: 'pointer',
-                          marginBottom: '10px'
+                          marginBottom: '10px',
+                          marginRight: '10px'
                         }}
                       >
                         💾 Save Test Data
+                      </button>
+                      <button
+                        type="button"
+                        onClick={debugTestInputs}
+                        style={{
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginBottom: '10px',
+                          marginRight: '10px'
+                        }}
+                      >
+                        🧪 Test Inputs
+                      </button>
+                      <button
+                        type="button"
+                        onClick={debugClearData}
+                        style={{
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginBottom: '10px'
+                        }}
+                      >
+                        🗑️ Clear Data
                       </button>
                       <div style={{ fontSize: '12px', color: '#92400e' }}>
                         <div>Client Name: {formData.clientName || 'empty'}</div>
@@ -3486,13 +3543,19 @@ Live City DJ Contract Terms and Conditions:
                       required
                       style={{
                         ...inputStyle,
-                        fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        padding: 'clamp(12px, 2vw, 16px)'
+                        // Simplified styling for better mobile compatibility
+                        fontSize: typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator?.userAgent || '') ? '16px' : 'clamp(16px, 2.5vw, 18px)',
+                        padding: typeof window !== 'undefined' && window.innerWidth <= 768 ? '14px 16px' : 'clamp(12px, 2vw, 16px)',
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
                       className="field-input"
                       value={formData.clientName || ''}
                       onChange={handleChange}
                       placeholder="Enter your full name"
+                      autoComplete="name"
                     />
                   </div>
                   <div>
@@ -3505,11 +3568,18 @@ Live City DJ Contract Terms and Conditions:
                       name="email"
                       type="email"
                       required
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
                       className="field-input"
                       value={formData.email || ''}
                       onChange={handleChange}
                       placeholder="your@email.com"
+                      autoComplete="email"
                     />
                   </div>
                 </div>
@@ -3526,11 +3596,18 @@ Live City DJ Contract Terms and Conditions:
                       name="contactPhone"
                       type="tel"
                       required
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
                       className="field-input"
                       value={formData.contactPhone || ''}
                       onChange={handleChange}
                       placeholder="(123) 456-7890"
+                      autoComplete="tel"
                     />
                     {formErrors.contactPhone && (
                       <p className="text-red-500 text-xs italic">{formErrors.contactPhone}</p>
@@ -3545,11 +3622,18 @@ Live City DJ Contract Terms and Conditions:
                     <input
                       name="clientPhone"
                       type="tel"
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
                       className="field-input"
                       value={formData.clientPhone || ''}
                       onChange={handleChange}
                       placeholder="(123) 456-7890"
+                      autoComplete="tel"
                     />
                     {formErrors.clientPhone && (
                       <p className="text-red-500 text-xs italic">{formErrors.clientPhone}</p>
@@ -3585,11 +3669,18 @@ Live City DJ Contract Terms and Conditions:
                       name="guestCount"
                       type="number"
                       required
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
                       className="field-input"
                       value={formData.guestCount || ''}
                       onChange={handleChange}
                       placeholder="Number of guests"
+                      autoComplete="off"
                     />
                   </div>
                 </div>
@@ -3692,10 +3783,18 @@ Live City DJ Contract Terms and Conditions:
                       name="venueName"
                       type="text"
                       required
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
                       className="field-input"
                       value={formData.venueName || ''}
                       onChange={handleChange}
+                      placeholder="Enter venue name"
+                      autoComplete="organization"
                     />
                   </div>
                   <div>
@@ -4066,15 +4165,16 @@ Live City DJ Contract Terms and Conditions:
                       />
                     </div>
                     
-                    <div style={{ 
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '10px',
+                    <div className="streaming-service-grid" style={{ 
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                      gap: 'clamp(8px, 2vw, 12px)',
                       marginBottom: '1rem'
                     }}>
                       {streamingServices.map(service => (
                         <div 
                           key={service.id}
+                          className="streaming-service-button"
                           onClick={() => {
                             const newData = { ...formData, streamingService: service.id };
                             setFormData(newData);
@@ -4092,8 +4192,8 @@ Live City DJ Contract Terms and Conditions:
                             }
                           }}
                           style={{
-                            padding: '8px 12px',
-                            borderRadius: '6px',
+                            padding: 'clamp(8px, 2vw, 12px)',
+                            borderRadius: '8px',
                             border: formData.streamingService === service.id 
                               ? '2px solid #0070f3' 
                               : '1px solid #e0e0e0',
@@ -4102,26 +4202,34 @@ Live City DJ Contract Terms and Conditions:
                               : 'white',
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
-                            flex: '1 0 150px',
-                            maxWidth: '200px'
+                            minHeight: '44px',
+                            textAlign: 'center',
+                            // Mobile touch optimization
+                            WebkitTapHighlightColor: 'transparent',
+                            touchAction: 'manipulation'
                           }}
                         >
                           <div 
+                            className="streaming-service-icon"
                             style={{ 
-                              width: '24px', 
-                              height: '24px', 
+                              width: 'clamp(20px, 4vw, 24px)', 
+                              height: 'clamp(20px, 4vw, 24px)', 
                               backgroundImage: `url(${service.icon})`,
                               backgroundSize: 'contain',
                               backgroundPosition: 'center',
                               backgroundRepeat: 'no-repeat',
-                              marginRight: '10px'
+                              marginRight: '10px',
+                              flexShrink: 0
                             }} 
                           />
-                          <span style={{
+                          <span className="streaming-service-text" style={{
                             fontWeight: formData.streamingService === service.id ? '500' : 'normal',
                             color: formData.streamingService === service.id ? '#0070f3' : '#333',
+                            fontSize: 'clamp(12px, 3vw, 14px)',
+                            lineHeight: '1.2'
                           }}>
                             {service.label}
                           </span>
@@ -4886,7 +4994,8 @@ Live City DJ Contract Terms and Conditions:
               alignItems: 'center',
               zIndex: 1050,
               opacity: 1,
-              transition: 'opacity 0.3s ease'
+              transition: 'opacity 0.3s ease',
+              padding: '16px'
             }}
             onClick={() => setShowGenreModal(false)}
           >
@@ -4895,15 +5004,21 @@ Live City DJ Contract Terms and Conditions:
                 backgroundColor: 'white',
                 borderRadius: '16px',
                 maxWidth: '800px',
-                width: '90%',
-                maxHeight: '85vh',
+                width: '100%',
+                maxHeight: '90vh',
                 boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)',
                 border: '2px solid #0070f3',
                 overflow: 'hidden',
                 transform: 'translateY(0)',
                 transition: 'transform 0.4s ease-out',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                // Mobile-specific adjustments
+                ...(window?.innerWidth <= 768 ? {
+                  maxHeight: '95vh',
+                  borderRadius: '12px',
+                  margin: '8px'
+                } : {})
               }}
               onClick={(e) => e.stopPropagation()}
             >
