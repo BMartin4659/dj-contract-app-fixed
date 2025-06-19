@@ -17,11 +17,6 @@ const EVENT_OPTIONS = [
       'Wedding Ceremony',
       'Wedding Reception',
       'Wedding Ceremony & Reception',
-      'Engagement Party',
-      'Bridal Shower',
-      'Bachelor/Bachelorette Party',
-      'Anniversary Party',
-      'Vow Renewal',
     ],
   },
   {
@@ -36,6 +31,11 @@ const EVENT_OPTIONS = [
       'Block Party',
       'Pool Party',
       'Holiday Party',
+      'Engagement Party',
+      'Bridal Shower',
+      'Bachelor/Bachelorette Party',
+      'Anniversary Party',
+      'Vow Renewal',
     ],
   },
   {
@@ -218,8 +218,10 @@ export default function EventTypeDropdown({
 
   return (
     <div className="w-full">
+      <label htmlFor="eventTypeSelect" style={{ display: 'none' }}>Event Type</label>
       <div className="relative">
         <select
+          id="eventTypeSelect"
           value={currentValue}
           onChange={handleChange}
           name={name || 'eventType'}

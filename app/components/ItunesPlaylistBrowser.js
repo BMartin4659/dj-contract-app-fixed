@@ -184,19 +184,24 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
               </div>
               <div className="flex-1">
                 <input
+                  id="playlistSearchInput"
                   type="text"
                   placeholder="Search songs, artists, or albums..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                  aria-label="Search songs, artists, or albums"
                 />
+                <label htmlFor="playlistSearchInput" style={{ display: 'none' }}>Search songs, artists, or albums</label>
               </div>
             </div>
             
             {/* Filter, Sort, and Clear */}
             <div className="flex flex-col sm:flex-row gap-1">
               <div className="flex-1 sm:max-w-xs">
+                <label htmlFor="genreFilterSelect" style={{ display: 'none' }}>Filter by Genre or Playlist</label>
                 <select
+                  id="genreFilterSelect"
                   value={selectedGenre}
                   onChange={(e) => setSelectedGenre(e.target.value)}
                   className="w-full px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
@@ -218,7 +223,9 @@ const ItunesPlaylistBrowser = ({ isOpen, onClose, selectedSongs = [], onSongsCha
               </div>
               
               <div className="flex-1 sm:max-w-xs flex gap-1">
+                <label htmlFor="sortBySelect" style={{ display: 'none' }}>Sort Songs By</label>
                 <select
+                  id="sortBySelect"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="flex-1 px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"

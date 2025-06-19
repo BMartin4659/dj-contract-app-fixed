@@ -5,11 +5,15 @@
 // DEPLOYMENT ID: emergency-pricing-fix-v2-20250201-0145
 // Using completely new function names to bypass Vercel caching
 
-// List of wedding event types - all wedding-related events from dropdown
+// List of wedding event types - only events with "Wedding" in the title
 export const WEDDING_EVENT_TYPES = [
   'Wedding Ceremony',
   'Wedding Reception',
   'Wedding Ceremony & Reception',
+];
+
+// List of wedding-related but not wedding events (for pricing purposes)
+export const WEDDING_RELATED_EVENTS = [
   'Engagement Party',
   'Bridal Shower',
   'Bachelor/Bachelorette Party',

@@ -22,7 +22,14 @@ import {
   FaAddressCard,
   FaUserFriends,
   FaBan,
-  FaChevronDown
+  FaChevronDown,
+  FaFemale,
+  FaMale,
+  FaUsers,
+  FaHeart,
+  FaUserTie,
+  FaAddressBook,
+  FaPhoneAlt
 } from 'react-icons/fa';
 import Image from 'next/image';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -474,8 +481,9 @@ export default function WeddingAgendaForm() {
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
     // Phone is now optional - removed the requirement
     
-    // Make entrance music optional
-    if (formData.entranceSong === undefined) formData.entranceSong = '';
+    // Make entrance music required
+    if (!formData.entranceSong) newErrors.entranceMusic = 'Wedding Party Entrance Music is required';
+    if (!formData.coupleEntranceSong) newErrors.coupleEntranceMusic = 'Bride & Groom Entrance Song is required';
     
     // Very flexible timeline validation - just check that at least one timeline element is specified
     const hasAnyTimelineEvent = formData.cocktailHourTime || 
@@ -735,10 +743,7 @@ export default function WeddingAgendaForm() {
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
         </Head>
 
-        {/* DEPLOYMENT VERIFICATION - REMOVE AFTER TESTING */}
-        <div style={{ position: 'fixed', top: 0, right: 0, background: 'red', color: 'white', padding: '5px', fontSize: '12px', zIndex: 9999 }}>
-          DEPLOY: 2025-01-31 17:00 - Wedding Fixes
-        </div>
+
 
         <div className="min-h-screen flex items-center justify-center" style={{ padding: isMobile ? '2px' : '1rem' }}>
           <style jsx global>{`
@@ -823,472 +828,533 @@ export default function WeddingAgendaForm() {
           `}</style>
           
           {/* Main form container */}
-          <div className="max-w-4xl mx-auto">
-            <div style={{ 
+          <div 
+            className="wedding-agenda-form"
+            style={{ 
               maxWidth: '800px',
-              width: isMobile ? 'calc(100vw - 4px)' : '96%',
-              margin: '2rem auto 3rem auto',
-              padding: isMobile ? '0 2px' : '0'
-            }}>
-              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" id="wedding-form" style={{
+              width: isMobile ? '98%' : '96%',
+              margin: isMobile ? '1rem auto 2rem auto' : '2rem auto 3rem auto'
+            }}
+          >
+            <form 
+              onSubmit={handleSubmit}
+              style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                padding: isMobile ? '1rem 0.25rem' : '2.5rem',
-                borderRadius: isMobile ? '2px' : '20px',
+                padding: isMobile ? '1rem' : '2.5rem',
+                borderRadius: isMobile ? '8px' : '20px',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
                 width: '100%',
                 marginBottom: '50px',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)'
+              }}
+            >
+              {/* Header with Wedding Logo */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '30px',
+                position: 'relative',
+                maxWidth: '100%',
+                padding: '0 10px'
               }}>
-                {/* Form Header with Logo */}
                 <div style={{
-                  textAlign: 'center',
-                  marginBottom: '30px',
-                  position: 'relative',
-                  padding: isMobile ? '20px 8px' : '30px 10px',
-                  overflow: 'visible'
+                  width: isMobile ? '80px' : '120px',
+                  height: isMobile ? '80px' : '120px',
+                  margin: '0 auto 15px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}>
-                  <div style={{
-                    width: isMobile ? '120px' : '200px',
-                    height: isMobile ? '120px' : '200px',
-                    margin: '0 auto 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Image
-                      src="/wedding-agenda-logo.png"
-                      alt="Wedding Agenda Logo"
-                      width={isMobile ? 120 : 200}
-                      height={isMobile ? 120 : 200}
-                      priority
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        objectFit: 'contain'
-                      }}
-                    />
-                  </div>
-                  
-                  {fontLoaded ? (
-                    <h1 className="wedding-agenda-header" style={{
-                      fontFamily: "'Hugh is Life Personal Use', 'Dancing Script', cursive, sans-serif",
-                      fontSize: isMobile ? 'clamp(52px, 13vw, 68px)' : 'clamp(54px, 8vw, 97px)',
-                      fontWeight: '500',
-                      color: '#000',
-                      textAlign: 'center',
-                      margin: '0 auto',
-                      padding: isMobile ? '0 8px' : '0 20px',
-                      lineHeight: '1.1',
-                      maxWidth: '100%',
-                      overflow: 'visible',
-                      textTransform: 'capitalize',
-                      opacity: 1,
-                      transition: 'opacity 0.3s ease-in-out',
-                      whiteSpace: 'nowrap',
-                      display: 'block',
-                      width: '100%'
-                    }}>
-                      Wedding Agenda
-                    </h1>
-                  ) : (
-                    <div style={{
-                      height: isMobile ? 'clamp(57px, 14.3vw, 75px)' : 'clamp(65px, 9.6vw, 116px)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto',
-                      padding: isMobile ? '0 8px' : '0 20px',
-                      width: '100%'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        border: '3px solid #f3f3f3',
-                        borderTop: '3px solid #0070f3',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }}></div>
-                    </div>
-                  )}
+                  <Image
+                    src="/wedding-agenda-logo.png"
+                    alt="Wedding Agenda Logo"
+                    width={isMobile ? 80 : 120}
+                    height={isMobile ? 80 : 120}
+                    priority
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      objectFit: 'contain'
+                    }}
+                  />
                 </div>
-
-
-
-                {/* Spacer div with increased margin */}
-                <div style={{ 
-                  height: '20px', 
-                  marginBottom: '40px', 
-                  borderBottom: '1px solid #e0e0e0',
-                  opacity: 0.5
-                }} className="section-divider"></div>
                 
-                {/* Event Type and Wedding Date */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
-                  {/* Event Type */}
-                  <div>
-                    <label style={{
+                <h1 style={{
+                  fontSize: 'clamp(50px, 7.2vw, 65px)',
+                  fontFamily: '"Hugh is Life Personal Use", sans-serif',
+                  fontWeight: 'normal',
+                  margin: '10px auto',
+                  color: '#000',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  lineHeight: '1.2',
+                  maxWidth: '100%',
+                  textAlign: 'center',
+                  flexWrap: 'nowrap',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <span>Wedding Agenda</span>
+                </h1>
+              </div>
+
+              {/* Spacer div */}
+              <div style={{ 
+                height: '20px', 
+                marginBottom: '20px', 
+                borderBottom: '1px solid #e0e0e0',
+                opacity: 0.5
+              }} className="section-divider"></div>
+
+              {/* Event Type and Date Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                <div>
+                  <label 
+                    htmlFor="eventType" 
+                    className="field-label"
+                    style={{
                       display: 'block',
                       marginBottom: '0.5rem',
                       fontWeight: 'bold',
                       color: '#333',
                       fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <FaMusic className="text-purple-500 mr-3" style={{ marginRight: '10px' }} /> Event Type
-                      </span>
-                    </label>
-                    <WeddingEventTypeDropdown
-                      value={formData.eventType}
-                      onChange={(value) => {
-                        setFormData(prev => ({ ...prev, eventType: value }));
-                        setEventType(value);
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <FaMusic style={{ marginRight: '8px', color: '#9F7AEA' }} /> Event Type *
+                    </span>
+                  </label>
+                  <WeddingEventTypeDropdown
+                    value={formData.eventType}
+                    onChange={handleEventTypeChange}
+                    style={{
+                      backgroundColor: 'white',
+                      width: '100%',
+                      padding: 'clamp(12px, 2vw, 16px)',
+                      marginBottom: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc',
+                      color: '#1a1a1a',
+                      fontSize: 'clamp(16px, 2.5vw, 18px)',
+                      minHeight: '44px',
+                      lineHeight: '1.4',
+                      WebkitAppearance: 'none',
+                      appearance: 'none',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                    className="field-input"
+                  />
+                </div>
+                <div>
+                  <label 
+                    htmlFor="weddingDate" 
+                    className="field-label"
+                    style={{
+                      display: 'block',
+                      marginBottom: '0.5rem',
+                      fontWeight: 'bold',
+                      color: '#333',
+                      fontSize: 'clamp(16px, 2.5vw, 18px)'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <FaCalendarAlt style={{ marginRight: '8px', color: '#D53F8C' }} /> Wedding Date *
+                    </span>
+                  </label>
+                  <ReactDatePickerField
+                    id="weddingDate"
+                    name="weddingDate"
+                    selectedDate={formData.weddingDate}
+                    onChange={handleDateChange}
+                    placeholder="Select wedding date"
+                    error={errors.weddingDate}
+                    minDate={new Date()}
+                    style={{
+                      backgroundColor: 'white',
+                      width: '100%',
+                      padding: 'clamp(12px, 2vw, 16px)',
+                      marginBottom: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc',
+                      color: '#1a1a1a',
+                      fontSize: 'clamp(16px, 2.5vw, 18px)',
+                      minHeight: '44px',
+                      lineHeight: '1.4',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                    className="field-input"
+                  />
+                </div>
+              </div>
+
+              {/* Contact Information Section */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
+                  marginBottom: '1.5rem',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaAddressBook style={{ color: '#4299E1' }} />
+                  Contact Information
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label 
+                      htmlFor="email" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
                       }}
-                      onPriceUpdate={setBasePrice}
-                      name="eventType"
-                    />
-                  </div>
-                  
-                  {/* Event Date */}
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <FaCalendarAlt className="text-blue-500 mr-3" style={{ marginRight: '10px' }} /> Wedding Date *
-                      </span>
-                    </label>
-                    <ReactDatePickerField
-                      id="weddingDate"
-                      name="weddingDate"
-                      selectedDate={formData.weddingDate}
-                      onChange={handleDateChange}
-                      placeholder="Select date"
-                      error={errors.weddingDate}
-                      minDate={new Date()}
-                    />
-                  </div>
-                </div>
-
-                {/* Section Header - Contact Information */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
-                    color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'inline-block',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <FaAddressCard className="text-blue-500 mr-3" style={{ marginRight: '10px' }} /> Contact Information
-                  </h3>
-                </div>
-
-                {/* Contact Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <FaEnvelope className="text-blue-500 mr-3" style={{ marginRight: '10px' }} /> Email *
+                        <FaEnvelope style={{ marginRight: '8px', color: '#ED8936' }} /> Email *
                       </span>
                     </label>
                     <input
-                      id="email"
                       type="email"
+                      id="email"
                       name="email"
-                      autoComplete="email"
                       value={formData.email}
                       onChange={handleChange}
+                      required
+                      placeholder="your@email.com"
                       style={{
+                        backgroundColor: 'white',
                         width: '100%',
                         padding: 'clamp(12px, 2vw, 16px)',
-                        border: '1px solid #ccc',
+                        marginBottom: '1rem',
                         borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        color: '#1a1a1a',
                         fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
+                        fontWeight: '500',
+                        minHeight: '44px',
+                        lineHeight: '1.4',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
-                      placeholder="your@email.com"
+                      className={`field-input ${errors.email ? 'border-red-500' : ''}`}
                     />
-                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                   </div>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="phone" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <FaPhone className="text-green-500 mr-3" style={{ marginRight: '10px' }} /> Phone *
+                        <FaPhoneAlt style={{ marginRight: '8px', color: '#48BB78' }} /> Phone *
                       </span>
                     </label>
                     <input
-                      id="phone"
                       type="tel"
+                      id="phone"
                       name="phone"
-                      autoComplete="tel"
                       value={formData.phone}
                       onChange={handleChange}
+                      required
+                      placeholder="(123) 456-7890"
                       style={{
+                        backgroundColor: 'white',
                         width: '100%',
                         padding: 'clamp(12px, 2vw, 16px)',
-                        border: '1px solid #ccc',
+                        marginBottom: '1rem',
                         borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        color: '#1a1a1a',
                         fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
+                        fontWeight: '500',
+                        minHeight: '44px',
+                        lineHeight: '1.4',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
-                      placeholder="(123) 456-7890"
+                      className={`field-input ${errors.phone ? 'border-red-500' : ''}`}
                     />
-                    {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
                   </div>
                 </div>
+              </div>
 
-                {/* Section Header - Couple Information */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
-                    color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'inline-block',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <FaUserFriends className="text-green-500 mr-3" style={{ marginRight: '10px' }} /> Couple Information
-                  </h3>
-                </div>
-
-                {/* Couple Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+              {/* Wedding Party Information */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
+                  marginBottom: '1.5rem',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaHeart style={{ color: '#F56565' }} />
+                  Wedding Party
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="brideName" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Bride&apos;s Name *
+                                                 <FaFemale style={{ marginRight: '8px', color: '#F687B3' }} /> Bride&apos;s Name
                       </span>
                     </label>
                     <input
-                      id="brideName"
                       type="text"
+                      id="brideName"
                       name="brideName"
                       value={formData.brideName}
                       onChange={handleChange}
+                      placeholder="Bride's full name"
                       style={{
+                        backgroundColor: 'white',
                         width: '100%',
                         padding: 'clamp(12px, 2vw, 16px)',
-                        border: errors.brideName ? '1px solid #ef4444' : '1px solid #ccc',
+                        marginBottom: '1rem',
                         borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        color: '#1a1a1a',
                         fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
+                        fontWeight: '500',
+                        minHeight: '44px',
+                        lineHeight: '1.4',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
-                      placeholder="Enter bride's name"
+                      className="field-input"
                     />
-                    {errors.brideName && <p className="mt-1 text-xs text-red-500">{errors.brideName}</p>}
                   </div>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="groomName" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Groom&apos;s Name *
+                                                 <FaMale style={{ marginRight: '8px', color: '#4299E1' }} /> Groom&apos;s Name
                       </span>
                     </label>
                     <input
-                      id="groomName"
                       type="text"
+                      id="groomName"
                       name="groomName"
                       value={formData.groomName}
                       onChange={handleChange}
+                      placeholder="Groom's full name"
                       style={{
+                        backgroundColor: 'white',
                         width: '100%',
                         padding: 'clamp(12px, 2vw, 16px)',
-                        border: errors.groomName ? '1px solid #ef4444' : '1px solid #ccc',
+                        marginBottom: '1rem',
                         borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        color: '#1a1a1a',
                         fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
+                        fontWeight: '500',
+                        minHeight: '44px',
+                        lineHeight: '1.4',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
-                      placeholder="Enter groom's name"
+                      className="field-input"
                     />
-                    {errors.groomName && <p className="mt-1 text-xs text-red-500">{errors.groomName}</p>}
                   </div>
                 </div>
 
-                {/* Section Header - Wedding Party */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
-                    color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'inline-block',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <FaUserFriends className="text-pink-500 mr-3" style={{ marginRight: '10px' }} /> Wedding Party
-                  </h3>
-                </div>
-               
-                {/* Maid of Honor and Best Man */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="maidOfHonor" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Maid of Honor
+                        <FaUserFriends style={{ marginRight: '8px', color: '#ED8936' }} /> Maid of Honor
                       </span>
                     </label>
                     <input
-                      id="maidOfHonor"
                       type="text"
+                      id="maidOfHonor"
                       name="maidOfHonor"
                       value={formData.maidOfHonor}
                       onChange={handleChange}
+                      placeholder="Maid of Honor's name"
                       style={{
+                        backgroundColor: 'white',
                         width: '100%',
                         padding: 'clamp(12px, 2vw, 16px)',
-                        border: '1px solid #ccc',
+                        marginBottom: '1rem',
                         borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        color: '#1a1a1a',
                         fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
+                        fontWeight: '500',
+                        minHeight: '44px',
+                        lineHeight: '1.4',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
-                      placeholder="Enter maid of honor's name"
+                      className="field-input"
                     />
                   </div>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="bestMan" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Best Man
+                        <FaUserTie style={{ marginRight: '8px', color: '#805AD5' }} /> Best Man
                       </span>
                     </label>
                     <input
-                      id="bestMan"
                       type="text"
+                      id="bestMan"
                       name="bestMan"
                       value={formData.bestMan}
                       onChange={handleChange}
+                      placeholder="Best Man's name"
                       style={{
+                        backgroundColor: 'white',
                         width: '100%',
                         padding: 'clamp(12px, 2vw, 16px)',
-                        border: '1px solid #ccc',
+                        marginBottom: '1rem',
                         borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        color: '#1a1a1a',
                         fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
+                        fontWeight: '500',
+                        minHeight: '44px',
+                        lineHeight: '1.4',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
                       }}
-                      placeholder="Enter best man's name"
+                      className="field-input"
                     />
                   </div>
                 </div>
 
-                {/* Bridesmaids and Groomsmen */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
-                  gap: isMobile ? '2.5rem' : '3.5rem',
-                  marginTop: '2rem',
-                  marginBottom: '3rem'
-                }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: isMobile ? '1rem' : '1.2rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="bridesmaids" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Bridesmaids
+                        <FaUsers style={{ marginRight: '8px', color: '#F687B3' }} /> Bridesmaids
                       </span>
                     </label>
                     <p className="text-sm text-blue-700 font-semibold mb-4">List Bridesmaids In Order Of Entrance</p>
-                    <div className="space-y-10">
+                    <div className="space-y-4">
                       {formData.bridesmaids.map((bridesmaid, index) => (
                         <div key={`bridesmaid-${index}`} style={{ marginBottom: isMobile ? '16px' : '24px' }}>
                           <input
                             type="text"
                             value={bridesmaid}
                             onChange={(e) => handlePartyMemberChange('bridesmaids', index, e.target.value)}
+                            placeholder={`Bridesmaid #${index + 1}`}
                             style={{
+                              backgroundColor: 'white',
                               width: '100%',
                               padding: 'clamp(12px, 2vw, 16px)',
-                              border: '1px solid #ccc',
+                              marginBottom: '1rem',
                               borderRadius: '8px',
-                              fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-                              backgroundColor: 'white',
-                              marginBottom: '8px',
-                              minHeight: isMobile ? '44px' : 'auto'
+                              border: '1px solid #ccc',
+                              color: '#1a1a1a',
+                              fontSize: 'clamp(16px, 2.5vw, 18px)',
+                              fontWeight: '500',
+                              minHeight: '44px',
+                              lineHeight: '1.4',
+                              WebkitAppearance: 'none',
+                              appearance: 'none',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                              userSelect: 'text',
+                              WebkitUserSelect: 'text'
                             }}
-                            placeholder={`Bridesmaid #${index + 1}`}
+                            className="field-input"
                           />
                         </div>
                       ))}
                       
                       {/* Remove buttons section - only show if there are more than 3 bridesmaids */}
                       {formData.bridesmaids.length > 3 && (
-                        <div style={{ 
-                          marginTop: '12px',
-                          marginBottom: '16px'
-                        }}>
+                        <div style={{ marginTop: '12px', marginBottom: '16px' }}>
                           {formData.bridesmaids.slice(3).map((_, removeIndex) => (
                             <div key={`remove-${removeIndex + 3}`} style={{ 
                               marginBottom: '12px',
@@ -1387,46 +1453,57 @@ export default function WeddingAgendaForm() {
                     </div>
                   </div>
                   <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: isMobile ? '1rem' : '1.2rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
+                    <label 
+                      htmlFor="groomsmen" 
+                      className="field-label"
+                      style={{
+                        display: 'block',
+                        marginBottom: '0.5rem',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: 'clamp(16px, 2.5vw, 18px)'
+                      }}
+                    >
                       <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Groomsmen
+                        <FaUsers style={{ marginRight: '8px', color: '#4299E1' }} /> Groomsmen
                       </span>
                     </label>
                     <p className="text-sm text-blue-700 font-semibold mb-4">List Groomsmen In Order Of Entrance</p>
-                    <div className="space-y-10">
+                    <div className="space-y-4">
                       {formData.groomsmen.map((groomsman, index) => (
                         <div key={`groomsman-${index}`} style={{ marginBottom: isMobile ? '16px' : '24px' }}>
                           <input
                             type="text"
                             value={groomsman}
                             onChange={(e) => handlePartyMemberChange('groomsmen', index, e.target.value)}
+                            placeholder={`Groomsman #${index + 1}`}
                             style={{
+                              backgroundColor: 'white',
                               width: '100%',
                               padding: 'clamp(12px, 2vw, 16px)',
-                              border: '1px solid #ccc',
+                              marginBottom: '1rem',
                               borderRadius: '8px',
-                              fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-                              backgroundColor: 'white',
-                              marginBottom: '8px',
-                              minHeight: isMobile ? '44px' : 'auto'
+                              border: '1px solid #ccc',
+                              color: '#1a1a1a',
+                              fontSize: 'clamp(16px, 2.5vw, 18px)',
+                              fontWeight: '500',
+                              minHeight: '44px',
+                              lineHeight: '1.4',
+                              WebkitAppearance: 'none',
+                              appearance: 'none',
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                              userSelect: 'text',
+                              WebkitUserSelect: 'text'
                             }}
-                            placeholder={`Groomsman #${index + 1}`}
+                            className="field-input"
                           />
                         </div>
                       ))}
                       
                       {/* Remove buttons section - only show if there are more than 3 groomsmen */}
                       {formData.groomsmen.length > 3 && (
-                        <div style={{ 
-                          marginTop: '12px',
-                          marginBottom: '16px'
-                        }}>
+                        <div style={{ marginTop: '12px', marginBottom: '16px' }}>
                           {formData.groomsmen.slice(3).map((_, removeIndex) => (
                             <div key={`remove-${removeIndex + 3}`} style={{ 
                               marginBottom: '12px',
@@ -1525,95 +1602,109 @@ export default function WeddingAgendaForm() {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Flower Girl and Ring Bearer */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Flower Girl
-                      </span>
-                    </label>
-                    <input
-                      id="flowerGirl"
-                      type="text"
-                      name="flowerGirl"
-                      value={formData.flowerGirl}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%',
-                        padding: 'clamp(12px, 2vw, 16px)',
-                        border: '1px solid #ccc',
-                        borderRadius: '8px',
-                        fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
-                      }}
-                      placeholder="Enter flower girl's name (if applicable)"
-                    />
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.5rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        Ring Bearer
-                      </span>
-                    </label>
-                    <input
-                      id="ringBearer"
-                      type="text"
-                      name="ringBearer"
-                      value={formData.ringBearer}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%',
-                        padding: 'clamp(12px, 2vw, 16px)',
-                        border: '1px solid #ccc',
-                        borderRadius: '8px',
-                        fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        backgroundColor: 'white',
-                        marginBottom: '1rem'
-                      }}
-                      placeholder="Enter ring bearer's name (if applicable)"
-                    />
-                  </div>
-                </div>
-
-                {/* Section Header - Entrance Music */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
+              {/* Flower Girl and Ring Bearer */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold',
                     color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0'
+                    fontSize: 'clamp(16px, 2.5vw, 18px)'
                   }}>
-                    <FaMusic className="text-red-500 mr-3" style={{ marginRight: '10px' }} /> Entrance Music
-                  </h3>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                                              👧🏽 Flower Girl
+                    </span>
+                  </label>
+                  <input
+                    id="flowerGirl"
+                    type="text"
+                    name="flowerGirl"
+                    value={formData.flowerGirl}
+                    onChange={handleChange}
+                    style={{
+                      backgroundColor: 'white',
+                      width: '100%',
+                      padding: 'clamp(12px, 2vw, 16px)',
+                      marginBottom: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc',
+                      color: '#1a1a1a',
+                      fontSize: 'clamp(16px, 2.5vw, 18px)',
+                      fontWeight: '500',
+                      minHeight: '44px',
+                      lineHeight: '1.4',
+                      WebkitAppearance: 'none',
+                      appearance: 'none',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      userSelect: 'text',
+                      WebkitUserSelect: 'text'
+                    }}
+                    className="field-input"
+                    placeholder="Enter flower girl's name (if applicable)"
+                  />
                 </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    fontSize: 'clamp(16px, 2.5vw, 18px)'
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                                              👦🏽 Ring Bearer
+                    </span>
+                  </label>
+                  <input
+                    id="ringBearer"
+                    type="text"
+                    name="ringBearer"
+                    value={formData.ringBearer}
+                    onChange={handleChange}
+                    style={{
+                      backgroundColor: 'white',
+                      width: '100%',
+                      padding: 'clamp(12px, 2vw, 16px)',
+                      marginBottom: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc',
+                      color: '#1a1a1a',
+                      fontSize: 'clamp(16px, 2.5vw, 18px)',
+                      fontWeight: '500',
+                      minHeight: '44px',
+                      lineHeight: '1.4',
+                      WebkitAppearance: 'none',
+                      appearance: 'none',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      userSelect: 'text',
+                      WebkitUserSelect: 'text'
+                    }}
+                    className="field-input"
+                    placeholder="Enter ring bearer's name (if applicable)"
+                  />
+                </div>
+              </div>
 
-                {/* Entrance Music */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+              {/* Entrance Music */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
+                  marginBottom: '1.5rem',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaMusic style={{ color: '#9F7AEA' }} /> Entrance Music
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label style={{
                       display: 'block',
@@ -1622,8 +1713,8 @@ export default function WeddingAgendaForm() {
                       color: '#333',
                       fontSize: 'clamp(16px, 2.5vw, 18px)'
                     }}>
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        🎉 Wedding Party Entrance Music *
+                      <span style={{ display: 'flex', alignItems: 'center', fontSize: '15px' }}>
+                        🎉 Wedding Party Entrance Song *
                       </span>
                     </label>
                     <SongSelector
@@ -1636,7 +1727,10 @@ export default function WeddingAgendaForm() {
                       suggestions={SONG_SUGGESTIONS.partyEntrance}
                       isMobile={isMobile}
                     />
-                    {errors.entranceMusic && <p className="mt-1 text-xs text-red-500">{errors.entranceMusic}</p>}
+                    {/* Error message placeholder for alignment */}
+                    <div style={{ minHeight: '1.25rem' }}>
+                      {errors.entranceMusic && <p className="mt-1 text-xs text-red-500">{errors.entranceMusic}</p>}
+                    </div>
                   </div>
                   <div>
                     <label style={{
@@ -1646,8 +1740,8 @@ export default function WeddingAgendaForm() {
                       color: '#333',
                       fontSize: 'clamp(16px, 2.5vw, 18px)'
                     }}>
-                      <span style={{ display: 'flex', alignItems: 'center' }}>
-                        💑 Bride & Groom Entrance Song
+                      <span style={{ display: 'flex', alignItems: 'center', fontSize: '15px' }}>
+                        💑 Bride & Groom Entrance Song *
                       </span>
                     </label>
                     <SongSelector
@@ -1660,34 +1754,29 @@ export default function WeddingAgendaForm() {
                       suggestions={SONG_SUGGESTIONS.coupleEntrance}
                       isMobile={isMobile}
                     />
+                    {/* Matching error message placeholder for alignment */}
+                    <div style={{ minHeight: '1.25rem' }}>
+                      {errors.coupleEntranceMusic && <p className="mt-1 text-xs text-red-500">{errors.coupleEntranceMusic}</p>}
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Section Header - Welcome and Blessing */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
-                    color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'inline-block',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <FaPray className="text-teal-500 mr-3" style={{ marginRight: '10px' }} /> Welcome and Blessing
-                  </h3>
-                </div>
-
-                {/* Welcome and Blessing */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+              {/* Welcome and Blessing */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
+                  marginBottom: '1.5rem',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaPray style={{ color: '#38B2AC' }} /> Welcome and Blessing
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label style={{
                       display: 'block',
@@ -1749,44 +1838,22 @@ export default function WeddingAgendaForm() {
                     </select>
                   </div>
                 </div>
+              </div>
 
-                {/* Section Header - Reception Timeline */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
-                    color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'inline-block',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <FaClipboardList className="text-blue-500 mr-3" style={{ marginRight: '10px' }} /> Reception Timeline
-                  </h3>
-                </div>
-
-                {/* Reception Timeline Description */}
-                <div style={{
+              {/* Reception Timeline */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
                   marginBottom: '1.5rem',
-                  color: '#555',
-                  fontSize: 'clamp(14px, 2vw, 16px)',
-                  lineHeight: '1.5'
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}>
-                  Please select appropriate times for the key events during your reception.
-                  These times help us plan the flow of your event.
-                  <br />
-                  <strong style={{ color: '#d97706' }}>Note:</strong> Times must be at least 30 minutes apart to ensure proper event flow.
-                </div>
+                  <FaClipboardList style={{ color: '#4FD1C5' }} /> Reception Timeline
+                </h3>
                 
-                {/* Reception Timeline - First Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5" style={{ marginBottom: '2rem' }}>
                   <div>
                     <label style={{
@@ -1811,7 +1878,7 @@ export default function WeddingAgendaForm() {
                         borderRadius: '8px',
                         fontSize: 'clamp(15px, 2vw, 16px)',
                         backgroundColor: 'white',
-                        marginBottom: isMobile ? '1.5rem' : '1rem',
+                        marginBottom: '1rem',
                         appearance: 'none',
                         backgroundImage: 'url("data:image/svg+xml;utf8,<svg fill=\'black\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>")',
                         backgroundRepeat: 'no-repeat',
@@ -1907,7 +1974,6 @@ export default function WeddingAgendaForm() {
                   </div>
                 </div>
                 
-                {/* Reception Timeline - Second Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5" style={{ marginBottom: '2rem' }}>
                   <div>
                     <label style={{
@@ -2027,7 +2093,6 @@ export default function WeddingAgendaForm() {
                   </div>
                 </div>
 
-                {/* Reception Timeline - Third Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5" style={{ marginBottom: '2.5rem' }}>
                   <div>
                     <label style={{
@@ -2146,47 +2211,22 @@ export default function WeddingAgendaForm() {
                     </select>
                   </div>
                 </div>
-                
-                {errors.timeline && (
-                  <div className="mt-2 mb-4">
-                    <p className="text-red-500 text-sm">{errors.timeline}</p>
-                  </div>
-                )}
+              </div>
 
-                {/* Section Header - Special Dances */}
-                <div style={{
-                  marginTop: '3.5rem',
-                  marginBottom: '1rem',
-                  borderBottom: '2px solid #e0e0e0',
-                  position: 'relative'
-                }} className="section-header">
-                  <h3 style={{
-                    color: '#333',
-                    fontSize: 'clamp(20px, 3vw, 24px)',
-                    fontWeight: '600',
-                    backgroundColor: 'transparent',
-                    display: 'inline-block',
-                    padding: '0 1rem 0.5rem 0',
-                    position: 'relative',
-                    marginBottom: '0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <FaMusic className="text-green-500 mr-3" style={{ marginRight: '10px' }} /> Special Dances
-                  </h3>
-                </div>
-                
-                {/* Special Dances Description */}
-                <div style={{
-                  marginBottom: '2rem',
-                  color: '#555',
-                  fontSize: 'clamp(14px, 2vw, 16px)',
-                  lineHeight: '1.5'
+              {/* Special Dances */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
+                  marginBottom: '1.5rem',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}>
-                  Please provide song selections for special moments. These are optional but recommended.
-                </div>
+                  <FaMusic style={{ color: '#38B2AC' }} /> Special Dances
+                </h3>
                 
-                {/* Special Dances - First Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12" style={{ marginBottom: '3rem' }}>
                   <div>
                     <label style={{
@@ -2236,7 +2276,6 @@ export default function WeddingAgendaForm() {
                   </div>
                 </div>
 
-                {/* Special Dances - Second Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12" style={{ marginBottom: '3rem' }}>
                   <div>
                     <label style={{
@@ -2286,7 +2325,6 @@ export default function WeddingAgendaForm() {
                   </div>
                 </div>
 
-                {/* Special Dances - Third Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16" style={{ marginBottom: '3.5rem' }}>
                   <div>
                     <label style={{
@@ -2335,120 +2373,111 @@ export default function WeddingAgendaForm() {
                     />
                   </div>
                 </div>
+              </div>
 
-                {/* Additional Information */}
-                <div className="form-section" style={{ marginTop: '3.5rem' }}>
-                  <div style={{
-                    marginTop: '3.5rem',
-                    marginBottom: '1rem',
-                    borderBottom: '2px solid #e0e0e0',
-                    position: 'relative'
-                  }} className="section-header">
-                    <h3 style={{
-                      color: '#333',
-                      fontSize: 'clamp(20px, 3vw, 24px)',
-                      fontWeight: '600',
-                      backgroundColor: 'transparent',
-                      display: 'inline-block',
-                      padding: '0 1rem 0.5rem 0',
-                      position: 'relative',
-                      marginBottom: '0',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <FaFileAlt className="text-yellow-500 mr-3" style={{ marginRight: '10px' }} /> Additional Information
-                    </h3>
-                  </div>
-                  <div style={{
-                    backgroundColor: 'white',
-                    padding: '1.5rem',
-                    borderRadius: '10px',
-                    border: '1px solid #e5e5e5',
-                    marginBottom: '2rem'
+              {/* Additional Information */}
+              <div style={{ marginTop: '3.5rem' }}>
+                <h3 style={{
+                  fontSize: 'clamp(18px, 3vw, 22px)',
+                  fontWeight: 'bold',
+                  marginBottom: '1.5rem',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FaFileAlt style={{ color: '#ECC94B' }} /> Additional Information
+                </h3>
+                
+                <div style={{
+                  backgroundColor: 'white',
+                  padding: '1.5rem',
+                  borderRadius: '10px',
+                  border: '1px solid #e5e5e5',
+                  marginBottom: '2rem'
+                }}>
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '0.75rem',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    fontSize: 'clamp(16px, 2.5vw, 18px)'
                   }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '0.75rem',
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: 'clamp(16px, 2.5vw, 18px)'
-                    }}>
-                      Special Instructions
-                    </label>
-                    <textarea
-                      id="specialInstructions"
-                      name="specialInstructions"
-                      value={formData.specialInstructions}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%',
-                        padding: '1rem',
-                        border: '1px solid #ccc',
-                        borderRadius: '8px',
-                        fontSize: 'clamp(16px, 2.5vw, 18px)',
-                        minHeight: '120px',
-                        lineHeight: '1.5',
-                        resize: 'vertical'
-                      }}
-                      placeholder="Anything else we should know about your event"
-                      rows="4"
-                    ></textarea>
-                  </div>
+                    Special Instructions
+                  </label>
+                  <textarea
+                    id="specialInstructions"
+                    name="specialInstructions"
+                    value={formData.specialInstructions}
+                    onChange={handleChange}
+                    style={{
+                      width: '100%',
+                      padding: '1rem',
+                      border: '1px solid #ccc',
+                      borderRadius: '8px',
+                      fontSize: 'clamp(16px, 2.5vw, 18px)',
+                      minHeight: '120px',
+                      lineHeight: '1.5',
+                      resize: 'vertical'
+                    }}
+                    placeholder="Anything else we should know about your event"
+                    rows="4"
+                  ></textarea>
                 </div>
+              </div>
 
-                {/* Submit Button - positioned with better spacing */}
-                <div className="mt-12 mb-10 text-center">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-16 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 text-lg mx-auto inline-block"
+              {/* Submit Button */}
+              <div className="mt-12 mb-10 text-center">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-16 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 text-lg mx-auto inline-block"
+                  style={{
+                    border: 'none',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                    minWidth: isMobile ? '260px' : '300px',
+                    minHeight: isMobile ? '52px' : 'auto'
+                  }}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <FaSpinner className="animate-spin mr-2" />
+                      <span>Submitting...</span>
+                    </div>
+                  ) : (
+                    'Submit Wedding Agenda'
+                  )}
+                </button>
+                
+                <div className="mt-4 text-sm text-gray-500">
+                  Your information helps us prepare for your special day
+                </div>
+                
+                {/* Back to Contract button - Bottom */}
+                <div className="mt-6">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      router.push('/');
+                    }}
+                    className="px-10 py-2.5 text-white font-medium rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 text-base mx-auto inline-flex items-center justify-center"
                     style={{
                       border: 'none',
                       boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                      minWidth: isMobile ? '260px' : '300px',
-                      minHeight: isMobile ? '52px' : 'auto'
+                      minWidth: isMobile ? '180px' : '200px',
+                      minHeight: isMobile ? '44px' : 'auto',
+                      letterSpacing: '0.3px',
+                      backgroundColor: '#1a73e8'
                     }}
                   >
-                    {isSubmitting ? (
-                      <div className="flex items-center justify-center">
-                        <FaSpinner className="animate-spin mr-2" />
-                        <span>Submitting...</span>
-                      </div>
-                    ) : (
-                      'Submit Wedding Agenda'
-                    )}
+                    <FaArrowLeft className="mr-3" style={{ fontSize: '14px' }} />
+                    Back to Contract
                   </button>
-                  
-                  <div className="mt-4 text-sm text-gray-500">
-                    Your information helps us prepare for your special day
-                  </div>
-                  
-                  {/* Back to Contract button - Bottom */}
-                  <div className="mt-6">
-                    <button 
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        router.push('/');
-                      }}
-                      className="px-10 py-2.5 text-white font-medium rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 text-base mx-auto inline-flex items-center justify-center"
-                      style={{
-                        border: 'none',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                        minWidth: isMobile ? '180px' : '200px',
-                        minHeight: isMobile ? '44px' : 'auto',
-                        letterSpacing: '0.3px',
-                        backgroundColor: '#1a73e8'
-                      }}
-                    >
-                      <FaArrowLeft className="mr-3" style={{ fontSize: '14px' }} />
-                      Back to Contract
-                    </button>
-                  </div>
                 </div>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
           <ToastContainer position={isMobile ? "bottom-center" : "bottom-right"} autoClose={5000} />
         </div>

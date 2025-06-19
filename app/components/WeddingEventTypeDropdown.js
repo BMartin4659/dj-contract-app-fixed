@@ -72,16 +72,25 @@ export default function WeddingEventTypeDropdown({
           value={selected}
           onChange={handleChange}
           name={name || 'eventType'}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="field-input"
           style={{
             backgroundColor: 'white',
             width: '100%',
             padding: 'clamp(12px, 2vw, 16px)',
-            marginBottom: '0.5rem',
+            marginBottom: '1rem',
             borderRadius: '8px',
             border: error ? '1px solid #ef4444' : '1px solid #ccc',
-            color: 'black',
+            color: '#1a1a1a', // Darker text for better mobile visibility
             fontSize: 'clamp(16px, 2.5vw, 18px)',
+            fontWeight: '500', // Thicker font weight for mobile readability
+            minHeight: '44px',
+            lineHeight: '1.4',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            outline: 'none',
+            boxSizing: 'border-box',
+            userSelect: 'text',
+            WebkitUserSelect: 'text',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'right 1rem top 50%',
             backgroundSize: '0.75rem auto',

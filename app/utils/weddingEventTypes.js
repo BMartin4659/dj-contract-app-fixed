@@ -3,11 +3,15 @@
 // NEW FILE TO BYPASS VERCEL CACHING - Wedding event types with proper filtering
 // DEPLOYMENT TIMESTAMP: 2025-01-31 18:30 - Force deployment refresh for wedding forms
 
-// List of wedding event types - includes all wedding-related events
+// List of wedding event types - only events with "Wedding" in the title
 export const WEDDING_EVENT_TYPES_V2 = [
   'Wedding Ceremony',
   'Wedding Reception',
   'Wedding Ceremony & Reception',
+];
+
+// List of wedding-related events (for pricing purposes, not dropdown display)
+export const WEDDING_RELATED_EVENTS_V2 = [
   'Engagement Party',
   'Bridal Shower',
   'Bachelor/Bachelorette Party',

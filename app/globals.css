@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
 
 /* Hugh is Life Personal Use Font */
 @font-face {
@@ -107,6 +107,9 @@
 
 /* Clean, simplified root structure */
 html {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
   height: 100%;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
@@ -118,27 +121,108 @@ body {
   font-family: 'Montserrat', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: url('/dj-background-new.jpg') !important;
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
+  margin: 0;
+  padding: 0;
   color: #333;
-  position: relative;
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
+  position: relative;
+  /* Remove background from body - will be handled by fixed background layer */
 }
 
-/* Next.js root container - proper layout structure */
+/* Background is now handled by the dedicated div in layout.js */
+/* Optional overlay for better content readability */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: -5;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Ensure body doesn't interfere with fixed background */
+  body {
+    background: transparent !important;
+    position: relative !important;
+  }
+}
+
+/* Wedding Agenda specific fixes */
+.wedding-agenda-form .grid {
+  width: 100% !important;
+  margin: 0 !important;
+  gap: 1.5rem !important; /* Match main form gap */
+}
+
+.wedding-agenda-form .field-input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 0 1rem 0 !important; /* Match main form margin */
+}
+
+.wedding-agenda-form .grid > div {
+  width: 100% !important;
+}
+
+/* Ensure consistent spacing for all form sections - match main form */
+.wedding-agenda-form .form-container {
+  padding: 2rem !important;
+  width: 100% !important;
+  max-width: 95vw !important;
+  margin: 2rem auto !important;
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  position: relative !important;
+  z-index: 2 !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 768px) {
+  .wedding-agenda-form .form-container {
+    padding: 1.5rem !important;
+    margin: 1rem auto !important;
+    width: 98% !important;
+    max-width: 98vw !important;
+    border-radius: 12px !important;
+    /* Remove expensive filters on mobile for performance */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: rgba(255, 255, 255, 0.98) !important;
+  }
+  
+  .wedding-agenda-form .grid {
+    gap: 1rem !important; /* Smaller gap on mobile */
+  }
+}
+
+/* Next.js root container - proper flex layout structure */
 #__next {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 1;
+  /* Ensure content scrolls over fixed background */
+  background: transparent;
 }
 
-/* Main content wrapper - flexible content area */
+/* Main content wrapper - fills available space */
 .main-wrapper {
   flex: 1;
   display: flex;
@@ -146,29 +230,45 @@ body {
   width: 100%;
   position: relative;
   z-index: 2;
+  /* Allow content to scroll independently */
+  overflow-y: auto;
 }
 
-/* Form container */
+/* Form container - optimized for background image */
 .form-container {
   width: 100%;
-  max-width: 850px;
+  max-width: 95vw;
   margin: 2rem auto;
   padding: 2rem;
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   z-index: 2;
+  overflow: visible; /* Allow autocomplete dropdown to appear */
 }
 
 /* Mobile styles - clean and simplified */
 @media (max-width: 768px) {
   .form-container {
-    margin: 0.5rem auto;
-    padding: 1rem;
+    margin: 1rem auto;
+    padding: 1.5rem;
     width: 98%;
-    max-width: 100%;
-    border-radius: 8px;
+    max-width: 98vw;
+    border-radius: 12px;
+    /* Remove expensive filters on mobile for performance */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    /* Ensure form stays above background */
+    position: relative;
+    z-index: 10;
   }
 
   /* Ensure content doesn't overflow */
@@ -183,12 +283,6 @@ body {
     height: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    background-attachment: scroll !important;
-  }
-
-  /* Remove attached background for cleaner display */
-  body::before {
-    display: none;
   }
 
   /* Maintain proper structure on mobile */
@@ -203,7 +297,7 @@ body {
   /* Flexible content area on mobile */
   .main-wrapper {
     flex: 1;
-    padding: 0 5px;
+    padding: 0 1vw;
     position: relative;
     z-index: 2;
   }
@@ -251,29 +345,18 @@ header a:hover {
   color: var(--primary-hover);
 }
 
-/* Mobile Responsive Styles - Consolidated */
+/* Mobile Responsive Styles - iOS fix only */
 @media (max-width: 768px) {
-  html {
-    font-size: 16px;
-    height: 100vh;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
-  }
-
   body {
     min-height: 100vh;
-    height: auto;
-    background-attachment: scroll !important;
-    -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
   }
 
   input, select, textarea {
     font-size: 16px !important;
+    color: #1a1a1a !important; /* Darker text for better mobile visibility */
+    font-weight: 500 !important; /* Thicker font weight */
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
   }
   
   input[type="radio"],
@@ -286,6 +369,7 @@ header a:hover {
     margin: 0.5rem auto;
     padding: 1rem;
     width: 98%;
+    max-width: 98vw;
     border-radius: 8px;
   }
 
@@ -306,6 +390,8 @@ header a:hover {
   .form-container {
     margin: 0.25rem auto;
     padding: 0.75rem;
+    width: 98%;
+    max-width: 98vw;
   }
 }
 
@@ -330,6 +416,10 @@ input, select {
 @media screen and (max-width: 768px) {
   input, select, textarea {
     font-size: 16px !important;
+    color: #1a1a1a !important; /* Darker text for better mobile visibility */
+    font-weight: 500 !important; /* Thicker font weight */
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
   }
   
   input[type="radio"],
@@ -502,52 +592,11 @@ input[type="radio"] {
   }
 }
 
-/* Mobile Background Fix - Optimized for performance */
-@media (max-width: 768px) {
-  /* Override all background-attachment fixed on mobile */
-  body, html, .main-wrapper, .form-container {
-    background-attachment: scroll !important;
-  }
-  
-  /* Ensure form content doesn't have competing backgrounds */
-  .form-container, .main-content {
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: none !important; /* Remove expensive filters on mobile */
-  }
-}
-
 /* Prevent horizontal overflow for all elements */
 * {
   max-width: 100vw;
   overflow-wrap: break-word;
   word-wrap: break-word;
-}
-
-/* CSS Reset */
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-  background: none;
-}
-
-html {
-  --app-height: 100vh;
-}
-
-body {
-  min-height: var(--app-height);
-  width: 100%;
-  color: #333;
-  overflow-x: hidden;
-  background: none;
 }
 
 /* Background image for mobile devices */
@@ -570,7 +619,7 @@ a {
 
 /* Form styling */
 .form-container {
-  max-width: 650px;
+  max-width: 95vw;
   width: 95%;
   margin: 1.5rem auto;
   padding: 2rem;
@@ -618,6 +667,10 @@ a {
   border-radius: 4px;
   font-size: 1rem;
   background-color: #fff;
+  color: #1a1a1a; /* Darker text for better visibility */
+  font-weight: 500; /* Thicker font weight */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .form-group textarea {
@@ -754,14 +807,12 @@ a {
   .form-container {
     padding: 1.5rem;
     margin: 1rem auto;
+    width: 98%;
+    max-width: 98vw;
   }
   
   .form-header h1 {
     font-size: 1.75rem;
-  }
-  
-  body {
-    background-attachment: scroll !important; /* Override fixed attachment on mobile */
   }
   
   /* Disable mobile-specific background handling */
@@ -773,7 +824,8 @@ a {
 @media (max-width: 480px) {
   .form-container {
     padding: 1.25rem;
-    width: 95%;
+    width: 98%;
+    max-width: 98vw;
     margin: 0.75rem auto;
   }
   
@@ -790,6 +842,10 @@ a {
   .form-group textarea {
     padding: 0.6rem;
     font-size: 0.95rem;
+    color: #1a1a1a; /* Darker text for better mobile visibility */
+    font-weight: 500; /* Thicker font weight */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   html, body {
@@ -802,17 +858,6 @@ a {
   input, select, textarea {
     max-width: 100%;
     font-size: 16px !important; /* Prevent iOS zoom on focus */
-  }
-}
-
-/* Fix for iOS devices */
-@supports (-webkit-touch-callout: none) {
-  body {
-    background-attachment: scroll !important;
-  }
-  
-  .ios-background-fix {
-    display: none;
   }
 }
 
@@ -946,7 +991,8 @@ a {
   .form-container, 
   .itemized-total-container, 
   .terms-container {
-    width: calc(95% - 0.5rem);
+    width: calc(98% - 0.5rem);
+    max-width: calc(98vw - 0.5rem);
     margin-left: auto;
     margin-right: auto;
     box-sizing: border-box;
@@ -961,16 +1007,10 @@ a {
   }
 }
 
-/* Add a specific rule to ensure no background on these elements */
-html, body, .form-container, .main-content, #__next {
-  background: none;
-}
-
 /* Ensure background images work properly on all devices */
 .mobile-background, 
-.ios-background-fix,
-body::before {
-  background-attachment: scroll !important;
+.ios-background-fix {
+  display: none !important;
 }
 
 /* Payment Confirmation Banner */
@@ -1089,7 +1129,7 @@ body::before {
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  max-width: 850px;
+  max-width: 95vw;
   margin: 0 auto;
   border-radius: 12px;
   background-color: rgba(255, 255, 255, 0.95);
@@ -1195,7 +1235,7 @@ h1, h2, h3, h4, h5, h6 {
   form {
     padding: 1.5rem 1rem !important;
     width: 100% !important;
-    max-width: 96% !important;
+    max-width: 98% !important;
     margin-left: auto !important;
     margin-right: auto !important;
     border-radius: 15px !important;
@@ -1338,21 +1378,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Mobile Performance and Scrolling Optimizations */
 @media (max-width: 768px) {
-  /* Fix background attachment for smooth scrolling */
+  /* Fix mobile scrolling performance */
   html, body {
-    background-attachment: scroll !important;
     -webkit-overflow-scrolling: touch !important;
     overflow-x: hidden !important;
     overscroll-behavior: contain !important;
-  }
-  
-  /* Force hardware acceleration and prevent tearing */
-  body, .main-wrapper, .form-container {
-    transform: translateZ(0) !important;
-    -webkit-transform: translateZ(0) !important;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-    will-change: auto !important; /* Only use when needed */
+    /* Ensure no background interference */
+    background: transparent !important;
   }
   
   /* Optimize scrolling performance */
@@ -1360,27 +1392,6 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-overflow-scrolling: touch;
     overflow-wrap: break-word;
     word-wrap: break-word;
-  }
-  
-  /* Remove unnecessary transforms from form elements */
-  .fixed-position-input {
-    position: relative !important;
-    transform: none !important;
-    height: auto;
-    min-height: 44px;
-  }
-  
-  .fixed-position-input:focus {
-    position: relative !important;
-    transform: none !important;
-  }
-  
-  /* Prevent viewport shifting when keyboard appears */
-  .form-container {
-    min-height: 100vh;
-    height: auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
   }
   
   /* Better tap targets for mobile */
@@ -1400,29 +1411,22 @@ h1, h2, h3, h4, h5, h6 {
     appearance: none;
   }
   
-  /* Remove scroll-behavior smooth on mobile for better performance */
-  html {
-    scroll-behavior: auto !important;
+  /* Address autocomplete container optimization */
+  .address-autocomplete-container {
+    position: relative !important;
+    overflow: visible !important;
+    z-index: 1 !important;
   }
   
-  /* Optimize container performance */
+  /* Form container adjustments for dropdown positioning */
+  .form-container {
+    overflow: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Optimize container performance without interfering with positioning */
   .vertical-scroll-container {
     -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
-    will-change: scroll-position;
-  }
-  
-  /* Prevent repaints on scroll */
-  .main-content, .form-header, .form-body {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-  
-  /* Optimize background rendering */
-  .mobile-background, .ios-background-fix {
-    transform: translateZ(0);
-    will-change: auto;
   }
 }
 
@@ -1755,18 +1759,10 @@ h1, h2, h3, h4, h5, h6 {
   .mobile-background {
     display: none;
   }
-  
-  body {
-    background-attachment: scroll !important;
-  }
 }
 
 /* Fix for iOS devices */
 @supports (-webkit-touch-callout: none) {
-  body {
-    background-attachment: scroll !important;
-  }
-  
   .ios-background-fix {
     display: none;
   }
@@ -1850,83 +1846,331 @@ input, select, textarea {
 
 /* Enhanced Mobile Input Field Support */
 @media (max-width: 768px) {
-  /* Ensure all input fields are properly interactive on mobile */
-  input[type="text"],
-  input[type="email"], 
-  input[type="tel"],
-  input[type="number"],
-  select,
-  textarea {
-    /* Prevent iOS zoom while maintaining accessibility */
-    font-size: 16px !important;
-    -webkit-text-size-adjust: 100% !important;
-    
-    /* Ensure proper touch interaction */
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
-    
-    /* Ensure text selection works */
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    
-    /* Remove any potential blocking styles */
-    pointer-events: auto !important;
-    
-    /* Ensure proper box model */
-    box-sizing: border-box !important;
-    
-    /* Minimum touch target size */
-    min-height: 44px !important;
-    
-    /* Ensure proper appearance */
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    
-    /* Ensure proper focus behavior */
-    outline: none !important;
-    border: 1px solid #ccc !important;
-    border-radius: 8px !important;
-    
-    /* Proper padding for mobile */
+  /* Music Library Button Styles - Mobile Responsive */
+  .music-library-nav-button {
     padding: 12px 16px !important;
-    
-    /* Ensure proper background */
-    background-color: white !important;
-    color: black !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    gap: 8px !important;
+    min-height: 48px !important;
+    flex: 1 !important;
+    max-width: none !important;
+    text-align: center !important;
+    justify-content: center !important;
   }
-  
-  /* Enhanced focus states for mobile */
-  input[type="text"]:focus,
-  input[type="email"]:focus, 
-  input[type="tel"]:focus,
-  input[type="number"]:focus,
-  select:focus,
-  textarea:focus {
-    border-color: #0070f3 !important;
-    box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2) !important;
-    outline: none !important;
-    background-color: white !important;
+
+  .music-library-nav-button .icon {
+    font-size: 16px !important;
   }
-  
-  /* Ensure field containers don't block interaction */
-  .field-input {
-    position: relative !important;
-    z-index: 1 !important;
-    pointer-events: auto !important;
+
+  .music-library-nav-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
   }
-  
-  /* Ensure labels don't interfere */
-  .field-label {
-    pointer-events: none !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
+
+  /* Selected Songs Summary Mobile Optimization */
+  .music-library-selected-summary {
+    padding: 16px !important;
+    margin-bottom: 20px !important;
   }
-  
-  /* Ensure form containers allow interaction */
-  .form-container,
-  .grid,
-  .form-grid-1col {
-    pointer-events: auto !important;
+
+  .music-library-selected-summary .button-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .music-library-selected-summary .button-group button {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+  }
+
+  /* Category Cards Mobile Optimization */
+  .music-library-category-card {
+    padding: 16px !important;
+  }
+
+  .music-library-category-card .icon-container {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .music-library-category-card .icon-container .icon {
+    font-size: 16px !important;
+  }
+
+  .music-library-category-card .title {
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+  }
+
+  .music-library-category-card .description {
+    font-size: 13px !important;
+  }
+
+  /* Back to Contract Button Mobile */
+  .music-library-back-button {
+    position: static !important;
+    width: 100% !important;
+    margin-bottom: 16px !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* Header Mobile Optimization */
+  .music-library-header {
+    text-align: center !important;
+    margin-bottom: 24px !important;
+  }
+
+  .music-library-header h1 {
+    font-size: 28px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .music-library-header p {
+    font-size: 16px !important;
+    padding: 0 8px !important;
+  }
+
+  /* Search Bar Mobile */
+  .music-library-search input {
+    padding: 12px 16px 12px 40px !important;
+    font-size: 16px !important;
+  }
+
+  /* Song List Items Mobile */
+  .music-library-song-item {
+    padding: 12px !important;
+  }
+
+  .music-library-song-item .track-number {
+    width: 24px !important;
+  }
+
+  .music-library-song-item .album-art {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .music-library-song-item .song-title {
+    font-size: 14px !important;
+  }
+
+  .music-library-song-item .song-artist {
+    font-size: 13px !important;
+  }
+
+  /* Playlist View Mobile */
+  .music-library-playlist-header {
+    flex-direction: column !important;
+    gap: 16px !important;
+    text-align: center !important;
+  }
+
+  .music-library-playlist-header .back-arrow {
+    position: static !important;
+    align-self: flex-start !important;
+    margin-bottom: 8px !important;
+  }
+
+  .music-library-playlist-header .back-to-contract {
+    position: static !important;
+    width: 100% !important;
+  }
+
+  /* Browse Navigation Mobile */
+  .music-library-browse-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .music-library-browse-nav button {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    gap: 8px !important;
+  }
+
+  /* Actual Music Library Category Card Buttons - Target the real structure */
+  .music-library .cursor-pointer .rounded-lg {
+    padding: 12px !important;
+  }
+
+  .music-library .cursor-pointer .w-12.h-12 {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .music-library .cursor-pointer .font-bold.text-lg {
+    font-size: 16px !important;
+  }
+
+  .music-library .cursor-pointer .text-sm {
+    font-size: 13px !important;
+  }
+
+  /* Target the actual button structure from the screenshots */
+  .px-8.py-4.font-bold.text-base.rounded-xl {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+  }
+
+  /* Target selected songs summary buttons */
+  .px-3.py-2.bg-green-500,
+  .px-3.py-2.bg-white,
+  .px-3.py-2.bg-gradient-to-r {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    min-height: 42px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Ensure flex containers stack vertically */
+  .flex.flex-col.sm\\:flex-row,
+  .flex.gap-2,
+  .flex.gap-3 {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* Additional specific targeting for music library buttons */
+  button.px-8.py-4 {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+  }
+
+  /* Target the navigation container */
+  .flex.flex-col.sm\\:flex-row.gap-4 {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Target selected songs buttons container */
+  .flex.flex-col.sm\\:flex-row.gap-2,
+  .flex.flex-col.sm\\:flex-row.gap-3 {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* Target all music library buttons with these specific classes */
+  button.px-3.py-2,
+  button.px-5.py-3 {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    min-height: 42px !important;
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* Target the main navigation buttons */
+  button.rounded-xl.border-2 {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+  }
+
+  /* Ensure category cards are mobile friendly */
+  .rounded-lg.p-4 {
+    padding: 12px !important;
+  }
+
+  /* Target icon containers in category cards */
+  .w-12.h-12.rounded-lg {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* Target text in category cards */
+  .font-bold.text-lg {
+    font-size: 16px !important;
+  }
+
+  .text-sm.font-medium {
+    font-size: 13px !important;
+  }
+
+  /* Music Library Container - Extend to edges */
+  .music-library-container,
+  .space-y-3 {
+    margin: 0 !important;
+    padding: 0 8px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  /* Category cards - extend to screen edges */
+  .cursor-pointer {
+    margin: 0 !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+  }
+
+  .cursor-pointer .rounded-lg {
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Music library main container */
+  .music-library-main {
+    padding: 8px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  /* Target the main content wrapper in music library */
+  .min-h-screen.bg-gradient-to-br {
+    padding: 8px !important;
+  }
+
+  /* Music library form container */
+  .music-library .form-container,
+  .rounded-lg.p-6.shadow-lg {
+    margin: 0 !important;
+    padding: 16px 8px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    border-radius: 8px !important;
+  }
+
+  /* Remove any extra spacing from category grid */
+  .space-y-3 > * {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .space-y-3 > *:first-child {
+    margin-top: 0 !important;
+  }
+
+  /* Header and search adjustments */
+  .music-library-header,
+  .music-library-search {
+    padding: 0 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Navigation buttons container */
+  .music-library-nav-container .flex {
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 
@@ -1962,6 +2206,362 @@ input, select, textarea {
     min-height: 48px !important;
     padding: 14px 16px !important;
     font-size: 16px !important;
+  }
+}
+
+/* Additional Mobile Optimizations for Very Small Screens */
+@media (max-width: 480px) {
+  /* Extra small button optimizations */
+  .music-library-nav-button {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    gap: 6px !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+  }
+
+  .music-library-nav-button .icon {
+    font-size: 14px !important;
+  }
+
+  /* Header adjustments for very small screens */
+  .music-library-header h1 {
+    font-size: 24px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .music-library-header p {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Back button mobile adjustments */
+  .music-library-back-button {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
+  }
+
+  /* Selected songs summary for small screens */
+  .music-library-selected-summary {
+    padding: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .music-library-selected-summary .button-group button {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    min-height: 42px !important;
+  }
+
+  /* Category cards for small screens */
+  .music-library-category-card {
+    padding: 12px !important;
+  }
+
+  .music-library-category-card .icon-container {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .music-library-category-card .title {
+    font-size: 15px !important;
+  }
+
+  .music-library-category-card .description {
+    font-size: 12px !important;
+  }
+
+  /* Search bar for small screens */
+  .music-library-search input {
+    padding: 10px 12px 10px 36px !important;
+    font-size: 16px !important;
+  }
+
+  /* Song list items for small screens */
+  .music-library-song-item {
+    padding: 10px !important;
+  }
+
+  .music-library-song-item .album-art {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Browse navigation for small screens */
+  .music-library-browse-nav button {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    gap: 6px !important;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+  .music-library-nav-container {
+    flex-direction: row !important;
+  }
+
+  .music-library-nav-button {
+    flex: 1 !important;
+    max-width: 50% !important;
+  }
+
+  .music-library-header {
+    margin-bottom: 16px !important;
+  }
+
+  .music-library-header h1 {
+    font-size: 26px !important;
+  }
+}
+
+/* Ensure buttons never exceed container width */
+@media (max-width: 768px) {
+  .music-library-nav-button,
+  .music-library-selected-summary .button-group button,
+  .music-library-browse-nav button,
+  .music-library-back-button {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  /* Container padding adjustments */
+  .music-library-nav-container,
+  .music-library-selected-summary,
+  .music-library-browse-nav {
+    padding: 0 8px !important;
+  }
+
+  /* Ensure proper spacing between elements */
+  .music-library-nav-container > div,
+  .music-library-selected-summary > div,
+  .music-library-browse-nav {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+/* Enhanced wide screen optimization */
+@media (min-width: 1200px) {
+  .form-container {
+    max-width: 90vw; /* Slightly less wide on very large screens for readability */
+    padding: 2.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.75rem;
+  }
+
+  .form-header h1 {
+    font-size: 2.25rem;
+  }
+
+  .form-header p {
+    font-size: 1.125rem;
+  }
+}
+
+/* Medium screen optimization */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .form-container {
+    max-width: 95vw;
+    padding: 2rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Ensure all input fields are properly interactive on mobile */
+input[type="text"],
+input[type="email"], 
+input[type="tel"],
+input[type="number"],
+select,
+textarea {
+  /* Prevent iOS zoom while maintaining accessibility */
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100% !important;
+  
+  /* Ensure proper touch interaction */
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  
+  /* Ensure text selection works */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  
+  /* Remove any potential blocking styles */
+  pointer-events: auto !important;
+  
+  /* Ensure proper box model */
+  box-sizing: border-box !important;
+  
+  /* Minimum touch target size */
+  min-height: 44px !important;
+  
+  /* Ensure proper appearance */
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  
+  /* Ensure proper focus behavior */
+  outline: none !important;
+  border: 1px solid #ccc !important;
+  border-radius: 8px !important;
+  
+  /* Proper padding for mobile */
+  padding: 12px 16px !important;
+  
+  /* Enhanced text visibility for mobile */
+  background-color: white !important;
+  color: #1a1a1a !important; /* Darker text color */
+  font-weight: 500 !important; /* Thicker font weight */
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Enhanced focus states for mobile */
+input[type="text"]:focus,
+input[type="email"]:focus, 
+input[type="tel"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  border-color: #0070f3 !important;
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2) !important;
+  outline: none !important;
+  background-color: white !important;
+}
+
+/* Ensure field containers don't block interaction */
+.field-input {
+  position: relative !important;
+  z-index: 1 !important;
+  pointer-events: auto !important;
+  /* Match the exact inputStyle from main form */
+  backgroundColor: white !important;
+  width: 100% !important;
+  padding: clamp(12px, 2vw, 16px) !important;
+  marginBottom: 1rem !important;
+  borderRadius: 8px !important;
+  border: 1px solid #ccc !important;
+  color: #1a1a1a !important; /* Darker text color for better visibility */
+  fontSize: clamp(16px, 2.5vw, 18px) !important;
+  fontWeight: 500 !important; /* Thicker font weight for mobile readability */
+  /* Mobile optimizations */
+  minHeight: 44px !important;
+  lineHeight: 1.4 !important;
+  WebkitAppearance: none !important;
+  appearance: none !important;
+  touchAction: manipulation !important;
+  WebkitTapHighlightColor: transparent !important;
+  /* Enhanced mobile input support */
+  outline: none !important;
+  boxSizing: border-box !important;
+  userSelect: text !important;
+  WebkitUserSelect: text !important;
+  /* Enhanced text rendering for mobile */
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.field-input:focus {
+  borderColor: #0070f3 !important;
+  boxShadow: 0 0 0 2px rgba(0, 112, 243, 0.2) !important;
+  outline: none !important;
+  backgroundColor: white !important;
+}
+
+/* Ensure labels don't interfere */
+.field-label {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  /* Match the exact labelStyle from main form */
+  display: block !important;
+  marginBottom: 0.5rem !important;
+  fontWeight: bold !important;
+  color: #333 !important;
+  fontSize: clamp(16px, 2.5vw, 18px) !important;
+}
+
+/* Ensure form containers allow interaction */
+.form-container,
+.grid,
+.form-grid-1col {
+  pointer-events: auto !important;
+}
+
+/* Fixed background div styling for all devices */
+.fixed-background {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: -10 !important;
+  pointer-events: none !important;
+  /* Force hardware acceleration */
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  will-change: auto !important;
+}
+
+/* Mobile-specific background fixes */
+@media (max-width: 768px) {
+  .fixed-background {
+    /* Ensure fixed positioning works on mobile */
+    position: fixed !important;
+    /* Prevent any scrolling or movement */
+    background-attachment: scroll !important;
+    /* Disable any transform effects that might cause issues */
+    transform: none !important;
+    -webkit-transform: none !important;
+    /* Ensure it covers the full viewport without scaling */
+    background-size: cover !important;
+    background-position: center center !important;
+    /* Prevent any potential repainting issues */
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+    /* Highest priority to stay behind content */
+    z-index: -20 !important;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .fixed-background {
+    /* Force fixed positioning on iOS */
+    position: fixed !important;
+    /* Use scroll instead of fixed for better iOS compatibility */
+    background-attachment: scroll !important;
+    /* Prevent iOS Safari from moving the background */
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Ensure body doesn't interfere with fixed background */
+  body {
+    background: transparent !important;
+    position: relative !important;
   }
 }
 

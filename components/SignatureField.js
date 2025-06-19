@@ -90,10 +90,8 @@ const SignatureField = ({ onSignatureChange, showTermsModal }) => {
         )}
       </div>
       
-      {/* Add import for signature font using style */}
+      {/* Add styles for signature section */}
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
-        
         #signature-section input::placeholder {
           opacity: 0.5;
           font-style: italic;

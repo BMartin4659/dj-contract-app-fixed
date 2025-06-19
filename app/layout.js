@@ -83,7 +83,30 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${inter.className}`}>
       <body suppressHydrationWarning className="relative min-h-screen flex flex-col">
-        <div id="__next" className="flex flex-col flex-1">
+        {/* Fixed background layer - completely separate from scrolling content */}
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundImage: 'url(/dj-background-new.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
+            zIndex: -10,
+            pointerEvents: 'none',
+            // Mobile-specific fixes
+            transform: 'translateZ(0)',
+            WebkitTransform: 'translateZ(0)',
+            willChange: 'auto'
+          }}
+          className="fixed-background"
+        />
+        
+        <div id="__next" className="flex flex-col flex-1 relative z-10">
           <ClientOnly>
             <ClientFormProvider>
               <DocumentHead />

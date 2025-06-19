@@ -222,40 +222,45 @@ const PaymentConfirmationBanner = ({ paymentMethod, onClose }) => {
 };
 
 // Payment Option component
-const PaymentOption = ({ method, isSelected, onSelect, color }) => (
-  <div 
-    onClick={onSelect}
-    className="payment-option-item"
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '18px',
-      borderRadius: '8px',
-      border: isSelected ? `2px solid ${color || '#0070f3'}` : '1px solid #ddd',
-      backgroundColor: isSelected ? (color ? `${color}10` : 'rgba(0, 112, 243, 0.05)') : 'white',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxShadow: isSelected ? `0 4px 8px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)',
-    }}
-  >
-    <input
-      type="radio"
-      name="paymentMethod"
-      value={method}
-      checked={isSelected}
-      onChange={() => {}}
-      style={{ display: 'none' }}
-    />
-    <div style={{ 
-      fontWeight: isSelected ? '600' : '400',
-      color: isSelected ? (color || '#0070f3') : '#333',
-      fontSize: '1rem',
-    }}>
-      {method}
+const PaymentOption = ({ method, isSelected, onSelect, color }) => {
+  const inputId = `paymentMethod${method.replace(/\s+/g, '')}`;
+  return (
+    <div 
+      onClick={onSelect}
+      className="payment-option-item"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '18px',
+        borderRadius: '8px',
+        border: isSelected ? `2px solid ${color || '#0070f3'}` : '1px solid #ddd',
+        backgroundColor: isSelected ? (color ? `${color}10` : 'rgba(0, 112, 243, 0.05)') : 'white',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        boxShadow: isSelected ? `0 4px 8px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)',
+      }}
+    >
+      <input
+        id={inputId}
+        type="radio"
+        name="paymentMethod"
+        value={method}
+        checked={isSelected}
+        onChange={() => {}}
+        style={{ display: 'none' }}
+      />
+      <label htmlFor={inputId} style={{ display: 'none' }}>{method} Payment Method</label>
+      <div style={{ 
+        fontWeight: isSelected ? '600' : '400',
+        color: isSelected ? (color || '#0070f3') : '#333',
+        fontSize: '1rem',
+      }}>
+        {method}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Add at the top of the file after imports
 // Payment method URL configurations
@@ -2479,8 +2484,9 @@ Live City DJ Contract Terms and Conditions:
     marginBottom: '1rem',
     borderRadius: '8px',
     border: '1px solid #ccc',
-    color: 'black',
+    color: '#1a1a1a', // Darker text for better mobile visibility
     fontSize: 'clamp(16px, 2.5vw, 18px)',
+    fontWeight: '500', // Thicker font weight for mobile readability
     // Mobile optimizations
     minHeight: '44px',
     lineHeight: '1.4',
@@ -3529,7 +3535,7 @@ Live City DJ Contract Terms and Conditions:
                 {/* Client Information Section - Two Column Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   <div>
-                    <label style={{
+                    <label htmlFor="clientName" style={{
                       ...labelStyle,
                       fontSize: 'clamp(16px, 2.5vw, 18px)'
                     }} className="field-label">
@@ -3538,6 +3544,7 @@ Live City DJ Contract Terms and Conditions:
                       </span>
                     </label>
                     <input
+                      id="clientName"
                       name="clientName"
                       type="text"
                       required
@@ -3559,12 +3566,13 @@ Live City DJ Contract Terms and Conditions:
                     />
                   </div>
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="email" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {fieldIcons['email']} Email *
                       </span>
                     </label>
                     <input
+                      id="email"
                       name="email"
                       type="email"
                       required
@@ -3587,12 +3595,13 @@ Live City DJ Contract Terms and Conditions:
                 {/* Phone Information Section - Two Column Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="contactPhone" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {fieldIcons['contactPhone']} Contact Phone *
                       </span>
                     </label>
                     <input
+                      id="contactPhone"
                       name="contactPhone"
                       type="tel"
                       required
@@ -3614,12 +3623,13 @@ Live City DJ Contract Terms and Conditions:
                     )}
                   </div>
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="clientPhone" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         <FaPhoneAlt style={{ color: '#10b981', marginRight: '8px' }} /> Client Phone
                       </span>
                     </label>
                     <input
+                      id="clientPhone"
                       name="clientPhone"
                       type="tel"
                       style={{
@@ -3660,12 +3670,13 @@ Live City DJ Contract Terms and Conditions:
                     />
                   </div>
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="guestCount" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {fieldIcons['guestCount']} Guest Count *
                       </span>
                     </label>
                     <input
+                      id="guestCount"
                       name="guestCount"
                       type="number"
                       required
@@ -3689,12 +3700,13 @@ Live City DJ Contract Terms and Conditions:
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
                   {/* Start Time */}
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="startTime" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {timeIcons['startTime']} Start Time *
                       </span>
                     </label>
                     <select
+                      id="startTime"
                       name="startTime"
                       value={formData.startTime || ''}
                       onChange={(e) => {
@@ -3734,12 +3746,13 @@ Live City DJ Contract Terms and Conditions:
 
                   {/* End Time */}
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="endTime" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {timeIcons['endTime']} End Time *
                       </span>
                     </label>
                     <select
+                      id="endTime"
                       name="endTime"
                       value={formData.endTime || ''}
                       onChange={(e) => handleEndTimeChange(e.target.value)}
@@ -3774,12 +3787,13 @@ Live City DJ Contract Terms and Conditions:
                 {/* Two-column grid for venue information - changed to single column */}
                 <div className="form-grid-1col">
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="venueName" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {fieldIcons['venueName']} Venue Name:
                       </span>
                     </label>
                     <input
+                      id="venueName"
                       name="venueName"
                       type="text"
                       required
@@ -3798,7 +3812,7 @@ Live City DJ Contract Terms and Conditions:
                     />
                   </div>
                   <div>
-                    <label style={labelStyle} className="field-label">
+                    <label htmlFor="venueLocation" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {venueLocationIcon} Venue Location:
                       </span>
@@ -4001,12 +4015,14 @@ Live City DJ Contract Terms and Conditions:
                         </p>
                         
                         <input
+                          id={`service_${name}`}
                           type="checkbox"
                           name={name}
                           checked={formData[name]}
                           onChange={handleChange}
                           style={{ position: 'absolute', opacity: 0 }}
                         />
+                        <label htmlFor={`service_${name}`} style={{ display: 'none' }}>{label} Service</label>
                       </div>
                     );
                   })}
@@ -4239,7 +4255,16 @@ Live City DJ Contract Terms and Conditions:
                     
                     {formData.streamingService && (
                       <div style={{ marginBottom: '1rem' }}>
+                        <label htmlFor="playlistLink" style={{ 
+                          display: 'block', 
+                          marginBottom: '0.5rem', 
+                          fontWeight: '500', 
+                          color: '#333' 
+                        }}>
+                          Playlist Link:
+                        </label>
                         <input
+                          id="playlistLink"
                           type="text"
                           name="playlistLink"
                           value={formData.playlistLink || ''}
@@ -4600,6 +4625,7 @@ Live City DJ Contract Terms and Conditions:
                         ${calculateDepositAmount()}
                       </div>
                       <input
+                        id="paymentAmountDeposit"
                         type="radio"
                         name="paymentAmount"
                         value="deposit"
@@ -4622,6 +4648,7 @@ Live City DJ Contract Terms and Conditions:
                         }}
                         style={{ position: 'absolute', opacity: 0 }}
                       />
+                      <label htmlFor="paymentAmountDeposit" style={{ display: 'none' }}>Pay Deposit</label>
                     </div>
                     
                     {/* Full Payment Option */}
@@ -4686,6 +4713,7 @@ Live City DJ Contract Terms and Conditions:
                         ${calculateTotal()}
                       </div>
                       <input
+                        id="paymentAmountFull"
                         type="radio"
                         name="paymentAmount"
                         value="full"
@@ -4708,6 +4736,7 @@ Live City DJ Contract Terms and Conditions:
                         }}
                         style={{ position: 'absolute', opacity: 0 }}
                       />
+                      <label htmlFor="paymentAmountFull" style={{ display: 'none' }}>Pay Full Amount</label>
                     </div>
                   </div>
                 </div>
@@ -4732,6 +4761,16 @@ Live City DJ Contract Terms and Conditions:
                       onClick={() => handlePaymentMethodSelect('Stripe')}
                       style={getPaymentOptionStyle('Stripe')}
                     >
+                      <input
+                        id="paymentMethodStripe"
+                        type="radio"
+                        name="paymentMethod"
+                        value="Stripe"
+                        checked={formData.paymentMethod === 'Stripe'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodStripe" style={{ display: 'none' }}>Stripe Payment Method</label>
                       <div className="payment-icon" style={{ 
                         ...paymentIconStyle,
                         color: paymentIconColors.Stripe
@@ -4753,6 +4792,16 @@ Live City DJ Contract Terms and Conditions:
                       onClick={() => handlePaymentMethodSelect('Venmo')}
                       style={getPaymentOptionStyle('Venmo')}
                     >
+                      <input
+                        id="paymentMethodVenmo"
+                        type="radio"
+                        name="paymentMethod"
+                        value="Venmo"
+                        checked={formData.paymentMethod === 'Venmo'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodVenmo" style={{ display: 'none' }}>Venmo Payment Method</label>
                       <div className="payment-icon" style={{ 
                         ...paymentIconStyle,
                         color: paymentIconColors.Venmo
@@ -4774,6 +4823,16 @@ Live City DJ Contract Terms and Conditions:
                       onClick={() => handlePaymentMethodSelect('CashApp')}
                       style={getPaymentOptionStyle('CashApp')}
                     >
+                      <input
+                        id="paymentMethodCashApp"
+                        type="radio"
+                        name="paymentMethod"
+                        value="CashApp"
+                        checked={formData.paymentMethod === 'CashApp'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodCashApp" style={{ display: 'none' }}>CashApp Payment Method</label>
                       <div className="payment-icon" style={{ 
                         ...paymentIconStyle,
                         color: paymentIconColors.CashApp
@@ -4795,6 +4854,16 @@ Live City DJ Contract Terms and Conditions:
                       onClick={() => handlePaymentMethodSelect('PayPal')}
                       style={getPaymentOptionStyle('PayPal')}
                     >
+                      <input
+                        id="paymentMethodPayPal"
+                        type="radio"
+                        name="paymentMethod"
+                        value="PayPal"
+                        checked={formData.paymentMethod === 'PayPal'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodPayPal" style={{ display: 'none' }}>PayPal Payment Method</label>
                       <div className="payment-icon" style={{ 
                         ...paymentIconStyle,
                         color: paymentIconColors.PayPal
@@ -4860,9 +4929,18 @@ Live City DJ Contract Terms and Conditions:
                   border: formErrors.signerName ? '1px solid red' : '1px solid #e0e0e0',
                   borderTop: 'none',
                 }}>
-                  <h3 style={{ marginBottom: '1rem', color: '#333' }}>Sign here</h3>
                   <div style={{ marginBottom: '1rem' }}>
+                    <label htmlFor="signerName" style={{ 
+                      display: 'block', 
+                      marginBottom: '1rem', 
+                      color: '#333',
+                      fontSize: '1.125rem',
+                      fontWeight: '600'
+                    }}>
+                      Sign here
+                    </label>
                     <input
+                      id="signerName"
                       name="signerName"
                       type="text"
                       value={formData.signerName || ''}
@@ -5151,7 +5229,7 @@ Live City DJ Contract Terms and Conditions:
                 
                 {formData.musicPreferences.includes('other') && (
                   <div style={{ marginBottom: '20px' }}>
-                    <label style={{
+                    <label htmlFor="otherMusicPreference" style={{
                       display: 'block',
                       marginBottom: '8px',
                       fontWeight: '500',
@@ -5160,6 +5238,8 @@ Live City DJ Contract Terms and Conditions:
                       Please specify other genres:
                     </label>
                     <input
+                      id="otherMusicPreference"
+                      name="otherMusicPreference"
                       type="text"
                       value={formData.otherMusicPreference}
                       onChange={(e) => {

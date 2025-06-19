@@ -16,10 +16,33 @@ const SongSelector = ({
   singleFieldValue,
   onSingleFieldChange
 }) => {
+  // Common input styles to match main form
+  const inputStyle = {
+    backgroundColor: 'white',
+    width: '100%',
+    padding: 'clamp(12px, 2vw, 16px)',
+    marginBottom: '1rem',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    color: '#1a1a1a', // Darker text for better mobile visibility
+    fontSize: 'clamp(16px, 2.5vw, 18px)',
+    fontWeight: '500', // Thicker font weight for mobile readability
+    minHeight: '44px',
+    lineHeight: '1.4',
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    outline: 'none',
+    boxSizing: 'border-box',
+    userSelect: 'text',
+    WebkitUserSelect: 'text'
+  };
+
   if (singleField) {
     return (
-      <div className="space-y-2">
+      <div>
+        <label htmlFor={`${singleFieldName}_select`} style={{ display: 'none' }}>Choose Song</label>
         <select
+          id={`${singleFieldName}_select`}
           name={singleFieldName}
           value={singleFieldValue}
           onChange={(e) => {
@@ -30,16 +53,8 @@ const SongSelector = ({
               onSingleFieldChange({ target: { name: singleFieldName, value: '' } });
             }
           }}
-          style={{
-            width: '100%',
-            padding: 'clamp(12px, 2vw, 16px)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-            backgroundColor: 'white',
-            marginBottom: '0.5rem',
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
+          style={inputStyle}
+          className="field-input"
         >
           <option value="">Choose from popular songs...</option>
           {suggestions?.map((song, index) => (
@@ -49,90 +64,73 @@ const SongSelector = ({
         </select>
         
         <input
+          id={`${singleFieldName}_input`}
           type="text"
           name={singleFieldName}
           value={singleFieldValue}
           onChange={onSingleFieldChange}
           style={{
-            width: '100%',
-            padding: 'clamp(12px, 2vw, 16px)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-            backgroundColor: 'white',
-            minHeight: isMobile ? '44px' : 'auto'
+            ...inputStyle,
+            marginBottom: '0'  // Remove bottom margin from last field
           }}
+          className="field-input"
           placeholder={placeholder}
+          aria-label={placeholder}
         />
+        <label htmlFor={`${singleFieldName}_input`} style={{ display: 'none' }}>{placeholder}</label>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <select
-          value=""
-          onChange={(e) => {
-            if (e.target.value) {
-              const [title, artist] = e.target.value.split(' – ');
-              onSongChange({ target: { name: songName, value: title || '' } });
-              onArtistChange({ target: { name: artistName, value: artist || '' } });
-            }
-          }}
-          style={{
-            width: '100%',
-            padding: 'clamp(12px, 2vw, 16px)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-            backgroundColor: 'white',
-            marginBottom: '0.5rem',
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
-        >
-          <option value="">Choose from popular songs...</option>
-          {suggestions?.map((song, index) => (
-            <option key={index} value={song}>{song}</option>
-          ))}
-        </select>
-      </div>
+    <div>
+      <label htmlFor={`${songName}_songSelect`} style={{ display: 'none' }}>Choose Popular Song</label>
+      <select
+        id={`${songName}_songSelect`}
+        value=""
+        onChange={(e) => {
+          if (e.target.value) {
+            const [title, artist] = e.target.value.split(' – ');
+            onSongChange({ target: { name: songName, value: title || '' } });
+            onArtistChange({ target: { name: artistName, value: artist || '' } });
+          }
+        }}
+        style={inputStyle}
+        className="field-input"
+      >
+        <option value="">Choose from popular songs...</option>
+        {suggestions?.map((song, index) => (
+          <option key={index} value={song}>{song}</option>
+        ))}
+      </select>
       
-      <div>
-        <input
-          type="text"
-          name={songName}
-          value={songValue}
-          onChange={onSongChange}
-          style={{
-            width: '100%',
-            padding: 'clamp(12px, 2vw, 16px)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-            backgroundColor: 'white',
-            marginBottom: '1.2rem',
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
-          placeholder="Song title"
-        />
-        <input
-          type="text"
-          name={artistName}
-          value={artistValue}
-          onChange={onArtistChange}
-          style={{
-            width: '100%',
-            padding: 'clamp(12px, 2vw, 16px)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            fontSize: isMobile ? '16px' : 'clamp(16px, 2.5vw, 18px)',
-            backgroundColor: 'white',
-            minHeight: isMobile ? '44px' : 'auto'
-          }}
-          placeholder="Artist"
-        />
-      </div>
+      <input
+        id={`${songName}_input`}
+        type="text"
+        name={songName}
+        value={songValue}
+        onChange={onSongChange}
+        style={inputStyle}
+        className="field-input"
+        placeholder="Song title"
+        aria-label="Song title"
+      />
+      <label htmlFor={`${songName}_input`} style={{ display: 'none' }}>Song title</label>
+      <input
+        id={`${artistName}_input`}
+        type="text"
+        name={artistName}
+        value={artistValue}
+        onChange={onArtistChange}
+        style={{
+          ...inputStyle,
+          marginBottom: '0'  // Remove bottom margin from last field
+        }}
+        className="field-input"
+        placeholder="Artist"
+        aria-label="Artist"
+      />
+      <label htmlFor={`${artistName}_input`} style={{ display: 'none' }}>Artist</label>
     </div>
   );
 };

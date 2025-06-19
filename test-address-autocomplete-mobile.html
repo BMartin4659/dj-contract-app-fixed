@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Autocomplete Mobile Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .test-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: visible;
+        }
+
+        .address-autocomplete-container {
+            position: relative;
+            width: 100%;
+            z-index: 1;
+            margin-bottom: 20px;
+        }
+
+        .address-input {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: white;
+            -webkit-appearance: none;
+            appearance: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px;
+            line-height: 1.4;
+        }
+
+        .address-input:focus {
+            outline: none;
+            border-color: #0070f3;
+            box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Google Maps Autocomplete Styles */
+        .pac-container {
+            z-index: 9999 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #ccc !important;
+            font-size: 16px !important;
+            background: white !important;
+            margin-top: 4px !important;
+            max-height: 300px !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            position: absolute !important;
+        }
+
+        .pac-item {
+            padding: 12px 16px !important;
+            border-bottom: 1px solid #eee !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+            min-height: 44px !important;
+            display: flex !important;
+            align-items: center !important;
+            font-size: 16px !important;
+            transition: background-color 0.2s ease !important;
+        }
+
+        .pac-item:hover, .pac-item:focus {
+            background-color: #f8f9fa !important;
+        }
+
+        .pac-item-selected {
+            background-color: #e3f2fd !important;
+        }
+
+        .pac-item:last-child {
+            border-bottom: none !important;
+        }
+
+        .pac-item-query {
+            font-size: 16px !important;
+            line-height: 1.4 !important;
+            color: #333 !important;
+        }
+
+        .pac-matched {
+            font-weight: 600 !important;
+            color: #1976d2 !important;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .pac-container {
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                position: absolute !important;
+                top: 100% !important;
+                margin-top: 2px !important;
+                max-height: 40vh !important;
+                border-radius: 12px !important;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .pac-item {
+                padding: 16px 20px !important;
+                min-height: 56px !important;
+                font-size: 16px !important;
+                line-height: 1.3 !important;
+            }
+
+            .pac-item-query {
+                font-size: 16px !important;
+                line-height: 1.3 !important;
+            }
+        }
+
+        .test-info {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .test-info h3 {
+            margin-bottom: 10px;
+            color: #2d5016;
+        }
+
+        .test-info ul {
+            margin-left: 20px;
+        }
+
+        .test-info li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-info">
+            <h3>🧪 Mobile Address Autocomplete Test</h3>
+            <p><strong>Test Instructions:</strong></p>
+            <ul>
+                <li>Type an address in the field below</li>
+                <li>Verify dropdown appears correctly</li>
+                <li>Tap suggestions to select them</li>
+                <li>Check positioning on mobile devices</li>
+                <li>Test with device keyboard open/closed</li>
+            </ul>
+        </div>
+
+        <div class="address-autocomplete-container">
+            <input 
+                type="text" 
+                id="address-input"
+                class="address-input"
+                placeholder="Enter venue address"
+                autocomplete="address-line1"
+            >
+        </div>
+
+        <div id="status" class="status">
+            Ready to test - Start typing an address...
+        </div>
+    </div>
+
+    <script>
+        let autocomplete;
+        let statusDiv = document.getElementById('status');
+        let addressInput = document.getElementById('address-input');
+
+        function updateStatus(message) {
+            statusDiv.textContent = message;
+            console.log('Status:', message);
+        }
+
+        function initAutocomplete() {
+            try {
+                updateStatus('Initializing Google Maps Autocomplete...');
+                
+                autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                    types: ['address'],
+                    componentRestrictions: { country: 'us' },
+                    fields: ['formatted_address', 'name', 'place_id', 'geometry']
+                });
+
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    if (place.formatted_address) {
+                        updateStatus(`✅ Address selected: ${place.formatted_address}`);
+                    } else {
+                        updateStatus('❌ No address details available');
+                    }
+                });
+
+                updateStatus('✅ Autocomplete initialized successfully! Start typing...');
+            } catch (error) {
+                updateStatus(`❌ Error initializing autocomplete: ${error.message}`);
+            }
+        }
+
+        function loadGoogleMaps() {
+            updateStatus('Loading Google Maps API...');
+            
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyC-5o9YY4NS8y8F2ZTg8-zibHYRP_1dOEc&libraries=places&callback=initAutocomplete';
+            script.async = true;
+            script.defer = true;
+            
+            script.onerror = function() {
+                updateStatus('❌ Failed to load Google Maps API');
+            };
+            
+            document.head.appendChild(script);
+        }
+
+        // Add input event listeners for testing
+        addressInput.addEventListener('focus', function() {
+            updateStatus('Input focused - autocomplete should be ready');
+        });
+
+        addressInput.addEventListener('input', function() {
+            if (this.value.length > 2) {
+                updateStatus(`Typing: "${this.value}" - suggestions should appear`);
+            }
+        });
+
+        // iOS zoom prevention
+        addressInput.addEventListener('touchstart', function() {
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                this.style.fontSize = '16px';
+            }
+        });
+
+        // Load Google Maps when page loads
+        window.addEventListener('load', loadGoogleMaps);
+        
+        // Make initAutocomplete globally available for the callback
+        window.initAutocomplete = initAutocomplete;
+    </script>
+</body>
+</html> 

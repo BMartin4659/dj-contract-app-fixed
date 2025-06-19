@@ -7,7 +7,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 const CustomInput = forwardRef(({ value, onClick, placeholder }, ref) => (
   <div 
-    className="datepicker-input"
+    className="datepicker-input field-input"
     onClick={(e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -39,24 +39,27 @@ const CustomInput = forwardRef(({ value, onClick, placeholder }, ref) => (
     }}
     ref={ref}
     style={{
-      width: '100%',
       backgroundColor: 'white',
-      border: '1px solid #ccc',
-      borderRadius: '8px',
+      width: '100%',
       padding: 'clamp(12px, 2vw, 16px)',
+      marginBottom: '1rem',
+      borderRadius: '8px',
+      border: '1px solid #ccc',
+      color: '#1a1a1a', // Darker text for better mobile visibility
       fontSize: 'clamp(16px, 2.5vw, 18px)',
-      color: '#000',
+      fontWeight: '500', // Thicker font weight for mobile readability
+      minHeight: '44px',
+      lineHeight: '1.4',
+      WebkitAppearance: 'none',
+      appearance: 'none',
+      outline: 'none',
+      boxSizing: 'border-box',
+      userSelect: 'text',
+      WebkitUserSelect: 'text',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      cursor: 'pointer',
-      boxSizing: 'border-box',
-      marginBottom: '0.5rem',
-      touchAction: 'manipulation',
-      WebkitTapHighlightColor: 'transparent',
-      WebkitTouchCallout: 'none',
-      WebkitUserSelect: 'none',
-      userSelect: 'none'
+      cursor: 'pointer'
     }}
   >
     <span style={{ 
@@ -119,21 +122,29 @@ const ReactDatePickerField = ({
     return (
       <div className="relative w-full">
         <div 
-          className="datepicker-input"
+          className="datepicker-input field-input"
           style={{
-            width: '100%',
             backgroundColor: 'white',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
+            width: '100%',
             padding: 'clamp(12px, 2vw, 16px)',
+            marginBottom: '1rem',
+            borderRadius: '8px',
+            border: '1px solid #ccc',
+            color: '#1a1a1a', // Darker text for better mobile visibility
             fontSize: 'clamp(16px, 2.5vw, 18px)',
-            color: '#6b7280',
+            fontWeight: '500', // Thicker font weight for mobile readability
+            minHeight: '44px',
+            lineHeight: '1.4',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            outline: 'none',
+            boxSizing: 'border-box',
+            userSelect: 'text',
+            WebkitUserSelect: 'text',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            cursor: 'pointer',
-            boxSizing: 'border-box',
-            marginBottom: '0.5rem'
+            cursor: 'pointer'
           }}
         >
           <span style={{ 

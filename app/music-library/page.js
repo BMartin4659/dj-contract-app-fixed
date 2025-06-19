@@ -1387,11 +1387,11 @@ export default function MusicLibraryPage() {
           }}>
             
             {/* Header */}
-            <div className="text-center mb-10 relative">
+            <div className="text-center mb-10 relative music-library-header">
               {/* Back to Contract Button - Positioned absolutely to not affect centering */}
                   <button
                     onClick={handleBackToContract}
-                className="absolute left-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                className="music-library-back-button absolute left-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
                 title="Save your selected songs and return to the contract form"
                   >
                 <span>Back to Contract</span>
@@ -1411,7 +1411,7 @@ export default function MusicLibraryPage() {
                 </div>
 
             {/* Search Bar */}
-            <div className="mb-8">
+            <div className="mb-8 music-library-search">
               <div className="relative">
                 <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
                 <input
@@ -1434,27 +1434,27 @@ export default function MusicLibraryPage() {
           </div>
 
             {/* Navigation Buttons */}
-            <div className="mb-8">
-              <div className="flex gap-4 justify-center">
+            <div className="mb-8 music-library-nav-container">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => handleTabChange('genres')}
-                  className={`px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
+                  className={`music-library-nav-button px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
                     activeTab === 'genres'
                       ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
                       : 'bg-white text-gray-900 border-purple-400 hover:bg-purple-50 hover:border-purple-600 hover:shadow-lg'
                   }`}
                 >
-                  <FaGuitar className="text-lg" /> Music Genres
+                  <FaGuitar className="text-lg icon" /> Music Genres
                 </button>
                 <button
                   onClick={() => handleTabChange('playlists')}
-                  className={`px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
+                  className={`music-library-nav-button px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
                     activeTab === 'playlists'
                       ? 'bg-green-600 text-white border-green-600 shadow-lg'
                       : 'bg-white text-gray-900 border-green-400 hover:bg-green-50 hover:border-green-600 hover:shadow-lg'
                   }`}
                 >
-                  <FaHeadphones className="text-lg" /> Curated Playlists
+                  <FaHeadphones className="text-lg icon" /> Curated Playlists
                 </button>
             </div>
         </div>
