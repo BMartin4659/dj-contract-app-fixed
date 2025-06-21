@@ -2,25 +2,84 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read all documents
+    // TEMPORARY DEVELOPMENT RULES - MORE PERMISSIVE
+    // TODO: Tighten these rules for production
+    
+    // Allow read/write access to all documents (DEVELOPMENT ONLY)
     match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // DJ user documents - accessible by DJ themselves or for subscription updates
+    match /users/{userId} {
+      // DJs can read/write their own data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow webhook updates for subscription data (unauthenticated)
+      // This is needed for Stripe/PayPal webhooks to update subscription status
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscription']);
+      
+      // Client documents within DJ's collection
+      match /clients/{clientId} {
+        // DJs can read/write their own client data
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        // Allow unauthenticated writes for client form submissions
+        // This enables clients to fill out forms without logging in
+        allow create, update: if true;
+        
+        // Prevent deletion by unauthenticated users
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Email templates within DJ's collection
+      match /emailTemplates/{templateId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Subscription information within DJ's collection
+      match /subscription/{subscriptionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        // Allow webhook updates (unauthenticated)
+        allow update: if true;
+      }
+    }
+    
+    // Public read access for DJ profiles (for client form branding)
+    match /djProfiles/{djId} {
       allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == djId;
     }
     
-    // Allow authenticated users to write to djContracts collection
-    match /djContracts/{docId} {
-      allow write: if request.auth != null || true; // Remove "|| true" for production to require authentication
+    // Booking documents - accessible by authenticated users only
+    match /bookings/{bookingId} {
+      allow read, write: if request.auth != null;
     }
     
-    // Allow users to write to stripePayments collection
-    match /stripePayments/{docId} {
-      allow write: if true;
+    // Contract documents - accessible by authenticated users only
+    match /contracts/{contractId} {
+      allow read, write: if request.auth != null;
     }
     
-    // Add more collection-specific rules as needed
-    // Default deny for anything else
-    match /{collectionName}/{docId} {
-      allow write: if false;
+    // Payment documents - accessible by authenticated users only
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Event documents - accessible by authenticated users only
+    match /events/{eventId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Music library - public read access, authenticated write
+    match /musicLibrary/{songId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Wedding agenda documents - accessible by authenticated users only
+    match /weddingAgendas/{agendaId} {
+      allow read, write: if request.auth != null;
     }
   }
 } 

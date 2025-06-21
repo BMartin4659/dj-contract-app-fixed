@@ -34,6 +34,7 @@ import {
 import Image from 'next/image';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Head from 'next/head';
@@ -163,6 +164,10 @@ export default function WeddingAgendaForm() {
   const [errors, setErrors] = useState({});
   const [fontLoaded, setFontLoaded] = useState(false);
   
+  // Authentication state
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
   // Initial form data structure
   const initialFormData = {
     eventType: 'Wedding',
@@ -217,6 +222,17 @@ export default function WeddingAgendaForm() {
   const formRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  // Authentication state management
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
   const [weddingDate, setWeddingDate] = useState(null);
 
   const handleEventTypeChange = (selected) => {
@@ -2453,8 +2469,8 @@ export default function WeddingAgendaForm() {
                   Your information helps us prepare for your special day
                 </div>
                 
-                {/* Back to Contract button - Bottom */}
-                <div className="mt-6">
+                {/* Navigation buttons - Bottom */}
+                <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center items-center">
                   <button 
                     type="button"
                     onClick={(e) => {
@@ -2462,7 +2478,7 @@ export default function WeddingAgendaForm() {
                       e.stopPropagation();
                       router.push('/');
                     }}
-                    className="px-10 py-2.5 text-white font-medium rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 text-base mx-auto inline-flex items-center justify-center"
+                    className="px-10 py-2.5 text-white font-medium rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 text-base inline-flex items-center justify-center"
                     style={{
                       border: 'none',
                       boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
@@ -2475,6 +2491,29 @@ export default function WeddingAgendaForm() {
                     <FaArrowLeft className="mr-3" style={{ fontSize: '14px' }} />
                     Back to Contract
                   </button>
+                  
+                  {user && (
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        router.push('/dj/dashboard');
+                      }}
+                      className="px-10 py-2.5 text-white font-medium rounded-full hover:bg-indigo-700 focus:outline-none transition-all duration-200 text-base inline-flex items-center justify-center"
+                      style={{
+                        border: 'none',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                        minWidth: isMobile ? '180px' : '200px',
+                        minHeight: isMobile ? '44px' : 'auto',
+                        letterSpacing: '0.3px',
+                        backgroundColor: '#6366f1'
+                      }}
+                    >
+                      <FaArrowLeft className="mr-3" style={{ fontSize: '14px' }} />
+                      DJ Dashboard
+                    </button>
+                  )}
                 </div>
               </div>
             </form>

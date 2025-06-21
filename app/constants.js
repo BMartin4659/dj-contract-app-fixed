@@ -12,6 +12,10 @@ if (PAYMENT_URLS.CASHAPP === 'https://cash.app/' || PAYMENT_URLS.CASHAPP === 'ht
   PAYMENT_URLS.CASHAPP = 'https://cash.app/$LiveCity';
 }
 
+// Debug logging for payment URLs
+console.log('PAYMENT_URLS loaded:', PAYMENT_URLS);
+console.log('Raw env var NEXT_PUBLIC_CASHAPP_URL:', process.env.NEXT_PUBLIC_CASHAPP_URL);
+
 // Payment method icons and colors
 export const PAYMENT_ICONS = {
   VENMO: 'venmo',

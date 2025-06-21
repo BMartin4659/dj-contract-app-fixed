@@ -65,6 +65,7 @@ import {
   FaExclamationCircle,
   FaStripe,
   FaArrowDown,
+  FaArrowLeft,
   FaDrum,
   FaPlay,
   FaExternalLinkAlt,
@@ -80,7 +81,6 @@ import {
 } from 'react-icons/fa';
 import { BsStripe } from 'react-icons/bs';
 import { SiVenmo, SiCashapp, SiSpotify, SiApplemusic, SiYoutubemusic } from 'react-icons/si';
-import { v4 as uuidv4 } from 'uuid';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Link from 'next/link';
@@ -113,6 +113,13 @@ import { useIsMobile } from './hooks/useIsMobile';
 
 // Import the optimized address autocomplete component
 import AddressAutocomplete from './components/AddressAutocomplete';
+
+// Import font manager for custom fonts
+import { fontManager } from './utils/fontManager';
+
+// Import system font selector
+import SystemFontSelector from './components/SystemFontSelector';
+// import HeaderStyleEditor from './components/HeaderStyleEditor';
 
 
 
@@ -1222,6 +1229,38 @@ const BookingConfirmationPage = ({ formData, onSendEmail, onBookAgain }) => {
 export default function DJContractForm() {
   const isMobile = useIsMobile();
   const router = useRouter();
+  
+  // Authentication and client detection state
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isClientAccess, setIsClientAccess] = useState(false);
+  
+  // Header font state
+  const [headerFont, setHeaderFont] = useState('Ka Blam');
+  const [previewFont, setPreviewFont] = useState('Ka Blam');
+  
+  // Header styles state
+  const [headerStyles, setHeaderStyles] = useState({
+    fontSize: 'clamp(39px, 5.6vw, 50px)',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontStyle: 'normal',
+    textDecoration: 'none',
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    lineHeight: '1.2',
+    color: '#000',
+    textStroke: 'none',
+    webkitTextStroke: 'none',
+    transform: 'none',
+    opacity: '1',
+    marginTop: '0px',
+    marginBottom: '20px',
+    padding: '10px'
+  });
+
+  // Header style dropdown state
+  const [showHeaderStyleDropdown, setShowHeaderStyleDropdown] = useState(false);
 
   // Add responsive styles for music library buttons and mobile optimizations
   React.useEffect(() => {
@@ -1375,6 +1414,26 @@ export default function DJContractForm() {
     bookingId: ''
   });
 
+  // Authentication state management and client access detection
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    // Check if this is client access via URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('clientId');
+    const djId = urlParams.get('djId');
+    
+    if (clientId && djId) {
+      setIsClientAccess(true);
+    }
+
+    return () => unsubscribe();
+  }, []);
+
   // Load any existing music library songs from localStorage
   useEffect(() => {
     try {
@@ -1391,6 +1450,162 @@ export default function DJContractForm() {
       }
     } catch (error) {
       console.error('Error loading music library songs:', error);
+    }
+  }, []);
+
+  // Load custom fonts on component mount
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        await fontManager.loadBuiltInFonts();
+      } catch (error) {
+        console.error('Error loading fonts:', error);
+      }
+    };
+    
+    loadFonts();
+  }, []);
+
+  // Handle font change and update CSS
+  const handleFontChange = (fontName) => {
+    console.log('🎨 Font change requested:', fontName);
+    setHeaderFont(fontName);
+    setPreviewFont(fontName); // Keep preview in sync with selected font
+    
+    // Update the CSS custom property for the header font
+    const root = document.documentElement;
+    const fontFamily = `"${fontName}", system-ui, sans-serif`;
+    root.style.setProperty('--header-font-family', fontFamily);
+    
+    // Debug: Verify the CSS property was set
+    const appliedFont = getComputedStyle(root).getPropertyValue('--header-font-family');
+    console.log('🎨 CSS custom property set to:', fontFamily);
+    console.log('🎨 CSS custom property applied as:', appliedFont);
+    
+    // Also try to directly update any existing header elements
+    const headerElements = document.querySelectorAll('.contract-header');
+    headerElements.forEach(element => {
+      element.style.fontFamily = fontFamily;
+      console.log('🎨 Direct font applied to header element');
+    });
+    
+    // Save font preference to localStorage
+    localStorage.setItem('headerFont', fontName);
+  };
+
+  // Handle font preview change (for live preview while scrolling/hovering)
+  const handlePreviewChange = (fontName) => {
+    console.log('🎨 Preview font changed to:', fontName);
+    setPreviewFont(fontName);
+    
+    // Update the CSS custom property for live preview
+    const root = document.documentElement;
+    const fontFamily = `"${fontName}", system-ui, sans-serif`;
+    root.style.setProperty('--header-font-family', fontFamily);
+    
+    // Also try to directly update any existing header elements
+    const headerElements = document.querySelectorAll('.contract-header');
+    headerElements.forEach(element => {
+      element.style.fontFamily = fontFamily;
+    });
+  };
+
+  // Handle header style changes
+  const handleStyleChange = (newStyles) => {
+    console.log('🎨 Style change requested:', newStyles);
+    setHeaderStyles(newStyles);
+    
+    // Update CSS custom properties for all style properties
+    const root = document.documentElement;
+    
+    // Set all style properties as CSS custom properties
+    Object.entries(newStyles).forEach(([property, value]) => {
+      const cssProperty = `--header-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+      root.style.setProperty(cssProperty, value);
+    });
+    
+    // Also apply styles directly to header elements
+    const headerElements = document.querySelectorAll('.contract-header');
+    headerElements.forEach(element => {
+      Object.entries(newStyles).forEach(([property, value]) => {
+        // Convert camelCase to kebab-case for CSS properties
+        const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+        element.style.setProperty(cssProperty, value);
+      });
+      console.log('🎨 Direct styles applied to header element');
+    });
+    
+    // Save style preferences to localStorage
+    localStorage.setItem('headerStyles', JSON.stringify(newStyles));
+  };
+
+  // Load saved font and style preferences on mount
+  useEffect(() => {
+    const savedFont = localStorage.getItem('headerFont');
+    const savedStyles = localStorage.getItem('headerStyles');
+    
+    // Load font
+    if (savedFont) {
+      console.log('🎨 Loading saved font on mount:', savedFont);
+      setHeaderFont(savedFont);
+      setPreviewFont(savedFont); // Initialize preview font
+      const root = document.documentElement;
+      const fontFamily = `"${savedFont}", system-ui, sans-serif`;
+      root.style.setProperty('--header-font-family', fontFamily);
+      
+      // Also apply directly to header elements if they exist
+      setTimeout(() => {
+        const headerElements = document.querySelectorAll('.contract-header');
+        headerElements.forEach(element => {
+          element.style.fontFamily = fontFamily;
+          console.log('🎨 Initial font applied to header element');
+        });
+      }, 100);
+    } else {
+      // Set default font if no saved font
+      console.log('🎨 No saved font, setting default Ka Blam');
+      setPreviewFont('Ka Blam'); // Initialize preview font with default
+      const root = document.documentElement;
+      const fontFamily = `"Ka Blam", system-ui, sans-serif`;
+      root.style.setProperty('--header-font-family', fontFamily);
+      
+      setTimeout(() => {
+        const headerElements = document.querySelectorAll('.contract-header');
+        headerElements.forEach(element => {
+          element.style.fontFamily = fontFamily;
+          console.log('🎨 Default font applied to header element');
+        });
+      }, 100);
+    }
+    
+    // Load styles
+    if (savedStyles) {
+      try {
+        const parsedStyles = JSON.parse(savedStyles);
+        console.log('🎨 Loading saved styles on mount:', parsedStyles);
+        setHeaderStyles(parsedStyles);
+        
+        // Apply saved styles
+        const root = document.documentElement;
+        Object.entries(parsedStyles).forEach(([property, value]) => {
+          const cssProperty = `--header-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+          root.style.setProperty(cssProperty, value);
+        });
+        
+        // Also apply directly to header elements
+        setTimeout(() => {
+          const headerElements = document.querySelectorAll('.contract-header');
+          headerElements.forEach(element => {
+            Object.entries(parsedStyles).forEach(([property, value]) => {
+              const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+              element.style.setProperty(cssProperty, value);
+            });
+            console.log('🎨 Initial styles applied to header element');
+          });
+        }, 100);
+      } catch (error) {
+        console.error('🎨 Error loading saved styles:', error);
+      }
     }
   }, []);
   
@@ -2346,20 +2561,31 @@ Live City DJ Contract Terms and Conditions:
     };
 
     const handlePayment = () => {
+      console.log('handlePayment called for:', paymentMethod);
+      console.log('Available payment URLs:', PAYMENT_URLS);
+      
       // Open payment app based on type - direct to payment platform using replace
       if (paymentMethod === 'Venmo') {
-        window.location.replace(PAYMENT_URLS.VENMO);
+        console.log('Redirecting to Venmo:', PAYMENT_URLS.VENMO);
+        window.open(PAYMENT_URLS.VENMO, '_blank');
       } else if (paymentMethod === 'CashApp') {
         console.log('CashApp URL being used:', PAYMENT_URLS.CASHAPP);
         console.log('Environment variable NEXT_PUBLIC_CASHAPP_URL:', process.env.NEXT_PUBLIC_CASHAPP_URL);
         
-        // Add a small delay to ensure the console logs are visible
-        setTimeout(() => {
-          console.log('Redirecting to Cash App...');
-          window.location.href = PAYMENT_URLS.CASHAPP;
-        }, 100);
+        // Ensure the URL is properly formatted
+        let cashAppUrl = PAYMENT_URLS.CASHAPP;
+        if (cashAppUrl === 'https://cash.app/' || cashAppUrl === 'https://cash.app') {
+          cashAppUrl = 'https://cash.app/$LiveCity';
+          console.log('Fixed CashApp URL to:', cashAppUrl);
+        }
+        
+        console.log('Redirecting to Cash App:', cashAppUrl);
+        window.open(cashAppUrl, '_blank');
       } else if (paymentMethod === 'PayPal') {
-        window.location.replace(PAYMENT_URLS.PAYPAL);
+        console.log('Redirecting to PayPal:', PAYMENT_URLS.PAYPAL);
+        window.open(PAYMENT_URLS.PAYPAL, '_blank');
+      } else {
+        console.error('Unknown payment method:', paymentMethod);
       }
     };
 
@@ -2754,6 +2980,16 @@ Live City DJ Contract Terms and Conditions:
   // Create a more direct payment method handler that doesn't rely on async processing
   // Update handlePaymentMethodSelect to be more direct
   const handlePaymentMethodSelect = useCallback((method) => {
+    console.log('Payment method selected:', method);
+    
+    // Prevent multiple rapid clicks
+    if (isChangingPayment) {
+      console.log('Payment method change already in progress, ignoring click');
+      return;
+    }
+    
+    setIsChangingPayment(true);
+    
     // Direct assignment for immediate UI feedback
     document.querySelectorAll('.payment-option').forEach(el => {
       el.style.border = el.dataset.method === method 
@@ -2770,11 +3006,13 @@ Live City DJ Contract Terms and Conditions:
     // Update form data immediately to avoid state update issues
     setFormData(prev => {
       const newData = { ...prev, paymentMethod: method };
+      console.log('Updated form data with payment method:', newData.paymentMethod);
       
       // Defer context update to avoid setState during render
       setTimeout(() => {
         updateContractFormData(newData);
-      }, 0);
+        setIsChangingPayment(false);
+      }, 100);
       
       // Also save to localStorage as backup
       try {
@@ -2793,7 +3031,7 @@ Live City DJ Contract Terms and Conditions:
         return newErrors;
       });
     }
-  }, [formErrors, updateContractFormData]);
+  }, [formErrors, updateContractFormData, isChangingPayment]);
 
   // Memoize the payment method option styles to reduce recalculations
   const getPaymentOptionStyle = useCallback((method) => {
@@ -2810,7 +3048,15 @@ Live City DJ Contract Terms and Conditions:
       backgroundColor: isSelected ? 'rgba(0, 112, 243, 0.05)' : 'white',
       transition: 'all 0.2s ease',
       boxShadow: isSelected ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
-      opacity: isChangingPayment ? 0.7 : 1
+      opacity: isChangingPayment ? 0.7 : 1,
+      position: 'relative',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      pointerEvents: isChangingPayment ? 'none' : 'auto',
+      ':hover': {
+        transform: isSelected ? 'none' : 'translateY(-2px)',
+        boxShadow: isSelected ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 4px 8px rgba(0,0,0,0.1)'
+      }
     };
   }, [formData.paymentMethod, isChangingPayment]);
 
@@ -3392,6 +3638,46 @@ Live City DJ Contract Terms and Conditions:
                   maxWidth: '100%',
                   padding: '0 10px'
                 }}>
+                  {/* Back to DJ Dashboard Button - Only for authenticated DJs */}
+                  {user && !isClientAccess && (
+                    <button
+                      onClick={() => router.push('/dj/dashboard')}
+                      style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: isMobile ? '0' : '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        backgroundColor: '#6366f1',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(99, 102, 241, 0.2)',
+                        transition: 'all 0.2s ease',
+                        zIndex: 10
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#4f46e5';
+                        e.target.style.transform = 'translateY(-1px)';
+                        e.target.style.boxShadow = '0 4px 8px rgba(99, 102, 241, 0.3)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = '#6366f1';
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 4px rgba(99, 102, 241, 0.2)';
+                      }}
+                    >
+                      <FaArrowLeft style={{ fontSize: '12px' }} />
+                      <span style={{ display: isMobile ? 'none' : 'inline' }}>DJ Dashboard</span>
+                      <span style={{ display: isMobile ? 'inline' : 'none' }}>Dashboard</span>
+                    </button>
+                  )}
+
                   <div style={{
                     width: '150px',
                     height: '150px',
@@ -3415,11 +3701,13 @@ Live City DJ Contract Terms and Conditions:
                     />
                   </div>
                   
-                  <h1 style={{
-                    fontSize: 'clamp(28px, 4vw, 36px)',
+                  <h1 className="contract-header" style={{
+                    fontSize: 'clamp(39px, 5.6vw, 50px)',
                     fontWeight: 'bold',
                     margin: '10px auto',
-                    color: '#000',
+                    color: 'transparent',
+                    WebkitTextStroke: '2px #000',
+                    textStroke: '2px #000',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -3428,13 +3716,313 @@ Live City DJ Contract Terms and Conditions:
                     maxWidth: '100%',
                     textAlign: 'center',
                     flexWrap: 'nowrap',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'var(--header-font-family)'
                   }}>
-                    <span style={{ 
-                      fontSize: 'clamp(28px, 4vw, 36px)'
-                    }}>📝</span>
                     <span>EVENT CONTRACT</span>
                   </h1>
+
+
+
+                  {/* Header Style Controls Dropdown - Only visible to authenticated DJs */}
+                  {user && !isClientAccess && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginBottom: '20px',
+                      position: 'relative'
+                    }}>
+                      <div style={{
+                        width: '100%',
+                        maxWidth: '600px',
+                        position: 'relative'
+                      }}>
+                        {/* Dropdown Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={() => setShowHeaderStyleDropdown(!showHeaderStyleDropdown)}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '12px 16px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            color: '#374151'
+                          }}
+                          onMouseOver={(e) => {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                          }}
+                        >
+                          <span style={{ display: 'flex', alignItems: 'center' }}>
+                            🎨 Header Style Controls
+                          </span>
+                          <span style={{
+                            transform: showHeaderStyleDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                            fontSize: '12px'
+                          }}>
+                            ▼
+                          </span>
+                        </button>
+
+                        {/* Dropdown Content */}
+                        {showHeaderStyleDropdown && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '0',
+                            right: '0',
+                            marginTop: '4px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            padding: '16px',
+                            zIndex: 50
+                          }}>
+                            {/* Font Preview */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Preview
+                              </label>
+                              <div style={{
+                                padding: '16px',
+                                backgroundColor: 'rgba(248, 250, 252, 0.8)',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                textAlign: 'center'
+                              }}>
+                                <div style={{
+                                  fontFamily: `var(--header-font-family), ${headerFont}`,
+                                  fontSize: headerStyles.fontSize,
+                                  fontWeight: headerStyles.fontWeight,
+                                  fontStyle: headerStyles.fontStyle,
+                                  textAlign: headerStyles.textAlign,
+                                  color: headerStyles.color || '#000',
+                                  textStroke: headerStyles.textStroke || 'none',
+                                  WebkitTextStroke: headerStyles.webkitTextStroke || 'none',
+                                  textTransform: headerStyles.textTransform || 'uppercase',
+                                  letterSpacing: headerStyles.letterSpacing || '2px',
+                                  lineHeight: headerStyles.lineHeight || '1.2',
+                                  marginBottom: '8px'
+                                }}>
+                                  EVENT CONTRACT
+                                </div>
+                                <div style={{
+                                  fontSize: '12px',
+                                  color: '#64748b',
+                                  fontStyle: 'italic'
+                                }}>
+                                  {previewFont !== headerFont ? `Preview: ${previewFont}` : `Current: ${headerFont}`}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Font Selector */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Header Font
+                              </label>
+                              <SystemFontSelector 
+                                onFontChange={handleFontChange}
+                                onPreviewChange={handlePreviewChange}
+                                currentFont={headerFont}
+                              />
+                            </div>
+
+                            {/* Font Size Controls */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Font Size
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: '8px'
+                              }}>
+                                {[
+                                  { label: 'Small', value: 'clamp(24px, 3vw, 32px)' },
+                                  { label: 'Medium', value: 'clamp(32px, 4vw, 40px)' },
+                                  { label: 'Large', value: 'clamp(39px, 5.6vw, 50px)' },
+                                  { label: 'X-Large', value: 'clamp(48px, 7vw, 64px)' }
+                                ].map((size) => (
+                                  <button
+                                    key={size.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, fontSize: size.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: headerStyles.fontSize === size.value ? '#dbeafe' : 'white',
+                                      color: headerStyles.fontSize === size.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => {
+                                      if (headerStyles.fontSize !== size.value) {
+                                        e.target.style.backgroundColor = '#f9fafb';
+                                      }
+                                    }}
+                                    onMouseOut={(e) => {
+                                      if (headerStyles.fontSize !== size.value) {
+                                        e.target.style.backgroundColor = 'white';
+                                      }
+                                    }}
+                                  >
+                                    {size.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Alignment Controls */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Alignment
+                              </label>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {[
+                                  { label: 'Left', value: 'left' },
+                                  { label: 'Center', value: 'center' },
+                                  { label: 'Right', value: 'right' }
+                                ].map((align) => (
+                                  <button
+                                    key={align.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, textAlign: align.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 16px',
+                                      fontSize: '14px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: headerStyles.textAlign === align.value ? '#dbeafe' : 'white',
+                                      color: headerStyles.textAlign === align.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => {
+                                      if (headerStyles.textAlign !== align.value) {
+                                        e.target.style.backgroundColor = '#f9fafb';
+                                      }
+                                    }}
+                                    onMouseOut={(e) => {
+                                      if (headerStyles.textAlign !== align.value) {
+                                        e.target.style.backgroundColor = 'white';
+                                      }
+                                    }}
+                                  >
+                                    {align.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Style Controls */}
+                            <div>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Style
+                              </label>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newWeight = headerStyles.fontWeight === 'bold' ? 'normal' : 'bold';
+                                    const newStyles = { ...headerStyles, fontWeight: newWeight };
+                                    handleStyleChange(newStyles);
+                                  }}
+                                  style={{
+                                    padding: '8px 16px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    backgroundColor: headerStyles.fontWeight === 'bold' ? '#dbeafe' : 'white',
+                                    color: headerStyles.fontWeight === 'bold' ? '#1d4ed8' : '#374151',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Bold
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newStyle = headerStyles.fontStyle === 'italic' ? 'normal' : 'italic';
+                                    const newStyles = { ...headerStyles, fontStyle: newStyle };
+                                    handleStyleChange(newStyles);
+                                  }}
+                                  style={{
+                                    padding: '8px 16px',
+                                    fontSize: '14px',
+                                    fontStyle: 'italic',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    backgroundColor: headerStyles.fontStyle === 'italic' ? '#dbeafe' : 'white',
+                                    color: headerStyles.fontStyle === 'italic' ? '#1d4ed8' : '#374151',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Italic
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Debug section - temporary for testing */}
                   {process.env.NODE_ENV === 'development' && (
@@ -4758,7 +5346,12 @@ Live City DJ Contract Terms and Conditions:
                     <div 
                       className="payment-option"
                       data-method="Stripe"
-                      onClick={() => handlePaymentMethodSelect('Stripe')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Stripe payment option clicked');
+                        handlePaymentMethodSelect('Stripe');
+                      }}
                       style={getPaymentOptionStyle('Stripe')}
                     >
                       <input
@@ -4789,7 +5382,12 @@ Live City DJ Contract Terms and Conditions:
                     <div 
                       className="payment-option"
                       data-method="Venmo"
-                      onClick={() => handlePaymentMethodSelect('Venmo')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Venmo payment option clicked');
+                        handlePaymentMethodSelect('Venmo');
+                      }}
                       style={getPaymentOptionStyle('Venmo')}
                     >
                       <input
@@ -4820,7 +5418,12 @@ Live City DJ Contract Terms and Conditions:
                     <div 
                       className="payment-option"
                       data-method="CashApp"
-                      onClick={() => handlePaymentMethodSelect('CashApp')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('CashApp payment option clicked');
+                        handlePaymentMethodSelect('CashApp');
+                      }}
                       style={getPaymentOptionStyle('CashApp')}
                     >
                       <input
@@ -4851,7 +5454,12 @@ Live City DJ Contract Terms and Conditions:
                     <div 
                       className="payment-option"
                       data-method="PayPal"
-                      onClick={() => handlePaymentMethodSelect('PayPal')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('PayPal payment option clicked');
+                        handlePaymentMethodSelect('PayPal');
+                      }}
                       style={getPaymentOptionStyle('PayPal')}
                     >
                       <input

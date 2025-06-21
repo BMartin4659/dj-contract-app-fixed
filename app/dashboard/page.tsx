@@ -48,7 +48,21 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 pb-6 space-y-6">
+    <div className="min-h-screen flex justify-center w-full overflow-visible">
+      <div 
+        className="container mx-auto px-4 pb-6 space-y-6"
+        style={{
+          maxWidth: '1200px',
+          width: '96%',
+          margin: '2rem auto 3rem auto',
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          padding: '2.5rem',
+          borderRadius: '20px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)'
+        }}
+      >
       {upcomingGigs.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-2">🗓️ Next Upcoming Gig</h2>
@@ -68,11 +82,11 @@ export default function Dashboard() {
                 placeholder="Search by client name..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="bg-white border border-gray-300 rounded-lg px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
               />
               <button
                 onClick={handleToggleUnpaid}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-4 py-2 rounded-lg transition-colors font-medium ${
                   filterUnpaidOnly
                     ? 'bg-red-600 hover:bg-red-700'
                     : 'bg-blue-600 hover:bg-blue-700'
@@ -82,28 +96,28 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="bg-blue-700/20 border border-blue-500 rounded-lg shadow-md overflow-hidden">
+            <div className="bg-blue-50 border border-blue-300 rounded-lg shadow-md overflow-hidden">
               <table className="w-full">
-                <thead className="bg-white/5">
+                <thead className="bg-blue-100">
                   <tr>
-                    <th className="p-3 text-left">Client</th>
-                    <th className="p-3 text-left">Event Date</th>
-                    <th className="p-3 text-left">Status</th>
-                    <th className="p-3 text-left">Toggle</th>
+                    <th className="p-3 text-left text-gray-900">Client</th>
+                    <th className="p-3 text-left text-gray-900">Event Date</th>
+                    <th className="p-3 text-left text-gray-900">Status</th>
+                    <th className="p-3 text-left text-gray-900">Toggle</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredContracts.map((contract) => (
-                    <tr key={contract.id} className="border-t border-white/10 hover:bg-white/5">
-                      <td className="p-3">{contract.clientName}</td>
-                      <td className="p-3">{format(parseISO(contract.eventDate), "MMM d, yyyy")}</td>
+                    <tr key={contract.id} className="border-t border-blue-200 hover:bg-blue-50">
+                      <td className="p-3 text-gray-900">{contract.clientName}</td>
+                      <td className="p-3 text-gray-700">{format(parseISO(contract.eventDate), "MMM d, yyyy")}</td>
                       <td className="p-3">
                         {contract.depositPaid ? (
-                          <span className="text-green-400 flex items-center gap-1">
+                          <span className="text-green-600 flex items-center gap-1 font-medium">
                             <FaCheckCircle /> Paid
                           </span>
                         ) : (
-                          <span className="text-red-400 flex items-center gap-1">
+                          <span className="text-red-600 flex items-center gap-1 font-medium">
                             <FaTimesCircle /> Unpaid
                           </span>
                         )}
@@ -111,7 +125,7 @@ export default function Dashboard() {
                       <td className="p-3">
                         <button
                           onClick={() => togglePaidStatus(contract.id, contract.depositPaid)}
-                          className={`px-3 py-1 rounded-md transition-colors ${
+                          className={`px-3 py-1 rounded-md transition-colors text-white font-medium ${
                             contract.depositPaid
                               ? 'bg-red-600 hover:bg-red-700'
                               : 'bg-green-600 hover:bg-green-700'
@@ -125,7 +139,7 @@ export default function Dashboard() {
                 </tbody>
               </table>
               {filteredContracts.length === 0 && (
-                <p className="p-4 text-center text-white/60">No matching contracts found</p>
+                <p className="p-4 text-center text-gray-600">No matching contracts found</p>
               )}
             </div>
           </div>
@@ -212,6 +226,7 @@ export default function Dashboard() {
             </button>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

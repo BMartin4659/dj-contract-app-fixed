@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Configuration Test</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+</head>
+<body>
+    <h1>Firebase Configuration Test</h1>
+    <div id="status">Testing...</div>
+    <div id="error" style="color: red;"></div>
+    
+    <script>
+        // Replace these with your new Firebase config
+        const firebaseConfig = {
+            apiKey: "your_new_api_key_here",
+            authDomain: "your_new_project_id.firebaseapp.com",
+            projectId: "your_new_project_id",
+            storageBucket: "your_new_project_id.firebasestorage.app",
+            messagingSenderId: "your_new_sender_id",
+            appId: "your_new_app_id"
+        };
+
+        try {
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            
+            document.getElementById('status').innerHTML = '✅ Firebase initialized successfully!';
+            
+            // Test authentication
+            auth.createUserWithEmailAndPassword('test@example.com', 'password123')
+                .then(() => {
+                    document.getElementById('status').innerHTML += '<br>✅ Authentication test successful!';
+                })
+                .catch((error) => {
+                    if (error.code === 'auth/email-already-in-use') {
+                        document.getElementById('status').innerHTML += '<br>✅ Authentication working (email already exists)!';
+                    } else {
+                        document.getElementById('error').innerHTML = '❌ Auth Error: ' + error.code + ' - ' + error.message;
+                    }
+                });
+                
+        } catch (error) {
+            document.getElementById('error').innerHTML = '❌ Firebase Error: ' + error.message;
+        }
+    </script>
+</body>
+</html> 

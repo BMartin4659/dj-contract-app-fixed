@@ -4,6 +4,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font Faces - Load custom fonts */
+@font-face {
+  font-family: 'Hugh is Life';
+  src: url('/fonts/hugh-is-life.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kamryn 3D Italic D';
+  src: url('/fonts/Kamryn 3D Italic D.otf') format('opentype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Jember Sketch';
+  src: url('/fonts/Jember Sketch.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bouncy';
+  src: url('/fonts/Bouncy-PERSONAL_USE_ONLY.otf') format('opentype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'The Bambank Script';
+  src: url('/fonts/The Bambank Script.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Ka Blam';
+  src: url('/fonts/Ka Blam.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* CSS Custom Properties for Dynamic Font Switching */
+:root {
+  --header-font-family: "Ka Blam", system-ui, sans-serif;
+}
+
 /* Hugh is Life Personal Use Font */
 @font-face {
   font-family: 'Hugh is Life Personal Use';
@@ -546,12 +588,22 @@ input[type="radio"] {
   
   .payment-option {
     width: 100%;
-    padding: 8px;
+    padding: 12px 8px;
     min-width: 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 80px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+  
+  .payment-option:active {
+    transform: scale(0.98);
   }
   
   .payment-option svg {
@@ -559,11 +611,11 @@ input[type="radio"] {
     margin-bottom: 5px;
   }
   
-  /* Make payment icons smaller on mobile */
+  /* Make payment icons appropriately sized on mobile */
   .payment-icon {
-    font-size: 20px !important;
+    font-size: 24px !important;
     margin-right: 0 !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 6px !important;
   }
   
   .payment-method-label {
@@ -2563,5 +2615,26 @@ textarea:focus {
     background: transparent !important;
     position: relative !important;
   }
+}
+
+/* Contract header specific styling */
+.contract-header {
+  font-family: var(--header-font-family) !important;
+  font-size: var(--header-font-size, clamp(39px, 5.6vw, 50px)) !important;
+  text-align: var(--header-text-align, center) !important;
+  font-weight: var(--header-font-weight, bold) !important;
+  font-style: var(--header-font-style, normal) !important;
+  text-decoration: var(--header-text-decoration, none) !important;
+  text-transform: var(--header-text-transform, uppercase) !important;
+  letter-spacing: var(--header-letter-spacing, 2px) !important;
+  line-height: var(--header-line-height, 1.2) !important;
+  color: var(--header-color, #000) !important;
+  -webkit-text-stroke: var(--header-webkit-text-stroke, none) !important;
+  text-stroke: var(--header-text-stroke, none) !important;
+  transform: var(--header-transform, none) !important;
+  opacity: var(--header-opacity, 1) !important;
+  margin-top: var(--header-margin-top, 0px) !important;
+  margin-bottom: var(--header-margin-bottom, 20px) !important;
+  padding: var(--header-padding, 10px) !important;
 }
 

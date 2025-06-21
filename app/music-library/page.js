@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { FaMusic, FaArrowLeft, FaSearch, FaList, FaHome, FaHeart, FaCompactDisc, FaRadiation, FaGuitar, FaMicrophone, FaHeadphones, FaDrum, FaStar, FaFire, FaPlay, FaTimes, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { 
   loadSongsByMode, 
@@ -250,6 +251,10 @@ export default function MusicLibraryPage() {
   const [categoryType, setCategoryType] = useState(null);
   const [viewMode, setViewMode] = useState('library'); // 'library' or 'playlist'
   
+  // Authentication state
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [groupBy, setGroupBy] = useState('none'); // 'none', 'genre', 'artist'
@@ -301,6 +306,17 @@ export default function MusicLibraryPage() {
     
     const normalizedGenre = genreName.toLowerCase().trim();
     return genreMapping[normalizedGenre] || null;
+  }, []);
+
+  // Authentication state management
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Check for URL parameters and load saved songs
@@ -1155,14 +1171,26 @@ export default function MusicLibraryPage() {
                   <FaArrowLeft className="text-gray-700 text-base" />
                 </button>
                 
-                {/* Back to Contract Button - Positioned absolutely on the right */}
-                <button 
-                  onClick={handleBackToContract}
-                  className="absolute right-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
-                  title="Save your selected songs and return to the contract form"
-                >
-                  <span>Back to Contract</span>
-                </button>
+                {/* Navigation Buttons - Positioned absolutely on the right */}
+                <div className="absolute right-0 top-0 flex gap-2">
+                  <button 
+                    onClick={handleBackToContract}
+                    className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                    title="Save your selected songs and return to the contract form"
+                  >
+                    <span>Contract</span>
+                  </button>
+                  
+                  {user && (
+                    <button 
+                      onClick={() => router.push('/dj/dashboard')}
+                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg border border-indigo-400 font-medium text-xs"
+                      title="Return to DJ Dashboard"
+                    >
+                      <span>Dashboard</span>
+                    </button>
+                  )}
+                </div>
                 
                 {/* Centered Header Content */}
                 <div className="mb-6">
@@ -1265,6 +1293,16 @@ export default function MusicLibraryPage() {
                         >
                         <span>Save & Return to Contract</span>
                         </button>
+                        
+                        {user && (
+                          <button
+                            onClick={() => router.push('/dj/dashboard')}
+                          className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg border border-indigo-400 font-medium text-sm md:text-base"
+                          title="Return to DJ Dashboard"
+                          >
+                          <span>DJ Dashboard</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
