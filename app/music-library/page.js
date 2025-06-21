@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthStateChanged } from 'firebase/auth';
 import { FaMusic, FaArrowLeft, FaSearch, FaList, FaHome, FaHeart, FaCompactDisc, FaRadiation, FaGuitar, FaMicrophone, FaHeadphones, FaDrum, FaStar, FaFire, FaPlay, FaTimes, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import BackToTopButton from '../components/BackToTopButton';
 import { 
   loadSongsByMode, 
   loadPlaylistSongs,
@@ -1148,10 +1149,13 @@ export default function MusicLibraryPage() {
                     <span>{selectedSongs.length} total song{selectedSongs.length !== 1 ? 's' : ''}</span>
                   </div>
                   </div>
-                )}
-              </div>
+                              )}
             </div>
           </div>
+        </div>
+        
+        {/* Back to Top Button */}
+        <BackToTopButton />
       </div>
     );
   }
@@ -1424,6 +1428,9 @@ export default function MusicLibraryPage() {
             </div>
           </div>
         </div>
+        
+        {/* Back to Top Button */}
+        <BackToTopButton />
       </div>
     );
   }
@@ -1635,6 +1642,9 @@ export default function MusicLibraryPage() {
           </div>
         </div>
       </div>
+      
+      {/* Back to Top Button */}
+      <BackToTopButton />
     </div>
   );
 } 

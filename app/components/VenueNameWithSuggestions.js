@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
 import { FaBuilding } from 'react-icons/fa';
 
 const VenueNameWithSuggestions = ({ 
@@ -21,16 +20,31 @@ const VenueNameWithSuggestions = ({
   const suggestionsRef = useRef(null);
 
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-      libraries: ['places']
-    });
+    console.log('VenueNameWithSuggestions: Waiting for Google Maps API to be available');
 
-    loader.load().then(() => {
-      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-    }).catch((error) => {
-      console.warn('Google Maps failed to load:', error);
-    });
+    const checkGoogleMaps = () => {
+      if (window.google?.maps?.places?.AutocompleteService) {
+        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+        console.log('VenueNameWithSuggestions: Google Maps AutocompleteService initialized successfully');
+        return true;
+      }
+      return false;
+    };
+
+    // Try to initialize immediately if already loaded
+    if (checkGoogleMaps()) {
+      return;
+    }
+
+    // Otherwise, poll for Google Maps availability
+    const interval = setInterval(() => {
+      if (checkGoogleMaps()) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -53,8 +67,11 @@ const VenueNameWithSuggestions = ({
     // Call the parent's onChange handler
     onChange(e);
 
+    console.log('VenueNameWithSuggestions: Input changed to:', input, 'Length:', input.length, 'AutocompleteService ready:', !!autocompleteServiceRef.current);
+
     // Handle venue suggestions
     if (input.length > 2 && autocompleteServiceRef.current) {
+      console.log('VenueNameWithSuggestions: Making Places API call for:', input);
       autocompleteServiceRef.current.getPlacePredictions(
         {
           input: input,
@@ -62,6 +79,7 @@ const VenueNameWithSuggestions = ({
           componentRestrictions: { country: 'us' }
         },
         (predictions, status) => {
+          console.log('VenueNameWithSuggestions: Places API response - Status:', status, 'Predictions:', predictions?.length || 0);
           if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
             // Filter to get venue-like establishments
             const venueResults = predictions.filter(prediction => {
@@ -79,15 +97,23 @@ const VenueNameWithSuggestions = ({
                      prediction.types.includes('lodging') ||
                      prediction.types.includes('event_venue');
             });
+            console.log('VenueNameWithSuggestions: Filtered venue results:', venueResults.length);
             setVenueSuggestions(venueResults.slice(0, 5));
             setShowSuggestions(venueResults.length > 0);
           } else {
+            console.log('VenueNameWithSuggestions: No results or error - Status:', status);
             setVenueSuggestions([]);
             setShowSuggestions(false);
           }
         }
       );
     } else {
+      if (input.length <= 2) {
+        console.log('VenueNameWithSuggestions: Input too short, clearing suggestions');
+      }
+      if (!autocompleteServiceRef.current) {
+        console.log('VenueNameWithSuggestions: AutocompleteService not ready');
+      }
       setVenueSuggestions([]);
       setShowSuggestions(false);
     }
