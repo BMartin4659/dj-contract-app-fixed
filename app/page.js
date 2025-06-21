@@ -114,6 +114,9 @@ import { useIsMobile } from './hooks/useIsMobile';
 // Import the optimized address autocomplete component
 import AddressAutocomplete from './components/AddressAutocomplete';
 
+// Import venue name with suggestions component
+import VenueNameWithSuggestions from './components/VenueNameWithSuggestions';
+
 // Import font manager for custom fonts
 import { fontManager } from './utils/fontManager';
 
@@ -1234,6 +1237,7 @@ export default function DJContractForm() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isClientAccess, setIsClientAccess] = useState(false);
+  const [contractType, setContractType] = useState('standard'); // 'standard' or 'premium'
   
   // Header font state
   const [headerFont, setHeaderFont] = useState('Ka Blam');
@@ -1429,6 +1433,24 @@ export default function DJContractForm() {
     
     if (clientId && djId) {
       setIsClientAccess(true);
+      
+      // Check contract type from client record
+      const checkContractType = async () => {
+        try {
+          const clientDoc = await getDoc(doc(db, 'users', djId, 'clients', clientId));
+          if (clientDoc.exists()) {
+            const clientData = clientDoc.data();
+            const type = clientData.contractType || 'standard';
+            setContractType(type);
+            console.log('📋 Contract type:', type);
+          }
+        } catch (error) {
+          console.error('Error checking contract type:', error);
+          setContractType('standard'); // Default to standard on error
+        }
+      };
+      
+      checkContractType();
     }
 
     return () => unsubscribe();
@@ -1484,13 +1506,22 @@ export default function DJContractForm() {
     
     // Also try to directly update any existing header elements
     const headerElements = document.querySelectorAll('.contract-header');
-    headerElements.forEach(element => {
+    console.log('🎨 Found header elements:', headerElements.length);
+    headerElements.forEach((element, index) => {
       element.style.fontFamily = fontFamily;
-      console.log('🎨 Direct font applied to header element');
+      console.log(`🎨 Direct font applied to header element ${index + 1}:`, element.textContent);
+      
+      // Force a style recalculation
+      element.style.display = 'none';
+      element.offsetHeight; // Trigger reflow
+      element.style.display = '';
     });
     
     // Save font preference to localStorage
     localStorage.setItem('headerFont', fontName);
+    
+    // Force a re-render by updating state
+    setHeaderStyles(prev => ({ ...prev }));
   };
 
   // Handle font preview change (for live preview while scrolling/hovering)
@@ -1505,8 +1536,14 @@ export default function DJContractForm() {
     
     // Also try to directly update any existing header elements
     const headerElements = document.querySelectorAll('.contract-header');
-    headerElements.forEach(element => {
+    headerElements.forEach((element, index) => {
       element.style.fontFamily = fontFamily;
+      console.log(`🎨 Preview font applied to header element ${index + 1}:`, fontName);
+      
+      // Force a style recalculation for preview
+      element.style.display = 'none';
+      element.offsetHeight; // Trigger reflow
+      element.style.display = '';
     });
   };
 
@@ -3716,16 +3753,43 @@ Live City DJ Contract Terms and Conditions:
                     maxWidth: '100%',
                     textAlign: 'center',
                     flexWrap: 'nowrap',
-                    whiteSpace: 'nowrap',
-                    fontFamily: 'var(--header-font-family)'
+                    whiteSpace: 'nowrap'
                   }}>
                     <span>EVENT CONTRACT</span>
                   </h1>
 
 
 
-                  {/* Header Style Controls Dropdown - Only visible to authenticated DJs */}
-                  {user && !isClientAccess && (
+                  {/* Standard Contract Notification */}
+                  {isClientAccess && contractType === 'standard' && (
+                    <div style={{
+                      backgroundColor: '#fef3c7',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      marginBottom: '20px',
+                      textAlign: 'center'
+                    }}>
+                      <p style={{
+                        fontSize: '14px',
+                        color: '#92400e',
+                        fontWeight: '500',
+                        margin: '0'
+                      }}>
+                        📝 Standard Contract - Basic styling and fonts are applied by your DJ
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        color: '#78350f',
+                        margin: '4px 0 0 0'
+                      }}>
+                        Premium features (custom fonts, advanced styling) are available with DJ subscription plans
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Header Style Controls Dropdown - Only for premium contracts or authenticated DJs */}
+                  {((user && !isClientAccess) || (isClientAccess && contractType === 'premium')) && (
                     <div style={{
                       display: 'flex',
                       justifyContent: 'center',
@@ -3790,180 +3854,288 @@ Live City DJ Contract Terms and Conditions:
                             border: '1px solid #d1d5db',
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                            padding: '16px',
-                            zIndex: 50
+                            padding: '12px',
+                            zIndex: 50,
+                            maxHeight: '70vh',
+                            overflowY: 'auto'
                           }}>
-                            {/* Font Preview */}
-                            <div style={{ marginBottom: '16px' }}>
-                              <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: '#374151',
-                                marginBottom: '8px'
-                              }}>
-                                Preview
-                              </label>
-                              <div style={{
-                                padding: '16px',
-                                backgroundColor: 'rgba(248, 250, 252, 0.8)',
-                                borderRadius: '6px',
-                                border: '1px solid #e2e8f0',
-                                textAlign: 'center'
-                              }}>
-                                <div style={{
-                                  fontFamily: `var(--header-font-family), ${headerFont}`,
-                                  fontSize: headerStyles.fontSize,
-                                  fontWeight: headerStyles.fontWeight,
-                                  fontStyle: headerStyles.fontStyle,
-                                  textAlign: headerStyles.textAlign,
-                                  color: headerStyles.color || '#000',
-                                  textStroke: headerStyles.textStroke || 'none',
-                                  WebkitTextStroke: headerStyles.webkitTextStroke || 'none',
-                                  textTransform: headerStyles.textTransform || 'uppercase',
-                                  letterSpacing: headerStyles.letterSpacing || '2px',
-                                  lineHeight: headerStyles.lineHeight || '1.2',
-                                  marginBottom: '8px'
-                                }}>
-                                  EVENT CONTRACT
-                                </div>
-                                <div style={{
+                            {/* Compact Top Row: Preview + Quick Controls */}
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: '2fr 1fr',
+                              gap: '12px',
+                              marginBottom: '12px'
+                            }}>
+                              {/* Left: Compact Preview */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
                                   fontSize: '12px',
-                                  color: '#64748b',
-                                  fontStyle: 'italic'
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
                                 }}>
-                                  {previewFont !== headerFont ? `Preview: ${previewFont}` : `Current: ${headerFont}`}
+                                  Live Preview
+                                </label>
+                                <div style={{
+                                  padding: '8px',
+                                  backgroundColor: 'rgba(248, 250, 252, 0.8)',
+                                  borderRadius: '4px',
+                                  border: '1px solid #e2e8f0',
+                                  textAlign: 'center',
+                                  minHeight: '50px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center'
+                                }}>
+                                  <div 
+                                    className="contract-header"
+                                    style={{
+                                      fontSize: 'clamp(14px, 2.5vw, 18px)', // Much smaller for compact view
+                                      fontWeight: headerStyles.fontWeight || 'bold',
+                                      fontStyle: headerStyles.fontStyle || 'normal',
+                                      textAlign: headerStyles.textAlign || 'center',
+                                      color: headerStyles.color || 'transparent',
+                                      textStroke: headerStyles.textStroke || '1px #000',
+                                      WebkitTextStroke: headerStyles.webkitTextStroke || '1px #000',
+                                      textTransform: headerStyles.textTransform || 'uppercase',
+                                      letterSpacing: headerStyles.letterSpacing || '1px',
+                                      lineHeight: headerStyles.lineHeight || '1.2',
+                                      textDecoration: headerStyles.textDecoration || 'none',
+                                      textShadow: headerStyles.textShadow || 'none',
+                                      transform: headerStyles.transform || 'rotate(0deg)',
+                                      marginBottom: '2px',
+                                      display: 'block',
+                                      width: '100%'
+                                    }}>
+                                    EVENT CONTRACT
+                                  </div>
+                                  <div style={{
+                                    fontSize: '9px',
+                                    color: '#64748b',
+                                    fontStyle: 'italic'
+                                  }}>
+                                    {previewFont !== headerFont ? `Preview: ${previewFont.substring(0, 12)}...` : `Current: ${headerFont.substring(0, 12)}...`}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right: Quick Style Buttons */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Quick Style
+                                </label>
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr 1fr',
+                                  gap: '3px'
+                                }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newWeight = headerStyles.fontWeight === 'bold' ? 'normal' : 'bold';
+                                      const newStyles = { ...headerStyles, fontWeight: newWeight };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      fontWeight: 'bold',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: headerStyles.fontWeight === 'bold' ? '#dbeafe' : 'white',
+                                      color: headerStyles.fontWeight === 'bold' ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    B
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyle = headerStyles.fontStyle === 'italic' ? 'normal' : 'italic';
+                                      const newStyles = { ...headerStyles, fontStyle: newStyle };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      fontStyle: 'italic',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: headerStyles.fontStyle === 'italic' ? '#dbeafe' : 'white',
+                                      color: headerStyles.fontStyle === 'italic' ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    I
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newDecoration = headerStyles.textDecoration === 'underline' ? 'none' : 'underline';
+                                      const newStyles = { ...headerStyles, textDecoration: newDecoration };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      textDecoration: 'underline',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: headerStyles.textDecoration === 'underline' ? '#dbeafe' : 'white',
+                                      color: headerStyles.textDecoration === 'underline' ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    U
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const shadows = ['none', '2px 2px 4px rgba(0,0,0,0.3)', '0 0 10px rgba(255,255,255,0.8)'];
+                                      const currentIndex = shadows.indexOf(headerStyles.textShadow || 'none');
+                                      const nextIndex = (currentIndex + 1) % shadows.length;
+                                      const newStyles = { ...headerStyles, textShadow: shadows[nextIndex] };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: (headerStyles.textShadow && headerStyles.textShadow !== 'none') ? '#dbeafe' : 'white',
+                                      color: (headerStyles.textShadow && headerStyles.textShadow !== 'none') ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    S
+                                  </button>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Font Selector */}
-                            <div style={{ marginBottom: '16px' }}>
-                              <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: '#374151',
-                                marginBottom: '8px'
-                              }}>
-                                Header Font
-                              </label>
-                              <SystemFontSelector 
-                                onFontChange={handleFontChange}
-                                onPreviewChange={handlePreviewChange}
-                                currentFont={headerFont}
-                              />
-                            </div>
-
-                            {/* Font Size Controls */}
-                            <div style={{ marginBottom: '16px' }}>
-                              <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: '#374151',
-                                marginBottom: '8px'
-                              }}>
-                                Font Size
-                              </label>
-                              <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                gap: '8px'
-                              }}>
-                                {[
-                                  { label: 'Small', value: 'clamp(24px, 3vw, 32px)' },
-                                  { label: 'Medium', value: 'clamp(32px, 4vw, 40px)' },
-                                  { label: 'Large', value: 'clamp(39px, 5.6vw, 50px)' },
-                                  { label: 'X-Large', value: 'clamp(48px, 7vw, 64px)' }
-                                ].map((size) => (
-                                  <button
-                                    key={size.label}
-                                    type="button"
-                                    onClick={() => {
-                                      const newStyles = { ...headerStyles, fontSize: size.value };
-                                      handleStyleChange(newStyles);
-                                    }}
-                                    style={{
-                                      padding: '8px 12px',
-                                      fontSize: '12px',
-                                      border: '1px solid #d1d5db',
-                                      borderRadius: '6px',
-                                      backgroundColor: headerStyles.fontSize === size.value ? '#dbeafe' : 'white',
-                                      color: headerStyles.fontSize === size.value ? '#1d4ed8' : '#374151',
-                                      cursor: 'pointer',
-                                      transition: 'all 0.2s'
-                                    }}
-                                    onMouseOver={(e) => {
-                                      if (headerStyles.fontSize !== size.value) {
-                                        e.target.style.backgroundColor = '#f9fafb';
-                                      }
-                                    }}
-                                    onMouseOut={(e) => {
-                                      if (headerStyles.fontSize !== size.value) {
-                                        e.target.style.backgroundColor = 'white';
-                                      }
-                                    }}
-                                  >
-                                    {size.label}
-                                  </button>
-                                ))}
+                            {/* Compact Control Sections */}
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr',
+                              gap: '12px',
+                              marginBottom: '12px'
+                            }}>
+                              {/* Left Column: Font Selector */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Header Font
+                                </label>
+                                <SystemFontSelector 
+                                  onFontChange={handleFontChange}
+                                  onPreviewChange={handlePreviewChange}
+                                  currentFont={headerFont}
+                                />
                               </div>
-                            </div>
 
-                            {/* Text Alignment Controls */}
-                            <div style={{ marginBottom: '16px' }}>
-                              <label style={{
-                                display: 'block',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: '#374151',
-                                marginBottom: '8px'
-                              }}>
-                                Text Alignment
-                              </label>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                {[
-                                  { label: 'Left', value: 'left' },
-                                  { label: 'Center', value: 'center' },
-                                  { label: 'Right', value: 'right' }
-                                ].map((align) => (
-                                  <button
-                                    key={align.label}
-                                    type="button"
-                                    onClick={() => {
-                                      const newStyles = { ...headerStyles, textAlign: align.value };
-                                      handleStyleChange(newStyles);
-                                    }}
-                                    style={{
-                                      padding: '8px 16px',
-                                      fontSize: '14px',
-                                      border: '1px solid #d1d5db',
-                                      borderRadius: '6px',
-                                      backgroundColor: headerStyles.textAlign === align.value ? '#dbeafe' : 'white',
-                                      color: headerStyles.textAlign === align.value ? '#1d4ed8' : '#374151',
-                                      cursor: 'pointer',
-                                      transition: 'all 0.2s'
-                                    }}
-                                    onMouseOver={(e) => {
-                                      if (headerStyles.textAlign !== align.value) {
-                                        e.target.style.backgroundColor = '#f9fafb';
-                                      }
-                                    }}
-                                    onMouseOut={(e) => {
-                                      if (headerStyles.textAlign !== align.value) {
-                                        e.target.style.backgroundColor = 'white';
-                                      }
-                                    }}
-                                  >
-                                    {align.label}
-                                  </button>
-                                ))}
+                              {/* Right Column: Size + Alignment */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Size & Align
+                                </label>
+                                
+                                {/* Font Size - Compact */}
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(4, 1fr)',
+                                  gap: '3px',
+                                  marginBottom: '6px'
+                                }}>
+                                  {[
+                                    { label: 'S', value: 'clamp(24px, 3vw, 32px)' },
+                                    { label: 'M', value: 'clamp(32px, 4vw, 40px)' },
+                                    { label: 'L', value: 'clamp(39px, 5.6vw, 50px)' },
+                                    { label: 'XL', value: 'clamp(48px, 7vw, 64px)' }
+                                  ].map((size) => (
+                                    <button
+                                      key={size.label}
+                                      type="button"
+                                      onClick={() => {
+                                        const newStyles = { ...headerStyles, fontSize: size.value };
+                                        handleStyleChange(newStyles);
+                                      }}
+                                      style={{
+                                        padding: '4px 6px',
+                                        fontSize: '10px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '3px',
+                                        backgroundColor: headerStyles.fontSize === size.value ? '#dbeafe' : 'white',
+                                        color: headerStyles.fontSize === size.value ? '#1d4ed8' : '#374151',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      {size.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                
+                                {/* Text Alignment - Compact */}
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(3, 1fr)',
+                                  gap: '3px'
+                                }}>
+                                  {[
+                                    { label: 'L', value: 'left' },
+                                    { label: 'C', value: 'center' },
+                                    { label: 'R', value: 'right' }
+                                  ].map((align) => (
+                                    <button
+                                      key={align.label}
+                                      type="button"
+                                      onClick={() => {
+                                        const newStyles = { ...headerStyles, textAlign: align.value };
+                                        handleStyleChange(newStyles);
+                                      }}
+                                      style={{
+                                        padding: '4px 6px',
+                                        fontSize: '10px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '3px',
+                                        backgroundColor: headerStyles.textAlign === align.value ? '#dbeafe' : 'white',
+                                        color: headerStyles.textAlign === align.value ? '#1d4ed8' : '#374151',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      {align.label}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
                             </div>
 
                             {/* Text Style Controls */}
-                            <div>
+                            <div style={{ marginBottom: '16px' }}>
                               <label style={{
                                 display: 'block',
                                 fontSize: '14px',
@@ -3973,7 +4145,7 @@ Live City DJ Contract Terms and Conditions:
                               }}>
                                 Text Style
                               </label>
-                              <div style={{ display: 'flex', gap: '8px' }}>
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -4016,6 +4188,275 @@ Live City DJ Contract Terms and Conditions:
                                 >
                                   Italic
                                 </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newDecoration = headerStyles.textDecoration === 'underline' ? 'none' : 'underline';
+                                    const newStyles = { ...headerStyles, textDecoration: newDecoration };
+                                    handleStyleChange(newStyles);
+                                  }}
+                                  style={{
+                                    padding: '8px 16px',
+                                    fontSize: '14px',
+                                    textDecoration: 'underline',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    backgroundColor: headerStyles.textDecoration === 'underline' ? '#dbeafe' : 'white',
+                                    color: headerStyles.textDecoration === 'underline' ? '#1d4ed8' : '#374151',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Underline
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Text Transform */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Transform
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: '8px'
+                              }}>
+                                {[
+                                  { label: 'None', value: 'none' },
+                                  { label: 'UPPER', value: 'uppercase' },
+                                  { label: 'lower', value: 'lowercase' },
+                                  { label: 'Title', value: 'capitalize' }
+                                ].map((transform) => (
+                                  <button
+                                    key={transform.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, textTransform: transform.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.textTransform || 'uppercase') === transform.value ? '#dbeafe' : 'white',
+                                      color: (headerStyles.textTransform || 'uppercase') === transform.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      textTransform: transform.value
+                                    }}
+                                  >
+                                    {transform.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Shadow */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Shadow
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: '8px'
+                              }}>
+                                {[
+                                  { label: 'None', value: 'none' },
+                                  { label: 'Soft', value: '2px 2px 4px rgba(0,0,0,0.3)' },
+                                  { label: 'Hard', value: '3px 3px 0px rgba(0,0,0,0.8)' },
+                                  { label: 'Glow', value: '0 0 10px rgba(255,255,255,0.8)' },
+                                  { label: 'Deep', value: '4px 4px 8px rgba(0,0,0,0.5)' },
+                                  { label: 'Neon', value: '0 0 15px #00ffff, 0 0 25px #00ffff' }
+                                ].map((shadow) => (
+                                  <button
+                                    key={shadow.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, textShadow: shadow.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.textShadow || 'none') === shadow.value ? '#dbeafe' : 'white',
+                                      color: (headerStyles.textShadow || 'none') === shadow.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      textShadow: shadow.value !== 'none' ? shadow.value : 'none'
+                                    }}
+                                  >
+                                    {shadow.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Letter Spacing */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Letter Spacing
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(5, 1fr)',
+                                gap: '8px'
+                              }}>
+                                {[
+                                  { label: 'Tight', value: '-1px' },
+                                  { label: 'Normal', value: '0px' },
+                                  { label: 'Wide', value: '2px' },
+                                  { label: 'Wider', value: '4px' },
+                                  { label: 'Widest', value: '6px' }
+                                ].map((spacing) => (
+                                  <button
+                                    key={spacing.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, letterSpacing: spacing.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.letterSpacing || '2px') === spacing.value ? '#dbeafe' : 'white',
+                                      color: (headerStyles.letterSpacing || '2px') === spacing.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      letterSpacing: spacing.value
+                                    }}
+                                  >
+                                    {spacing.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Color */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Color
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: '8px'
+                              }}>
+                                {[
+                                  { label: 'Hollow', value: 'transparent', stroke: '2px #000' },
+                                  { label: 'Black', value: '#000000', stroke: 'none' },
+                                  { label: 'White', value: '#ffffff', stroke: '1px #000' },
+                                  { label: 'Blue', value: '#3b82f6', stroke: 'none' },
+                                  { label: 'Red', value: '#ef4444', stroke: 'none' },
+                                  { label: 'Gold', value: '#f59e0b', stroke: 'none' },
+                                  { label: 'Purple', value: '#8b5cf6', stroke: 'none' },
+                                  { label: 'Green', value: '#10b981', stroke: 'none' }
+                                ].map((color) => (
+                                  <button
+                                    key={color.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { 
+                                        ...headerStyles, 
+                                        color: color.value,
+                                        webkitTextStroke: color.stroke,
+                                        textStroke: color.stroke
+                                      };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.color || 'transparent') === color.value ? '#dbeafe' : 'white',
+                                      color: color.value === 'transparent' ? '#000' : color.value,
+                                      WebkitTextStroke: color.value === 'transparent' ? '1px #000' : (color.stroke !== 'none' ? color.stroke : 'none'),
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      fontWeight: '500'
+                                    }}
+                                  >
+                                    {color.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Rotation */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Rotation
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: '8px'
+                              }}>
+                                {[
+                                  { label: '0°', value: '0deg' },
+                                  { label: '-5°', value: '-5deg' },
+                                  { label: '5°', value: '5deg' },
+                                  { label: '10°', value: '10deg' }
+                                ].map((rotation) => (
+                                  <button
+                                    key={rotation.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, transform: `rotate(${rotation.value})` };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.transform || 'rotate(0deg)') === `rotate(${rotation.value})` ? '#dbeafe' : 'white',
+                                      color: (headerStyles.transform || 'rotate(0deg)') === `rotate(${rotation.value})` ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      transform: rotation.value
+                                    }}
+                                  >
+                                    {rotation.label}
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           </div>
@@ -4374,32 +4815,30 @@ Live City DJ Contract Terms and Conditions:
 
                 {/* Two-column grid for venue information - changed to single column */}
                 <div className="form-grid-1col">
-                  <div>
+                  <div style={{ marginBottom: '2rem' }}>
                     <label htmlFor="venueName" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {fieldIcons['venueName']} Venue Name:
                       </span>
                     </label>
-                    <input
-                      id="venueName"
+                    <VenueNameWithSuggestions
+                      value={formData.venueName || ''}
+                      onChange={handleChange}
                       name="venueName"
-                      type="text"
-                      required
+                      placeholder="Enter venue name"
+                      required={true}
                       style={{
                         ...inputStyle,
                         // Ensure input is interactive
                         pointerEvents: 'auto',
                         userSelect: 'text',
-                        WebkitUserSelect: 'text'
+                        WebkitUserSelect: 'text',
+                        marginBottom: '0'
                       }}
                       className="field-input"
-                      value={formData.venueName || ''}
-                      onChange={handleChange}
-                      placeholder="Enter venue name"
-                      autoComplete="organization"
                     />
                   </div>
-                  <div>
+                  <div style={{ marginBottom: '2rem' }}>
                     <label htmlFor="venueLocation" style={labelStyle} className="field-label">
                       <span style={{ display: 'flex', alignItems: 'center' }}>
                         {venueLocationIcon} Venue Location:

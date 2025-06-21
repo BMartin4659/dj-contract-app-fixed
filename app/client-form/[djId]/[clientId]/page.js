@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { sendConfirmationEmail } from '@/lib/emailTemplates';
+import VenueNameWithSuggestions from '../../../components/VenueNameWithSuggestions';
 
 export default function ClientFormPage() {
   const { djId, clientId } = useParams();
@@ -299,13 +300,25 @@ export default function ClientFormPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Venue Name
                   </label>
-                  <input
-                    type="text"
-                    name="venueName"
+                  <VenueNameWithSuggestions
                     value={form.venueName}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    name="venueName"
                     placeholder="Grand Ballroom"
+                    required={false}
+                    style={{
+                      width: '100%',
+                      border: '1px solid #d1d5db',
+                      padding: '12px',
+                      borderRadius: '6px',
+                      fontSize: '16px',
+                      color: '#1f2937',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      marginBottom: '0'
+                    }}
+                    className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>

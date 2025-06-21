@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaCalendarAlt, FaClock, FaUsers, FaBuilding, FaMapMarkerAlt, FaPhone, FaEnvelope } from 'react-icons/fa';
+import VenueNameWithSuggestions from '@/app/components/VenueNameWithSuggestions';
 
 // Configure the localizer
 const localizer = momentLocalizer(moment);
@@ -559,11 +560,24 @@ export default function CalendarPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="venueName">Venue Name</Label>
-                <Input
-                  id="venueName"
-                  name="venueName"
+                <VenueNameWithSuggestions
                   value={newEvent.venueName}
                   onChange={handleInputChange}
+                  name="venueName"
+                  placeholder="Enter venue name"
+                  required={false}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#374151',
+                    border: '1px solid #4b5563',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    marginBottom: '0'
+                  }}
                   className="bg-gray-700 border-gray-600"
                 />
               </div>

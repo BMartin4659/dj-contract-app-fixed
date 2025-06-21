@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { FaMusic, FaArrowLeft, FaSearch, FaList, FaHome, FaHeart, FaCompactDisc, FaRadiation, FaGuitar, FaMicrophone, FaHeadphones, FaDrum, FaStar, FaFire, FaPlay, FaTimes, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { 
   loadSongsByMode, 
@@ -28,7 +28,7 @@ const CategoryCard = React.memo(({ title, color, type, onSelect, description, so
     onClick={() => onSelect(type, title)}
   >
     <div 
-      className="rounded-lg p-4 border-2 border-gray-300 bg-white shadow-sm hover:border-gray-400 hover:shadow-md transition-all duration-200"
+      className="rounded-none md:rounded-lg p-4 border-2 border-gray-300 bg-white shadow-sm hover:border-gray-400 hover:shadow-md transition-all duration-200"
       style={{ 
         background: `linear-gradient(135deg, ${color}15, ${color}05)`,
         borderLeft: `4px solid ${color}`
@@ -69,7 +69,7 @@ const SongListItem = React.memo(({ song, index, isSelected, onToggle, sourceData
 
   return (
     <div 
-      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border-2 ${
+      className={`flex items-center gap-3 p-3 rounded-none md:rounded-lg cursor-pointer transition-all duration-200 border-2 ${
         isSelected 
           ? 'bg-green-50 border-green-300 shadow-md' 
           : 'bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm'
@@ -136,7 +136,7 @@ const PaginationControls = React.memo(({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-200 mt-4">
+    <div className="flex items-center justify-center p-4 bg-gray-50 rounded-none md:rounded-lg border-2 border-gray-200 mt-4">
       <div className="flex items-center gap-2">
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -310,13 +310,32 @@ export default function MusicLibraryPage() {
 
   // Authentication state management
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setAuthLoading(false);
-    });
+    try {
+      // Try to import Firebase auth
+      import('../../lib/firebase').then(({ auth }) => {
+        if (!auth) {
+          console.log('🔥 Firebase not available - Music Library will work without authentication');
+          setAuthLoading(false);
+          setUser(null);
+          return;
+        }
+        
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setAuthLoading(false);
+        });
 
-    return () => unsubscribe();
+        return () => unsubscribe();
+      }).catch(error => {
+        console.log('🔥 Firebase not available - Music Library will work without authentication');
+        setAuthLoading(false);
+        setUser(null);
+      });
+    } catch (error) {
+      console.log('🔥 Firebase not available - Music Library will work without authentication');
+      setAuthLoading(false);
+      setUser(null);
+    }
   }, []);
 
   // Check for URL parameters and load saved songs
@@ -771,25 +790,25 @@ export default function MusicLibraryPage() {
           <div style={{ 
             maxWidth: '800px',
             width: '96%',
-            margin: '2rem auto 3rem auto',
+            margin: '1rem auto 3rem auto',
             padding: '0'
-          }}>
+          }} className="px-2 md:px-4 mt-4 md:mt-8">
             <div style={{
               backgroundColor: 'rgba(255, 255, 255, 0.75)',
-              padding: '2.5rem',
-              borderRadius: '20px',
+              padding: '1rem',
+              borderRadius: '0',
               width: '100%',
               marginBottom: '50px',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)'
-            }}>
+            }} className="md:rounded-[20px] md:p-10">
               
               {/* Header */}
-              <div className="text-center mb-10 relative">
+              <div className="text-center mb-10 relative pt-20 md:pt-24">
                 {/* Back Arrow Button - Positioned absolutely on the left */}
                 <button 
                   onClick={handleContinueAdding}
-                  className="absolute left-0 top-0 w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300 flex items-center justify-center"
+                  className="absolute left-0 top-20 md:top-24 w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300 flex items-center justify-center"
                 >
                   <FaArrowLeft className="text-gray-700 text-base" />
                 </button>
@@ -797,7 +816,7 @@ export default function MusicLibraryPage() {
                 {/* Back to Contract Button - Positioned absolutely on the right */}
                 <button 
                   onClick={handleBackToContract}
-                  className="absolute right-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                  className="absolute right-0 top-20 md:top-24 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
                   title="Save your selected songs and return to the contract form"
                 >
                   <span>Back to Contract</span>
@@ -1161,36 +1180,41 @@ export default function MusicLibraryPage() {
           WebkitBackdropFilter: 'blur(10px)'
         }}>
               
-              {/* Header */}
-              <div className="text-center mb-10 relative">
-                {/* Back Arrow Button - Positioned absolutely on the left */}
-                <button 
-                  onClick={handleBackToCategory}
-                  className="absolute left-0 top-0 w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors shadow-sm border border-gray-300 flex items-center justify-center"
-                >
-                  <FaArrowLeft className="text-gray-700 text-base" />
-                </button>
-                
-                {/* Navigation Buttons - Positioned absolutely on the right */}
-                <div className="absolute right-0 top-0 flex gap-2">
+                              {/* Header */}
+                <div className="text-center mb-10 relative pt-20 md:pt-24">
+                  {/* Simple Navigation Buttons */}
                   <button 
-                    onClick={handleBackToContract}
-                    className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
-                    title="Save your selected songs and return to the contract form"
+                    onClick={handleBackToCategory}
+                    className="absolute left-0 top-20 md:top-24 flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium text-xs shadow-sm"
                   >
-                    <span>Contract</span>
+                    <FaArrowLeft className="text-xs" />
+                    <span className="hidden sm:inline">Back to Library</span>
+                    <span className="sm:hidden">Back</span>
                   </button>
-                  
-                  {user && (
+
+                  <div className="absolute right-0 top-20 md:top-24 flex gap-2">
                     <button 
-                      onClick={() => router.push('/dj/dashboard')}
-                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg border border-indigo-400 font-medium text-xs"
-                      title="Return to DJ Dashboard"
+                      onClick={handleBackToContract}
+                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
+                      title="Save your selected songs and return to the contract form"
                     >
-                      <span>Dashboard</span>
+                      <FaArrowLeft className="text-xs" />
+                      <span className="hidden sm:inline">Contract</span>
+                      <span className="sm:hidden">Save</span>
                     </button>
-                  )}
-                </div>
+                    
+                    {user && (
+                      <button 
+                        onClick={() => router.push('/dj/dashboard')}
+                        className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg border border-indigo-400 font-medium text-xs"
+                        title="Return to DJ Dashboard"
+                      >
+                        <FaHome className="text-xs" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                        <span className="sm:hidden">DJ</span>
+                      </button>
+                    )}
+                  </div>
                 
                 {/* Centered Header Content */}
                 <div className="mb-6">
@@ -1341,7 +1365,7 @@ export default function MusicLibraryPage() {
               {/* Category Info */}
               <div className="mb-6">
                 <div 
-                  className="rounded-lg p-4 border-l-4" 
+                  className="rounded-none md:rounded-lg p-4 border-l-4" 
                   style={{ 
                     background: `linear-gradient(135deg, ${categoryData?.color}15, ${categoryData?.color}05)`,
                     borderColor: categoryData?.color || '#6366f1'
@@ -1411,42 +1435,30 @@ export default function MusicLibraryPage() {
         <div style={{ 
           maxWidth: '800px',
           width: '96%',
-          margin: '2rem auto 3rem auto',
+          margin: '1rem auto 3rem auto',
           padding: '0'
-        }}>
+        }} className="px-2 md:px-4 mt-4 md:mt-8">
           <div style={{
             backgroundColor: 'rgba(255, 255, 255, 0.75)',
-            padding: '2.5rem',
-            borderRadius: '20px',
+            padding: '1rem',
+            borderRadius: '0',
             width: '100%',
             marginBottom: '50px',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)'
-          }}>
+          }} className="md:rounded-[20px] md:p-10">
             
+
+
             {/* Header */}
-            <div className="text-center mb-10 relative music-library-header">
-              {/* Back to Contract Button - Positioned absolutely to not affect centering */}
-                  <button
-                    onClick={handleBackToContract}
-                className="music-library-back-button absolute left-0 top-0 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
-                title="Save your selected songs and return to the contract form"
-                  >
-                <span>Back to Contract</span>
-                  </button>
-              
-              {/* Centered Header Content */}
+            <div className="text-center mb-10 music-library-header pt-20 md:pt-24">
               <div className="mb-6">
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-                  Music Library
+                  Browse And Select Songs For Your Event
                 </h1>
                 <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full" style={{ width: 'fit-content', minWidth: '120px' }}></div>
-                </div>
-              
-              <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-                Browse Genres And Playlists To Find The Perfect Music For Your Event
-              </p>
-                </div>
+              </div>
+            </div>
 
             {/* Search Bar */}
             <div className="mb-8 music-library-search">
@@ -1457,7 +1469,7 @@ export default function MusicLibraryPage() {
                   placeholder="Search songs, artists, albums..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder-gray-500 shadow-sm"
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-300 rounded-none md:rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder-gray-500 shadow-sm bg-white"
                 />
                 {searchTerm && (
                   <button
@@ -1476,7 +1488,7 @@ export default function MusicLibraryPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => handleTabChange('genres')}
-                  className={`music-library-nav-button px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
+                  className={`music-library-nav-button px-8 py-4 font-bold text-base rounded-none md:rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
                     activeTab === 'genres'
                       ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
                       : 'bg-white text-gray-900 border-purple-400 hover:bg-purple-50 hover:border-purple-600 hover:shadow-lg'
@@ -1486,7 +1498,7 @@ export default function MusicLibraryPage() {
                 </button>
                 <button
                   onClick={() => handleTabChange('playlists')}
-                  className={`music-library-nav-button px-8 py-4 font-bold text-base rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
+                  className={`music-library-nav-button px-8 py-4 font-bold text-base rounded-none md:rounded-xl border-2 transition-all duration-200 flex items-center gap-3 shadow-md ${
                     activeTab === 'playlists'
                       ? 'bg-green-600 text-white border-green-600 shadow-lg'
                       : 'bg-white text-gray-900 border-green-400 hover:bg-green-50 hover:border-green-600 hover:shadow-lg'
@@ -1501,7 +1513,7 @@ export default function MusicLibraryPage() {
           {selectedSongs.length > 0 && (
               <div className="mb-6 md:mb-8">
                 <div 
-                  className="rounded-lg p-3 md:p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
+                  className="rounded-none md:rounded-lg p-3 md:p-5 border-l-4 border-green-500 border-2 border-green-200 shadow-md" 
                   style={{ background: 'linear-gradient(135deg, #10b98125, #10b98110)' }}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -1517,23 +1529,31 @@ export default function MusicLibraryPage() {
                     <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                       <button
                         onClick={handleViewPlaylist}
-                        className="px-3 py-2 md:px-5 md:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500 text-sm md:text-base"
+                        className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-md border-2 border-green-500 text-xs"
                       >
-                        View Playlist
+                        <span className="hidden sm:inline">View Your Playlist</span>
+                        <span className="sm:hidden">View Playlist</span>
                       </button>
-                  <button
-                    onClick={() => setSelectedSongs([])}
-                        className="px-3 py-2 md:px-5 md:py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium shadow-sm text-sm md:text-base"
-                  >
-                        Clear All
-                  </button>
-                  <button
-                    onClick={handleBackToContract}
-                        className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-sm md:text-base"
+                      <button
+                        onClick={handleBackToContract}
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400 font-medium text-xs"
                         title="Save your selected songs and return to the contract form"
-                  >
-                        <span>Save & Return to Contract</span>
-                  </button>
+                      >
+                        <FaArrowLeft className="text-xs" />
+                        <span className="hidden sm:inline">Back to Contract</span>
+                        <span className="sm:hidden">Back to Contract</span>
+                      </button>
+                      {user && (
+                        <button
+                          onClick={() => router.push('/dj/dashboard')}
+                          className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg border border-indigo-400 font-medium text-xs"
+                          title="Return to DJ Dashboard"
+                        >
+                          <FaHome className="text-xs" />
+                          <span className="hidden sm:inline">DJ Dashboard</span>
+                          <span className="sm:hidden">Dashboard</span>
+                        </button>
+                      )}
                     </div>
                 </div>
               </div>

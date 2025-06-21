@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import CustomDatePicker from '@/app/components/CustomDatePicker';
+import VenueNameWithSuggestions from '@/app/components/VenueNameWithSuggestions';
 
 export default function BookingPage() {
   const [step, setStep] = useState(1);
@@ -590,13 +591,25 @@ export default function BookingPage() {
                         <HiBuildingOffice2 className="mr-1 h-4 w-4 text-blue-400" />
                         Venue Name
                       </label>
-                      <input
-                        type="text"
-                        name="venueName"
+                      <VenueNameWithSuggestions
                         value={formData.venueName}
                         onChange={handleChange}
+                        name="venueName"
                         placeholder="Venue Name"
-                        className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required={false}
+                        style={{
+                          width: '100%',
+                          backgroundColor: '#374151',
+                          border: '1px solid #4b5563',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          color: '#fff',
+                          fontSize: '16px',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          marginBottom: '0'
+                        }}
+                        className="focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     

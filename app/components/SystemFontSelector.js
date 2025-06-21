@@ -173,32 +173,49 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
       return;
     }
 
-    if (searchTerm === '') {
-      // No search term, try to restore last selected position
-      if (lastSelectedIndex >= 0 && lastSelectedIndex < filteredFonts.length) {
-        setHighlightedIndex(lastSelectedIndex);
-        setHasRestoredPosition(true);
-        // Scroll to the remembered position after a brief delay
-        setTimeout(() => {
-          scrollToHighlighted(lastSelectedIndex);
-        }, 100);
-      } else {
-        // Find current selected font in filtered list
-        const currentIndex = filteredFonts.indexOf(selectedFont);
-        if (currentIndex !== -1) {
-          setHighlightedIndex(currentIndex);
+    // Only restore once when dropdown opens
+    const restoreTimeout = setTimeout(() => {
+      if (searchTerm === '' && !userIsNavigating) {
+        // No search term, try to restore last selected position
+        if (lastSelectedIndex >= 0 && lastSelectedIndex < filteredFonts.length) {
+          setHighlightedIndex(lastSelectedIndex);
           setHasRestoredPosition(true);
-          setTimeout(() => {
-            scrollToHighlighted(currentIndex);
-          }, 100);
+          // Use instant scroll for restoration to avoid conflicts
+          if (fontListRef.current) {
+            const listItems = fontListRef.current.children;
+            if (listItems[lastSelectedIndex]) {
+              listItems[lastSelectedIndex].scrollIntoView({
+                behavior: 'instant',
+                block: 'center'
+              });
+            }
+          }
+        } else {
+          // Find current selected font in filtered list
+          const currentIndex = filteredFonts.indexOf(selectedFont);
+          if (currentIndex !== -1) {
+            setHighlightedIndex(currentIndex);
+            setHasRestoredPosition(true);
+            if (fontListRef.current) {
+              const listItems = fontListRef.current.children;
+              if (listItems[currentIndex]) {
+                listItems[currentIndex].scrollIntoView({
+                  behavior: 'instant',
+                  block: 'center'
+                });
+              }
+            }
+          }
         }
+      } else {
+        // Search is active, start from top
+        setHighlightedIndex(-1);
+        setHasRestoredPosition(true);
       }
-    } else {
-      // Search is active, start from top
-      setHighlightedIndex(-1);
-      setHasRestoredPosition(true);
-    }
-  }, [filteredFonts, selectedFont, lastSelectedIndex, searchTerm, userIsNavigating, hasRestoredPosition, isOpen]);
+    }, 50);
+
+    return () => clearTimeout(restoreTimeout);
+  }, [isOpen, hasRestoredPosition]);
 
   // Mark user as navigating and set timeout to reset
   const markUserNavigating = () => {
@@ -209,10 +226,10 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
       clearTimeout(navigationTimeoutRef.current);
     }
     
-    // Reset navigation flag after 2 seconds of inactivity
+    // Reset navigation flag after 1 second of inactivity (reduced from 2 seconds)
     navigationTimeoutRef.current = setTimeout(() => {
       setUserIsNavigating(false);
-    }, 2000);
+    }, 1000);
   };
 
   // Keyboard navigation handler
@@ -278,31 +295,37 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
     }
   };
 
-  // Scroll to highlighted item with smooth animation
+  // Scroll to highlighted item with controlled animation
   const scrollToHighlighted = (index) => {
-    if (fontListRef.current && index >= 0) {
+    if (fontListRef.current && index >= 0 && index < filteredFonts.length) {
       const listItems = fontListRef.current.children;
       if (listItems[index]) {
+        // Use smooth scrolling but with better positioning
         listItems[index].scrollIntoView({
           behavior: 'smooth',
-          block: 'nearest'
+          block: 'nearest',
+          inline: 'nearest'
         });
       }
     }
   };
 
-  // Throttled mouse wheel handler for controlled scrolling
+  // Improved mouse wheel handler with better control
   const handleWheel = (e) => {
     if (!isOpen) return;
     
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Immediately disable position restoration when wheel scrolling starts
+    setHasRestoredPosition(true);
     markUserNavigating();
     
     const now = Date.now();
     const timeSinceLastWheel = now - lastWheelTime.current;
     
-    // Throttle wheel events to prevent too fast scrolling
-    if (timeSinceLastWheel < 100) {
+    // More aggressive throttling to prevent erratic behavior
+    if (timeSinceLastWheel < 150) {
       return;
     }
     
@@ -313,33 +336,29 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
       clearTimeout(wheelTimeoutRef.current);
     }
     
-    // Determine scroll direction with reduced sensitivity
-    const delta = Math.sign(e.deltaY);
+    // Determine scroll direction with normalized delta
+    const delta = e.deltaY > 0 ? 1 : -1;
     
-    // Throttle the actual state update
-    wheelTimeoutRef.current = setTimeout(() => {
-      setHighlightedIndex(prev => {
-        let newIndex;
-        if (prev === -1) {
-          // Start from remembered position or current selection
-          const startIndex = lastSelectedIndex >= 0 && lastSelectedIndex < filteredFonts.length 
-            ? lastSelectedIndex 
-            : filteredFonts.indexOf(selectedFont);
-          newIndex = startIndex !== -1 ? startIndex : (delta > 0 ? 0 : filteredFonts.length - 1);
-        } else {
-          newIndex = prev + delta;
-          if (newIndex < 0) newIndex = filteredFonts.length - 1;
-          if (newIndex >= filteredFonts.length) newIndex = 0;
-        }
-        
-        // Smooth scroll to new position
-        setTimeout(() => {
-          scrollToHighlighted(newIndex);
-        }, 10);
-        
-        return newIndex;
+    // Immediate state update for better responsiveness
+    setHighlightedIndex(prev => {
+      let newIndex;
+      if (prev === -1) {
+        // Start from current position in list, not saved position
+        const currentIndex = filteredFonts.indexOf(selectedFont);
+        newIndex = currentIndex !== -1 ? currentIndex : (delta > 0 ? 0 : filteredFonts.length - 1);
+      } else {
+        newIndex = prev + delta;
+        if (newIndex < 0) newIndex = filteredFonts.length - 1;
+        if (newIndex >= filteredFonts.length) newIndex = 0;
+      }
+      
+      // Scroll to new position with slight delay
+      requestAnimationFrame(() => {
+        scrollToHighlighted(newIndex);
       });
-    }, 50);
+      
+      return newIndex;
+    });
   };
 
   // Handle font selection and remember position
@@ -400,6 +419,7 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
       setIsOpen(true);
       setHasRestoredPosition(false);
       setUserIsNavigating(false);
+      setHighlightedIndex(-1); // Reset highlighted index when opening
       // Position restoration will be handled by useEffect
     } else {
       setIsOpen(false);

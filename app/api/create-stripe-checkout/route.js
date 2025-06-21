@@ -192,8 +192,15 @@ export async function GET(request) {
 
     if (!priceId) {
       console.error('Missing Stripe price ID for plan:', plan);
+      console.error('Available environment variables:', {
+        STRIPE_STANDARD_PRICE_ID: process.env.STRIPE_STANDARD_PRICE_ID ? 'Set' : 'Missing',
+        STRIPE_PREMIUM_PRICE_ID: process.env.STRIPE_PREMIUM_PRICE_ID ? 'Set' : 'Missing'
+      });
       return NextResponse.json(
-        { error: 'Subscription configuration error' },
+        { 
+          error: 'Subscription configuration error', 
+          details: `Missing Stripe price ID for ${plan} plan. Please configure STRIPE_${plan.toUpperCase()}_PRICE_ID in environment variables.`
+        },
         { status: 500 }
       );
     }
