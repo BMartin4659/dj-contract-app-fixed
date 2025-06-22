@@ -96,14 +96,14 @@ export default function LandingPage() {
           
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Standard Plan */}
-            <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-gray-200">
-              <div className="text-center">
+            <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-gray-200 flex flex-col h-full">
+              <div className="text-center flex-grow flex flex-col">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Standard</h3>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900">$10</span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                <ul className="text-left space-y-3 mb-8">
+                <ul className="text-left space-y-3 mb-8 flex-grow">
                   <li className="flex items-center">
                     <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -129,24 +129,24 @@ export default function LandingPage() {
                     Basic email confirmations
                   </li>
                 </ul>
-                <Link href="/auth/signup?plan=standard" className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors block text-center">
+                <Link href="/auth/signup?plan=standard" className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors block text-center mt-auto">
                   Get Started
                 </Link>
               </div>
             </div>
 
             {/* Premium Plan */}
-            <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-blue-500 relative">
+            <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-blue-500 relative flex flex-col h-full">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
               </div>
-              <div className="text-center">
+              <div className="text-center flex-grow flex flex-col">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Premium</h3>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900">$15</span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                <ul className="text-left space-y-3 mb-8">
+                <ul className="text-left space-y-3 mb-8 flex-grow">
                   <li className="flex items-center">
                     <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -178,7 +178,7 @@ export default function LandingPage() {
                     Priority support
                   </li>
                 </ul>
-                <Link href="/auth/signup?plan=premium" className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors block text-center">
+                <Link href="/auth/signup?plan=premium" className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors block text-center mt-auto">
                   Get Started
                 </Link>
               </div>

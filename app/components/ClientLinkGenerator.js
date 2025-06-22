@@ -22,6 +22,7 @@ export default function ClientLinkGenerator({ djId }) {
   const [copied, setCopied] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Check subscription status
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function ClientLinkGenerator({ djId }) {
       }
     }
 
-    setLoading(true);
+    setIsGenerating(true);
     try {
       const clientId = generateUUID();
       
@@ -112,7 +113,7 @@ export default function ClientLinkGenerator({ djId }) {
       console.error('Error generating link:', error);
       alert('Error generating link. Please try again.');
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -140,48 +141,51 @@ export default function ClientLinkGenerator({ djId }) {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Generate Client Form Link</h2>
-      
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
+      {/* Header with title and button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
+        <div className="flex-1">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            Generate Client Form Link
+          </h2>
+        </div>
+        <div className="flex-shrink-0">
+          <button
+            onClick={handleGenerateLink}
+            disabled={isGenerating}
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="hidden sm:inline">Generating...</span>
+                <span className="sm:hidden">...</span>
+              </>
+            ) : (
+              <>
+                🔗
+                <span className="hidden sm:inline">Generate New Link</span>
+                <span className="sm:hidden">New Link</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* Subscription Status */}
       {checkingSubscription ? (
-        <div className="mb-4 p-3 bg-gray-100 rounded-md">
-          <p className="text-sm text-gray-600">Checking subscription status...</p>
-        </div>
+        <p className="mb-4 text-sm text-gray-600">Checking subscription status...</p>
       ) : (
-        <div className={`mb-4 p-3 rounded-md ${
-          subscriptionStatus?.hasActiveSubscription 
-            ? 'bg-green-100 border border-green-200' 
-            : 'bg-yellow-100 border border-yellow-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${
-                subscriptionStatus?.hasActiveSubscription ? 'text-green-800' : 'text-yellow-800'
-              }`}>
-                {subscriptionStatus?.hasActiveSubscription 
-                  ? `✅ Premium Plan (${subscriptionStatus.tier})` 
-                  : '⚠️ Free Plan'
-                }
-              </p>
-              <p className={`text-xs ${
-                subscriptionStatus?.hasActiveSubscription ? 'text-green-600' : 'text-yellow-600'
-              }`}>
-                {subscriptionStatus?.hasActiveSubscription 
-                  ? 'Full access to custom fonts, styling, and premium features'
-                  : 'Standard contract links only - Premium features require subscription'
-                }
-              </p>
-            </div>
-            {!subscriptionStatus?.hasActiveSubscription && (
-              <button
-                onClick={() => router.push('/subscription')}
-                className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
-              >
-                Upgrade
-              </button>
-            )}
-          </div>
+        <div className="mb-4">
+          <p className={`text-sm ${subscriptionStatus?.hasActiveSubscription ? 'text-gray-700' : 'text-red-600'}`}>
+            {subscriptionStatus?.hasActiveSubscription 
+              ? `✅ Premium Plan (${subscriptionStatus.tier}) - Full access to custom fonts, styling, and premium features` 
+              : '⚠️ Free Plan - Standard contract links only - Premium features require subscription'
+            }
+          </p>
         </div>
       )}
 
@@ -189,27 +193,6 @@ export default function ClientLinkGenerator({ djId }) {
         Create a unique link for your client to fill out their event details and preferences.
       </p>
       
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={handleGenerateLink}
-          disabled={loading}
-          className={`flex-1 px-6 py-3 rounded-md font-medium transition-colors ${
-            loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-          } text-white`}
-        >
-          {loading ? 'Generating...' : 'Generate New Link'}
-        </button>
-        
-        <button
-          onClick={handleGoToMainContract}
-          className="px-6 py-3 rounded-md font-medium transition-colors bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white flex items-center gap-2"
-        >
-          📝 Main Contract
-        </button>
-      </div>
-
       {link && (
         <div className="mt-6 p-4 bg-gray-50 rounded-md">
           <p className="text-sm font-medium text-gray-700 mb-2">
@@ -227,7 +210,7 @@ export default function ClientLinkGenerator({ djId }) {
               className={`px-4 py-3 rounded-md font-medium transition-colors ${
                 copied
                   ? 'bg-green-600 text-white'
-                  : 'bg-gray-600 hover:bg-gray-700 text-white'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
               }`}
             >
               {copied ? 'Copied!' : 'Copy'}
@@ -239,9 +222,9 @@ export default function ClientLinkGenerator({ djId }) {
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-blue-50 rounded-md">
-        <h3 className="text-sm font-medium text-blue-800 mb-2">How it works:</h3>
-        <ul className="text-sm text-blue-700 space-y-1">
+      <div className="mt-6 p-4 bg-gray-50 rounded-md">
+        <h3 className="text-sm font-medium text-gray-800 mb-2">How it works:</h3>
+        <ul className="text-sm text-gray-700 space-y-1">
           <li>• Click &quot;Generate New Link&quot; to create a unique form link</li>
           <li>• Share the link with your client via email, text, or social media</li>
           <li>• Client fills out their event details without needing to create an account</li>

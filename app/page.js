@@ -4225,8 +4225,8 @@ Live City DJ Contract Terms and Conditions:
                               </label>
                               <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                gap: '8px'
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))',
+                                gap: '6px'
                               }}>
                                 {[
                                   { label: 'None', value: 'none' },
@@ -4242,15 +4242,23 @@ Live City DJ Contract Terms and Conditions:
                                       handleStyleChange(newStyles);
                                     }}
                                     style={{
-                                      padding: '8px 12px',
+                                      padding: '8px 10px',
                                       fontSize: '12px',
+                                      fontWeight: '500',
                                       border: '1px solid #d1d5db',
                                       borderRadius: '6px',
                                       backgroundColor: (headerStyles.textTransform || 'uppercase') === transform.value ? '#dbeafe' : 'white',
                                       color: (headerStyles.textTransform || 'uppercase') === transform.value ? '#1d4ed8' : '#374151',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s',
-                                      textTransform: transform.value
+                                      textTransform: transform.value,
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
                                     }}
                                   >
                                     {transform.label}
@@ -4272,8 +4280,8 @@ Live City DJ Contract Terms and Conditions:
                               </label>
                               <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: '8px'
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
+                                gap: '6px'
                               }}>
                                 {[
                                   { label: 'None', value: 'none' },
@@ -4291,15 +4299,23 @@ Live City DJ Contract Terms and Conditions:
                                       handleStyleChange(newStyles);
                                     }}
                                     style={{
-                                      padding: '8px 12px',
+                                      padding: '8px 10px',
                                       fontSize: '12px',
+                                      fontWeight: '500',
                                       border: '1px solid #d1d5db',
                                       borderRadius: '6px',
                                       backgroundColor: (headerStyles.textShadow || 'none') === shadow.value ? '#dbeafe' : 'white',
                                       color: (headerStyles.textShadow || 'none') === shadow.value ? '#1d4ed8' : '#374151',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s',
-                                      textShadow: shadow.value !== 'none' ? shadow.value : 'none'
+                                      textShadow: shadow.value !== 'none' ? shadow.value : 'none',
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
                                     }}
                                   >
                                     {shadow.label}
@@ -4321,8 +4337,8 @@ Live City DJ Contract Terms and Conditions:
                               </label>
                               <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(5, 1fr)',
-                                gap: '8px'
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(65px, 1fr))',
+                                gap: '6px'
                               }}>
                                 {[
                                   { label: 'Tight', value: '-1px' },
@@ -4339,15 +4355,24 @@ Live City DJ Contract Terms and Conditions:
                                       handleStyleChange(newStyles);
                                     }}
                                     style={{
-                                      padding: '8px 12px',
-                                      fontSize: '12px',
+                                      padding: '8px 10px',
+                                      fontSize: '11px',
+                                      fontWeight: '500',
                                       border: '1px solid #d1d5db',
                                       borderRadius: '6px',
                                       backgroundColor: (headerStyles.letterSpacing || '2px') === spacing.value ? '#dbeafe' : 'white',
                                       color: (headerStyles.letterSpacing || '2px') === spacing.value ? '#1d4ed8' : '#374151',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s',
-                                      letterSpacing: spacing.value
+                                      // Don't apply letter spacing to the button text itself, only to the header when selected
+                                      letterSpacing: 'normal',
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
                                     }}
                                   >
                                     {spacing.label}
@@ -4369,8 +4394,8 @@ Live City DJ Contract Terms and Conditions:
                               </label>
                               <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                gap: '8px'
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(65px, 1fr))',
+                                gap: '6px'
                               }}>
                                 {[
                                   { label: 'Hollow', value: 'transparent', stroke: '2px #000' },
@@ -4395,8 +4420,9 @@ Live City DJ Contract Terms and Conditions:
                                       handleStyleChange(newStyles);
                                     }}
                                     style={{
-                                      padding: '8px 12px',
+                                      padding: '8px 10px',
                                       fontSize: '12px',
+                                      fontWeight: '600',
                                       border: '1px solid #d1d5db',
                                       borderRadius: '6px',
                                       backgroundColor: (headerStyles.color || 'transparent') === color.value ? '#dbeafe' : 'white',
@@ -4404,7 +4430,13 @@ Live City DJ Contract Terms and Conditions:
                                       WebkitTextStroke: color.value === 'transparent' ? '1px #000' : (color.stroke !== 'none' ? color.stroke : 'none'),
                                       cursor: 'pointer',
                                       transition: 'all 0.2s',
-                                      fontWeight: '500'
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
                                     }}
                                   >
                                     {color.label}
@@ -4426,8 +4458,8 @@ Live City DJ Contract Terms and Conditions:
                               </label>
                               <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                gap: '8px'
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(55px, 1fr))',
+                                gap: '6px'
                               }}>
                                 {[
                                   { label: '0°', value: '0deg' },
@@ -4443,15 +4475,23 @@ Live City DJ Contract Terms and Conditions:
                                       handleStyleChange(newStyles);
                                     }}
                                     style={{
-                                      padding: '8px 12px',
+                                      padding: '8px 10px',
                                       fontSize: '12px',
+                                      fontWeight: '500',
                                       border: '1px solid #d1d5db',
                                       borderRadius: '6px',
                                       backgroundColor: (headerStyles.transform || 'rotate(0deg)') === `rotate(${rotation.value})` ? '#dbeafe' : 'white',
                                       color: (headerStyles.transform || 'rotate(0deg)') === `rotate(${rotation.value})` ? '#1d4ed8' : '#374151',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s',
-                                      transform: rotation.value
+                                      transform: rotation.value,
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
                                     }}
                                   >
                                     {rotation.label}

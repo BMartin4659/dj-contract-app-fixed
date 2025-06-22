@@ -57,15 +57,15 @@ export default function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50/80 backdrop-blur border border-red-200/60 text-red-700 px-6 py-4 rounded-lg">
           {error}
         </div>
       )}
       
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="block text-lg font-medium text-gray-700 mb-3 text-left">
           Email address
         </label>
         <div className="mt-1">
@@ -75,7 +75,7 @@ export default function LoginForm() {
             type="email"
             autoComplete="email"
             required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="appearance-none block w-full px-5 py-5 border border-gray-300/60 rounded-lg placeholder-gray-400 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg text-gray-900 leading-normal text-left"
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -84,7 +84,7 @@ export default function LoginForm() {
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="password" className="block text-lg font-medium text-gray-700 mb-3 text-left">
           Password
         </label>
         <div className="mt-1">
@@ -94,7 +94,7 @@ export default function LoginForm() {
             type="password"
             autoComplete="current-password"
             required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="appearance-none block w-full px-5 py-5 border border-gray-300/60 rounded-lg placeholder-gray-400 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg text-gray-900 leading-normal text-left"
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -106,11 +106,11 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+          className={`w-full flex justify-center py-5 px-8 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white backdrop-blur-sm ${
             loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-          }`}
+              ? 'bg-gray-400/80 cursor-not-allowed'
+              : 'bg-blue-600/90 hover:bg-blue-700/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+          } transition-all duration-200`}
         >
           {loading ? 'Signing in...' : 'Sign in'}
         </button>

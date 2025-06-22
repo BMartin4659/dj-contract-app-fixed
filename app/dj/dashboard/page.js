@@ -47,12 +47,16 @@ export default function DJDashboardPage() {
     }
   };
 
+  const handleGoToMainContract = () => {
+    router.push('/');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+          <p className="mt-4 text-gray-600 text-sm sm:text-base">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -78,65 +82,94 @@ export default function DJDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">DJ Dashboard</h1>
-              <p className="text-sm text-gray-600">Welcome back, {user.displayName || user.email}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                {getSubscriptionStatus()}
-              </div>
-              <Link
-                href="/music-library"
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Music Library
-              </Link>
-              <Link
-                href="/wedding-agenda"
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Wedding Agenda
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-900 font-medium"
-              >
-                Sign Out
-              </button>
+      <header className="bg-white shadow-sm border-b relative">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-12 sm:py-16">
+          {/* Sign Out Button - Upper Right Corner */}
+          <button
+            onClick={handleSignOut}
+            className="absolute top-2 right-2 px-1.5 py-1 text-gray-600 bg-gray-50 hover:bg-gray-100 font-normal rounded text-xs border border-gray-200 hover:border-gray-300 shadow-sm transition-colors duration-200"
+          >
+            Sign Out
+          </button>
+          {/* Title Section */}
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 tracking-tight leading-tight mb-2">
+              DJ Dashboard
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              Welcome back, <span className="font-medium">{user.displayName || user.email}</span>
+            </p>
+          </div>
+          
+          {/* Navigation Buttons */}
+          <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 mb-4">
+            <button
+              onClick={handleGoToMainContract}
+              className="px-4 py-3 sm:px-5 sm:py-3.5 text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-sm sm:text-base">Contract</span>
+            </button>
+            <button
+              onClick={() => router.push('/music-library')}
+              className="px-4 py-3 sm:px-5 sm:py-3.5 text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <span className="text-sm sm:text-base">Music</span>
+            </button>
+            <button
+              onClick={() => router.push('/wedding-agenda')}
+              className="px-4 py-3 sm:px-5 sm:py-3.5 text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-sm sm:text-base">Agenda</span>
+            </button>
+          </div>
+          
+          {/* Subscription Status */}
+          <div className="text-center">
+            <div className="text-sm text-gray-700 font-semibold px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 inline-block shadow-sm">
+              {getSubscriptionStatus()}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
         {/* Subscription Status */}
         {userProfile?.subscription?.status === 'trial' && (
-          <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <div className="flex items-center justify-between">
+          <div className="mb-4 sm:mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-yellow-800">Free Trial Active</h3>
-                <p className="text-yellow-700">
+                <h3 className="text-base sm:text-lg font-semibold text-yellow-800">Free Trial Active</h3>
+                <p className="text-sm sm:text-base text-yellow-700 mt-1">
                   Your {userProfile.subscription.planType} trial expires in{' '}
-                  {Math.ceil((userProfile.subscription.trialEnds - Date.now()) / (1000 * 60 * 60 * 24))} days.
+                  <span className="font-semibold">
+                    {Math.ceil((userProfile.subscription.trialEnds - Date.now()) / (1000 * 60 * 60 * 24))} days
+                  </span>.
+                  <br className="sm:hidden" />
+                  <span className="hidden sm:inline"> </span>
                   Upgrade to continue using all features.
                 </p>
               </div>
-              <Link
-                href="/subscription"
-                className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 font-medium"
+              <button
+                onClick={() => router.push('/subscription')}
+                className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 self-start sm:self-auto"
               >
                 Upgrade Now
-              </Link>
+              </button>
             </div>
           </div>
         )}
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Client Link Generator */}
           <div className="lg:col-span-2">
             <ClientLinkGenerator djId={user.email} />
@@ -154,9 +187,11 @@ export default function DJDashboardPage() {
 
           {/* Subscription Management */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">Subscription Management</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 text-gray-800">
+                Subscription Management
+              </h2>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Manage your subscription plan and billing information.
               </p>
               <SubscribeButtons />
@@ -164,54 +199,54 @@ export default function DJDashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/music-library"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        {/* Quick Links */}
+        <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-gray-800">Quick Links</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <button
+              onClick={() => router.push('/music-library')}
+              className="flex items-center p-4 sm:p-5 lg:p-6 border-2 border-gray-200 rounded-xl hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-100 hover:border-purple-300 transition-all duration-300 hover:shadow-lg group text-left transform hover:-translate-y-1"
             >
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:from-purple-200 group-hover:to-purple-300 transition-all duration-300 shadow-md">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                 </svg>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Music Library</h3>
-                <p className="text-sm text-gray-600">Browse songs and playlists</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 text-base sm:text-lg lg:text-xl mb-1">Music Library</h3>
+                <p className="text-sm sm:text-base text-gray-600">Browse songs and playlists</p>
               </div>
-            </Link>
+            </button>
 
-            <Link
-              href="/wedding-agenda"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            <button
+              onClick={() => router.push('/wedding-agenda')}
+              className="flex items-center p-4 sm:p-5 lg:p-6 border-2 border-gray-200 rounded-xl hover:bg-gradient-to-br hover:from-green-50 hover:to-green-100 hover:border-green-300 transition-all duration-300 hover:shadow-lg group text-left transform hover:-translate-y-1"
             >
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:from-green-200 group-hover:to-green-300 transition-all duration-300 shadow-md">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Wedding Agenda</h3>
-                <p className="text-sm text-gray-600">Plan wedding timeline</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 text-base sm:text-lg lg:text-xl mb-1">Wedding Agenda</h3>
+                <p className="text-sm sm:text-base text-gray-600">Plan wedding timeline</p>
               </div>
-            </Link>
+            </button>
 
-            <Link
-              href="/subscription"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            <button
+              onClick={() => router.push('/subscription')}
+              className="flex items-center p-4 sm:p-5 lg:p-6 border-2 border-gray-200 rounded-xl hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all duration-300 hover:shadow-lg group sm:col-span-2 lg:col-span-1 text-left transform hover:-translate-y-1"
             >
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300 shadow-md">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Billing</h3>
-                <p className="text-sm text-gray-600">Manage subscription</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 text-base sm:text-lg lg:text-xl mb-1">Billing & Subscription</h3>
+                <p className="text-sm sm:text-base text-gray-600">Manage your subscription plan</p>
               </div>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
