@@ -303,6 +303,10 @@ export default function ClientFormPage() {
                   <VenueNameWithSuggestions
                     value={form.venueName}
                     onChange={handleChange}
+                    onAddressChange={(e) => {
+                      // Update venueAddress field when venue is selected
+                      setForm({ ...form, venueAddress: e.target.value });
+                    }}
                     name="venueName"
                     placeholder="Grand Ballroom"
                     required={false}

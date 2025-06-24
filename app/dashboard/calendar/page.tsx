@@ -563,6 +563,7 @@ export default function CalendarPage() {
                 <VenueNameWithSuggestions
                   value={newEvent.venueName}
                   onChange={handleInputChange}
+                  onAddressChange={handleInputChange}
                   name="venueName"
                   placeholder="Enter venue name"
                   required={false}

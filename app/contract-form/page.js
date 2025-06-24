@@ -1,0 +1,6582 @@
+'use client';
+
+// FORCE VERCEL DEPLOYMENT REFRESH - 2025-01-31 20:10 UTC
+// CRITICAL CACHE BUSTING: Wedding event selection on main contract form
+// Wedding events not working on Vercel deployment - USING V2 FUNCTIONS
+// All wedding event types must trigger dynamic pricing and wedding agenda alerts
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { collection, addDoc, doc, updateDoc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
+import StripeCheckout from '../../components/StripeCheckout';
+import Header from '../../components/Header';
+import EnvChecker from '../../components/EnvChecker';
+import EnvTest from '../../components/EnvTest';
+import { AdminAuth, AuthRequirements } from '../../lib/utils';
+import { isAdminEmail } from '../constants';
+import AccessLevelBanner from '../components/AccessLevelBanner';
+import { 
+  FaCheckCircle, 
+  FaShieldAlt,
+  FaReceipt,
+  FaUser, 
+  FaEnvelope, 
+  FaPhone, 
+  FaCalendarAlt,
+  FaUsers,
+  FaBuilding,
+  FaMapMarkerAlt,
+  FaClock,
+  FaLightbulb,
+  FaCamera,
+  FaVideo,
+  FaCheck,
+  FaPlus,
+  FaMinus,
+  FaPaypal,
+  FaCreditCard,
+  FaInfoCircle,
+  FaMobileAlt,
+  FaPhoneAlt,
+  FaUserAlt,
+  FaFacebookSquare, 
+  FaInstagram, 
+  FaArrowRight,
+  FaPlayCircle,
+  FaMusic,
+  FaTimes,
+  FaList,
+  FaRegClock,
+  FaFileAlt,
+  FaRegMoneyBillAlt,
+  FaSpinner,
+  FaUserFriends,
+  FaStickyNote,
+  FaPlusCircle,
+  FaMinusCircle,
+  FaMoneyBillWave,
+  FaMoneyCheck,
+  FaInfo,
+  FaQuestionCircle,
+  FaDollarSign,
+  FaExclamationTriangle,
+  FaCaretRight,
+  FaPaperPlane,
+  FaBriefcase,
+  FaExclamationCircle,
+  FaStripe,
+  FaArrowDown,
+  FaArrowLeft,
+  FaDrum,
+  FaPlay,
+  FaExternalLinkAlt,
+  FaClipboard,
+  FaRegClipboard,
+  FaRegCopy,
+  FaRedo,
+  FaClipboardList,
+  FaChevronRight,
+  FaStar,
+  FaVolumeUp,
+  FaRegCreditCard
+} from 'react-icons/fa';
+import { BsStripe } from 'react-icons/bs';
+import { SiVenmo, SiCashapp, SiSpotify, SiApplemusic, SiYoutubemusic } from 'react-icons/si';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Link from 'next/link';
+import Logo from '../../components/Logo';
+import LoadingDots from '../../components/LoadingDots';
+import { handleNavigationClick } from '../../lib/eventHandlers';
+import { isValidEmail, isValidPhoneNumber } from '../../lib/validation';
+import Footer from '../../components/Footer';
+import { getStreamingLogo } from '../components/StreamingLogos';
+import { CustomDatePicker } from '../components/CustomDatePicker';
+import { loadStripe } from '@stripe/stripe-js';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/app/styles/datepicker.css';
+
+// Import the new ReactDatePickerField component
+import ReactDatePickerField from '../components/ReactDatePickerField';
+import EventTypeDropdown from '../components/EventTypeDropdown';
+
+// Import the new SuppressHydration component
+import SuppressHydration from '../components/SuppressHydration';
+
+// Import the event utilities - USING CONSOLIDATED FUNCTIONS
+import { isWeddingEvent, getBasePrice } from '../utils/eventUtils';
+
+// Import the form context
+import { useFormContext } from '../contexts/FormContext';
+import { useIsMobile } from '../hooks/useIsMobile';
+
+// Import the optimized address autocomplete component
+import AddressAutocomplete from '../components/AddressAutocomplete';
+
+// Import venue name with suggestions component
+import VenueNameWithSuggestions from '../components/VenueNameWithSuggestions';
+
+// Import font manager for custom fonts
+import { fontManager } from '../utils/fontManager';
+
+// Import system font selector
+import SystemFontSelector from '../components/SystemFontSelector';
+// import HeaderStyleEditor from './components/HeaderStyleEditor';
+
+
+
+// Dynamic import for client-only component with no SSR
+import dynamic from 'next/dynamic';
+
+// Constants and Pricing
+const SERVICES = {
+  BASE: 400,
+  LIGHTING: 100,
+  PHOTOGRAPHY: 150,
+  VIDEO_VISUALS: 100,
+  ADDITIONAL_HOUR: 75,
+};
+
+// Dynamic import for client-only component with no SSR
+const WeddingAgendaCard = dynamic(() => import('../components/WeddingAgendaCard'), { ssr: false });
+
+// Payment confirmation banner component
+const PaymentConfirmation = ({ show, message }) => {
+  if (!show) return null;
+  
+  return (
+    <div className="payment-confirmation-banner" style={{
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100%',
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      zIndex: '1000',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+      padding: '15px',
+      borderRadius: '0 0 8px 8px'
+    }}>
+      <div className="payment-confirmation-content" style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        <FaCheckCircle style={{ color: 'green', marginRight: '10px', fontSize: '24px', marginTop: '3px' }} />
+        <div>
+          <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>{message || 'Payment initiated successfully!'}</div>
+          <div style={{ fontSize: '0.95rem', marginTop: '5px', color: '#555' }}>
+            If you have any questions or concerns, please contact us at <a href="mailto:therealdjbobbydrake@gmail.com" style={{ color: '#0070f3', textDecoration: 'underline' }}>therealdjbobbydrake@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Payment confirmation banner component
+const PaymentConfirmationBanner = ({ paymentMethod, onClose }) => {
+  const getMessage = () => {
+    switch(paymentMethod) {
+      case 'Stripe':
+        return 'Redirecting to Stripe for secure payment...';
+      case 'Venmo':
+        return 'Redirecting to Venmo. Complete your payment to confirm booking.';
+      case 'CashApp':
+        return 'Redirecting to Cash App. Complete your payment to confirm booking.';
+      case 'PayPal':
+        return 'Redirecting to PayPal. Complete your payment to confirm booking.';
+      default:
+        return 'Processing your payment...';
+    }
+  };
+
+  return (
+    <div className="payment-confirmation-banner" style={{
+      position: 'fixed',
+      top: '0',
+      left: 0,
+      width: '100%',
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      zIndex: '1000',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+      borderRadius: '0 0 8px 8px',
+      height: '75px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div className="confirmation-content" style={{
+        padding: '10px 20px',
+        maxWidth: '600px',
+        margin: '0 auto',
+        position: 'relative',
+        textAlign: 'center'
+      }}>
+        <h3 style={{ margin: '0 0 5px 0', fontSize: '16px' }}>Payment Initiated</h3>
+        <p style={{ margin: '0', fontSize: '14px' }}>{getMessage()}</p>
+        <button onClick={onClose} className="close-btn" style={{
+          position: 'absolute',
+          top: '50%',
+          right: '0',
+          transform: 'translateY(-50%)',
+          background: 'none',
+          border: 'none',
+          fontSize: '1.5rem',
+          cursor: 'pointer'
+        }}>×</button>
+      </div>
+    </div>
+  );
+};
+
+// Payment Option component
+const PaymentOption = ({ method, isSelected, onSelect, color }) => {
+  const inputId = `paymentMethod${method.replace(/\s+/g, '')}`;
+  return (
+    <div 
+      onClick={onSelect}
+      className="payment-option-item"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '18px',
+        borderRadius: '8px',
+        border: isSelected ? `2px solid ${color || '#0070f3'}` : '1px solid #ddd',
+        backgroundColor: isSelected ? (color ? `${color}10` : 'rgba(0, 112, 243, 0.05)') : 'white',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        boxShadow: isSelected ? `0 4px 8px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)',
+      }}
+    >
+      <input
+        id={inputId}
+        type="radio"
+        name="paymentMethod"
+        value={method}
+        checked={isSelected}
+        onChange={() => {}}
+        style={{ display: 'none' }}
+      />
+      <label htmlFor={inputId} style={{ display: 'none' }}>{method} Payment Method</label>
+      <div style={{ 
+        fontWeight: isSelected ? '600' : '400',
+        color: isSelected ? (color || '#0070f3') : '#333',
+        fontSize: '1rem',
+      }}>
+        {method}
+      </div>
+    </div>
+  );
+};
+
+// Add at the top of the file after imports
+// Payment method URL configurations
+const PAYMENT_URLS = {
+  VENMO: process.env.NEXT_PUBLIC_VENMO_URL || 'https://venmo.com/u/Bobby-Martin-64',
+  CASHAPP: process.env.NEXT_PUBLIC_CASHAPP_URL || 'https://cash.app/$LiveCity',
+  PAYPAL: process.env.NEXT_PUBLIC_PAYPAL_URL || 'https://paypal.me/bmartin4659'
+};
+
+// Fix Cash App URL if it's missing the username due to environment variable parsing issues
+if (PAYMENT_URLS.CASHAPP === 'https://cash.app/' || PAYMENT_URLS.CASHAPP === 'https://cash.app') {
+  PAYMENT_URLS.CASHAPP = 'https://cash.app/$LiveCity';
+}
+
+// Debug logging
+console.log('PAYMENT_URLS loaded:', PAYMENT_URLS);
+console.log('Raw env var NEXT_PUBLIC_CASHAPP_URL:', process.env.NEXT_PUBLIC_CASHAPP_URL);
+
+// We won't use a direct URL for CashApp as deep linking isn't working reliably
+const getCashAppInfo = () => {
+  const baseURL = PAYMENT_URLS.CASHAPP;
+  const username = baseURL.includes('$') ? baseURL.split('cash.app/').pop() : 'LiveCity';
+  
+  // Format the CashApp payment URL properly using a simple format
+  const formatPaymentUrl = (amount = 0) => {
+    // Remove $ if it exists at the beginning
+    const cleanUsername = username.startsWith('$') ? username.substring(1) : username;
+    
+    // Use the official format for Cash App (simple version)
+    return `https://cash.app/$${cleanUsername}`;
+  };
+  
+  return {
+    username: username,
+    url: baseURL,
+    formatPaymentUrl
+  };
+};
+
+// Format CashApp URL with amount
+const formatCashAppURL = (username, amount = 0) => {
+  // Remove $ if it exists at the beginning
+  const cleanUsername = username.startsWith('$') ? username.substring(1) : username;
+  
+  // Use the simplest format to avoid 404 errors
+  return `https://cash.app/$${cleanUsername}`;
+};
+
+// Add this component before the main DJContractForm component
+function PlaylistHelpModal({ streamingService, onClose }) {
+  const [animateIn, setAnimateIn] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimateIn(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const stepStyle = {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '16px',
+    padding: '16px',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    border: '1px solid #eaeaea',
+    margin: '12px 0',
+    transition: 'transform 0.2s ease',
+    cursor: 'default',
+    ':hover': {
+      transform: 'translateY(-2px)',
+    }
+  };
+
+  const numberBadgeStyle = (color) => ({
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    backgroundColor: color,
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: '600',
+    flexShrink: 0
+  });
+
+  const getServiceColor = () => {
+    switch(streamingService) {
+      case 'spotify': return '#1DB954';
+      case 'apple': return '#FC3C44';
+      case 'youtube': return '#FF0000';
+      case 'tidal': return '#000000';
+      default: return '#0070f3';
+    }
+  };
+
+  const getServiceIcon = () => {
+    switch(streamingService) {
+      case 'spotify': return '🎵';
+      case 'apple': return '🎵';
+      case 'youtube': return '▶️';
+      case 'tidal': return '🎵';
+      default: return '🎵';
+    }
+  };
+
+  const getInstructions = () => {
+    if (!streamingService) {
+      return (
+        <div className="space-y-6">
+          <div style={{
+            backgroundColor: '#0070f3',
+            padding: '20px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            {getStreamingLogo(null, 'w-8 h-8')}
+            <h4 style={{ 
+              margin: 0, 
+              fontSize: '1.1rem',
+              fontWeight: '600'
+            }}>
+              Sharing Guide
+            </h4>
+          </div>
+          
+          <div style={{
+            padding: '24px',
+            backgroundColor: '#f5f9ff',
+            borderRadius: '12px',
+            border: '1px solid #e1e8ff'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <span style={{ fontSize: '24px' }}>👋</span>
+              <div>
+                <h5 style={{
+                  margin: '0 0 8px 0',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  color: '#333'
+                }}>
+                  Welcome to the Playlist Sharing Guide!
+                </h5>
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  lineHeight: '1.5',
+                  color: '#555'
+                }}>
+                  To get started:
+                </p>
+              </div>
+            </div>
+
+            <ol style={{
+              margin: '0',
+              paddingLeft: '24px',
+              listStyle: 'decimal',
+              color: '#555'
+            }}>
+              <li style={{
+                marginBottom: '12px',
+                fontSize: '0.95rem',
+                lineHeight: '1.5'
+              }}>
+                First, select your streaming service from the options below
+              </li>
+              <li style={{
+                marginBottom: '12px',
+                fontSize: '0.95rem',
+                lineHeight: '1.5'
+              }}>
+                Once selected, I&apos;ll show you specific steps for sharing your playlist
+              </li>
+              <li style={{
+                fontSize: '0.95rem',
+                lineHeight: '1.5'
+              }}>
+                Follow the steps to copy and paste your playlist link
+              </li>
+            </ol>
+          </div>
+
+          <div style={{
+            marginTop: '24px',
+            padding: '16px',
+            backgroundColor: '#f7f7f7',
+            borderRadius: '12px',
+            border: '1px solid #eaeaea'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '12px'
+            }}>
+              <span style={{ fontSize: '20px' }}>💡</span>
+              <h5 style={{ 
+                margin: 0,
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: '#333'
+              }}>
+                Pro Tip
+              </h5>
+            </div>
+            <p style={{
+              margin: 0,
+              fontSize: '0.85rem',
+              color: '#666',
+              lineHeight: '1.5'
+            }}>
+              Make sure your playlist is set to &quot;Public&quot; so we can access it. Don&apos;t worry, you can change it back to private after we&apos;ve reviewed it.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const color = getServiceColor();
+    const Logo = () => getStreamingLogo(streamingService, 'w-8 h-8');
+    
+    const steps = {
+      'spotify': [
+        'Open Spotify and go to your playlist',
+        'Click the three dots (...) next to the playlist',
+        'Select "Share" → "Copy link to playlist"',
+        'Paste the copied link in the playlist field below'
+      ],
+      'apple': [
+        'Open Apple Music and select your playlist',
+        'Click the three dots (...) in the top right',
+        'Choose "Share" → "Copy Link"',
+        'Paste the copied link in the playlist field below'
+      ],
+      'youtube': [
+        'Go to your YouTube playlist',
+        'Click "SHARE" below the playlist title',
+        'Click "Copy" to copy the link',
+        'Paste the copied link in the playlist field below'
+      ],
+      'tidal': [
+        'Open TIDAL and navigate to your playlist',
+        'Click the three dots (...) menu',
+        'Select "Share" → "Copy Link"',
+        'Paste the copied link in the playlist field below'
+      ]
+    };
+
+    const currentSteps = steps[streamingService] || [];
+
+    return (
+      <div className="space-y-6">
+        <div style={{
+          backgroundColor: color,
+          padding: '20px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <Logo />
+          <h4 style={{ 
+            margin: 0, 
+            fontSize: '1.1rem',
+            fontWeight: '600'
+          }}>
+            {streamingService?.charAt(0).toUpperCase() + streamingService?.slice(1)} Sharing Guide
+          </h4>
+        </div>
+
+        <div className="steps-container">
+          {currentSteps.map((step, index) => (
+            <div key={index} style={stepStyle}>
+              <div style={numberBadgeStyle(color)}>
+                {index + 1}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ 
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  lineHeight: '1.5',
+                  color: '#333'
+                }}>
+                  {step}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          marginTop: '24px',
+          padding: '16px',
+          backgroundColor: '#f7f7f7',
+          borderRadius: '12px',
+          border: '1px solid #eaeaea'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '12px'
+          }}>
+            <span style={{ fontSize: '20px' }}>💡</span>
+            <h5 style={{ 
+              margin: 0,
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: '#333'
+            }}>
+              Pro Tip
+            </h5>
+          </div>
+          <p style={{
+            margin: 0,
+            fontSize: '0.85rem',
+            color: '#666',
+            lineHeight: '1.5'
+          }}>
+            Make sure your playlist is set to &quot;Public&quot; so we can access it. Don&apos;t worry, you can change it back to private after we&apos;ve reviewed it.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        opacity: animateIn ? 1 : 0,
+        transition: 'opacity 0.2s ease-in-out',
+        padding: '16px'
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          padding: '24px',
+          maxWidth: '90%',
+          width: '400px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          position: 'relative',
+          transform: animateIn ? 'scale(1)' : 'scale(0.95)',
+          transition: 'transform 0.2s ease-in-out'
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            border: 'none',
+            background: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: '#666',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            transition: 'all 0.2s ease',
+            ':hover': {
+              backgroundColor: '#f5f5f5'
+            }
+          }}
+        >
+          ×
+        </button>
+        
+        {getInstructions()}
+      </div>
+    </div>
+  );
+}
+
+// Add this new component for the confirmation page
+const BookingConfirmationPage = ({ formData, onSendEmail, onBookAgain }) => {
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailError, setEmailError] = useState(null);
+  
+  // Add ToastContainer for email notifications if not already in the parent component
+  useEffect(() => {
+    // Check if ToastContainer already exists in the DOM
+    if (!document.querySelector('.Toastify')) {
+      // It will be created by the ToastContainer component when needed
+      console.log('Toast container will be created when needed');
+    }
+  }, []);
+  
+  // Get payment details based on selected method
+  const getPaymentDetails = () => {
+    switch (formData.paymentMethod) {
+      case 'Venmo':
+        return {
+          name: 'Venmo',
+          icon: <SiVenmo style={{ fontSize: '1.8rem', color: '#3D95CE' }} />,
+          color: '#3D95CE',
+          background: '#EBF8FF',
+          url: PAYMENT_URLS.VENMO
+        };
+      case 'CashApp':
+        return {
+          name: 'Cash App',
+          icon: <SiCashapp style={{ fontSize: '1.8rem', color: '#00C244' }} />,
+          color: '#00C244',
+          background: '#F0FFF4',
+          url: PAYMENT_URLS.CASHAPP
+        };
+      case 'PayPal':
+        return {
+          name: 'PayPal',
+          icon: <FaPaypal style={{ fontSize: '1.8rem', color: '#0070BA' }} />,
+          color: '#0070BA',
+          background: '#EBF8FF',
+          url: PAYMENT_URLS.PAYPAL
+        };
+      case 'Stripe':
+        return {
+          name: 'Stripe',
+          icon: <FaCreditCard style={{ fontSize: '1.8rem', color: '#6772E5' }} />,
+          color: '#6772E5',
+          background: '#F3F4FF',
+          url: null
+        };
+      default:
+        return {
+          name: formData.paymentMethod,
+          icon: <FaDollarSign style={{ fontSize: '1.8rem', color: '#0070f3' }} />,
+          color: '#0070f3',
+          background: '#F3F9FF',
+          url: null
+        };
+    }
+  };
+  
+  const paymentDetails = getPaymentDetails();
+  
+  // Format date for display
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+  
+  // Handle email sending
+  // Handle email sending - both auto-send and manual resend
+  const handleSendEmail = async () => {
+    if (emailSending) return;
+    
+    setEmailSending(true);
+    setEmailError(null);
+    
+    try {
+      // Ensure we have a valid bookingId
+      if (!formData.bookingId) {
+        setEmailError('Missing booking ID. Please try again or contact support.');
+        return;
+      }
+      
+      // Prepare email template parameters
+      const templateParams = {
+        // Required parameters
+        bookingId: formData.bookingId,
+        
+        // Customer details
+        clientName: formData.clientName,
+        email: formData.email, 
+        
+        // Event details
+        eventType: formData.eventType,
+        eventDate: formData.eventDate,
+        venueName: formData.venueName,
+        venueLocation: formData.venueLocation,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        
+        // Payment details
+        totalAmount: formData.totalAmount || 0,
+        paymentMethod: formData.paymentMethod,
+        
+        // Additional info
+        signerName: formData.signerName,
+        hasSigned: 'Yes'
+      };
+      
+      console.log('Sending confirmation email with parameters:', templateParams);
+      const result = await onSendEmail(templateParams);
+      
+      if (result.success) {
+        setEmailSent(true);
+        console.log('Email sent successfully:', result);
+        
+        // Show a temporary success message
+        toast.success("Confirmation email sent successfully!", {
+          position: "top-center",
+          autoClose: 5000,
+        });
+      } else {
+        console.warn('Email sending failed:', result);
+        setEmailError(result.fallbackMessage || 'Failed to send email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      setEmailError('An unexpected error occurred. Please try again later.');
+    } finally {
+      setEmailSending(false);
+    }
+  };
+  
+  // Send the confirmation email automatically when the component mounts
+  useEffect(() => {
+    // Only auto-send if we have the necessary booking info and email hasn't been sent
+    if (formData.bookingId && formData.email && !emailSent && !emailSending && !emailError) {
+      handleSendEmail();
+    }
+  }, []);
+  
+  // Handle payment button click
+  const handlePaymentClick = async () => {
+    if (formData.paymentMethod === 'Stripe') {
+      try {
+        // Calculate the amount to charge (in cents for Stripe)
+        const amountInDollars = formData.paymentAmount === 'deposit' ? (formData.totalAmount / 2) : formData.totalAmount;
+        const amountInCents = Math.round(amountInDollars * 100);
+        
+        console.log('Creating Stripe checkout with amount:', {
+          amountInDollars,
+          amountInCents,
+          paymentAmount: formData.paymentAmount,
+          totalAmount: formData.totalAmount
+        });
+        
+        // Create Stripe checkout session
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: amountInCents, // Amount in cents at root level
+            contractDetails: {
+              clientName: formData.clientName,
+              email: formData.email,
+              eventType: formData.eventType,
+              eventDate: formData.eventDate,
+              venueName: formData.venueName,
+              venueLocation: formData.venueLocation,
+              bookingId: formData.bookingId
+            }
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create checkout session');
+        }
+
+        const { url } = await response.json();
+        if (url) {
+          window.location.href = url;
+        } else {
+          throw new Error('No checkout URL received');
+        }
+      } catch (error) {
+        console.error('Error creating Stripe checkout:', error);
+        alert('Unable to process Stripe payment. Please try again or contact support.');
+      }
+    } else if (paymentDetails.url) {
+      // For other payment methods, use their direct URLs
+      window.location.href = paymentDetails.url;
+    }
+  };
+  
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      padding: '20px',
+      position: 'relative',
+      width: '100%',
+      background: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)',
+      color: 'white'
+    }}>
+      <div style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: '40px',
+        borderRadius: '16px',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+        maxWidth: '90%',
+        width: '650px'
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <span role="img" aria-label="celebration" style={{ fontSize: '64px' }}>🎉</span>
+          </div>
+          <h1 style={{ 
+            color: '#3b82f6', 
+            marginBottom: '1rem', 
+            fontSize: '2.2rem', 
+            fontWeight: 'bold',
+            textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+          }}>
+            Booking Confirmed!
+          </h1>
+          <p style={{ 
+            fontSize: '1.1rem', 
+            lineHeight: '1.5',
+            marginBottom: '1rem',
+            color: '#4b5563',
+            fontWeight: '500'
+          }}>
+            Thank you for booking DJ Bobby Drake for your event!
+          </p>
+        </div>
+        
+        {/* Booking Details Section */}
+        <div style={{
+          background: '#f9fafb',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '25px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <h2 style={{
+            fontSize: '1.2rem',
+            fontWeight: '600',
+            marginBottom: '15px',
+            color: '#4b5563',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <FaCalendarAlt style={{ color: '#3b82f6' }} />
+            Event Details
+          </h2>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            fontSize: '0.95rem'
+          }}>
+            <div style={{ color: '#4b5563' }}>
+              <strong>Event Type:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937' }}>{formData.eventType}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563' }}>
+              <strong>Event Date:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937' }}>{formatDate(formData.eventDate)}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563' }}>
+              <strong>Start Time:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937' }}>{formData.startTime}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563' }}>
+              <strong>End Time:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937' }}>{formData.endTime}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563', gridColumn: '1 / span 2' }}>
+              <strong>Venue:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937' }}>{formData.venueName}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563', gridColumn: '1 / span 2' }}>
+              <strong>Location:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937' }}>{formData.venueLocation}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563' }}>
+              <strong>Booking ID:</strong>
+              <div style={{ marginTop: '4px', color: '#1f2937', fontFamily: 'monospace' }}>{formData.bookingId}</div>
+            </div>
+            
+            <div style={{ color: '#4b5563' }}>
+              <strong>Booking Status:</strong>
+              <div style={{ 
+                marginTop: '4px', 
+                color: '#047857',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontWeight: '500'
+              }}>
+                <FaCheckCircle size={14} /> Confirmed
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Payment Section */}
+        <div style={{
+          background: paymentDetails.background,
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '25px',
+          border: `1px solid ${paymentDetails.color}25`
+        }}>
+          <h2 style={{
+            fontSize: '1.2rem',
+            fontWeight: '600',
+            marginBottom: '15px',
+            color: '#4b5563',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <FaMoneyBillWave style={{ color: paymentDetails.color }} />
+            Payment Information
+          </h2>
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <div style={{ color: '#4b5563', fontSize: '0.9rem' }}>Payment Method</div>
+                <div style={{ 
+                  color: '#1f2937', 
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginTop: '4px'
+                }}>
+                  {paymentDetails.icon} {paymentDetails.name}
+                </div>
+              </div>
+              
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ color: '#4b5563', fontSize: '0.9rem' }}>Amount</div>
+                <div style={{ 
+                  color: '#1f2937', 
+                  fontWeight: '600',
+                  fontSize: '1.25rem',
+                  marginTop: '4px'
+                }}>
+                  ${formData.paymentAmount === 'deposit' ? (formData.totalAmount / 2) : formData.totalAmount}
+                </div>
+              </div>
+            </div>
+            
+            {(paymentDetails.url || formData.paymentMethod === 'Stripe') && (
+              <button
+                onClick={handlePaymentClick}
+                style={{
+                  backgroundColor: paymentDetails.color,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '14px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  marginTop: '10px',
+                  width: '100%'
+                }}
+              >
+                {paymentDetails.icon} Complete Payment with {paymentDetails.name}
+              </button>
+            )}
+            
+            <p style={{ 
+              fontSize: '0.85rem', 
+              color: '#4b5563',
+              marginTop: '5px',
+              textAlign: 'center'
+            }}>
+              {formData.paymentAmount === 'deposit' 
+                ? 'This is a 50% deposit. The remaining balance will be due on the event day.'
+                : 'This is the full payment amount for your event.'}
+            </p>
+          </div>
+        </div>
+        
+        {/* Email Status Section */}
+        <div style={{
+          background: emailError ? '#fff1f2' : emailSent ? '#f0fdf4' : '#f0f9ff',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '20px',
+          border: `1px solid ${emailError ? '#fecdd3' : emailSent ? '#dcfce7' : '#bae6fd'}`,
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '24px',
+            marginBottom: '10px',
+            color: emailError ? '#e11d48' : emailSent ? '#16a34a' : '#0284c7'
+          }}>
+            {emailError ? <FaExclamationCircle /> : emailSent ? <FaCheckCircle /> : <FaEnvelope />}
+          </div>
+          
+          <h3 style={{
+            color: emailError ? '#e11d48' : emailSent ? '#16a34a' : '#0284c7',
+            fontSize: '1.1rem',
+            marginBottom: '8px'
+          }}>
+            {emailError ? 'Email Delivery Issue' : emailSent ? 'Confirmation Email Sent' : 'Email Status'}
+          </h3>
+          
+          <p style={{
+            fontSize: '0.95rem',
+            color: emailError ? '#9f1239' : emailSent ? '#14532d' : '#0c4a6e',
+            marginBottom: '15px'
+          }}>
+            {emailError 
+              ? emailError 
+              : emailSent 
+                ? `We've sent a confirmation email to ${formData.email}. Please check your inbox (and spam folder).` 
+                : `We're sending your confirmation email to ${formData.email}...`}
+          </p>
+          
+          <button
+            onClick={handleSendEmail}
+            disabled={emailSending}
+            style={{
+              backgroundColor: emailError ? '#e11d48' : emailSent ? '#16a34a' : '#0284c7',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 18px',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              cursor: emailSending ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              opacity: emailSending ? 0.7 : 1,
+              transition: 'all 0.2s ease',
+              width: 'auto',
+              margin: '0 auto'
+            }}
+          >
+            {emailSending ? (
+              <>
+                <FaSpinner className="spin" /> Sending...
+              </>
+            ) : emailError ? (
+              <>
+                <FaRedo /> Try Again
+              </>
+            ) : emailSent ? (
+              <>
+                <FaEnvelope /> Resend Email
+              </>
+            ) : (
+              <>
+                <FaEnvelope /> Send Email
+              </>
+            )}
+          </button>
+        </div>
+        
+        {/* Actions Section */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '15px',
+          marginTop: '20px',
+          marginBottom: '10px'
+        }}>
+          <button
+            onClick={onBookAgain}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#3b82f6',
+              border: '2px solid #3b82f6',
+              borderRadius: '8px',
+              padding: '12px',
+              fontSize: '0.95rem',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <FaCalendarAlt /> Book Another Event
+          </button>
+        </div>
+        
+        <div style={{
+          fontSize: '0.85rem',
+          color: '#6b7280',
+          textAlign: 'center',
+          marginTop: '25px'
+        }}>
+          <p>
+            If you have any questions, please contact us at{' '}
+            <a 
+              href="mailto:therealdjbobbydrake@gmail.com"
+              style={{ color: '#3b82f6', textDecoration: 'underline' }}
+            >
+              therealdjbobbydrake@gmail.com
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function DJContractForm() {
+  const isMobile = useIsMobile();
+  const router = useRouter();
+  
+  // Authentication and client detection state
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isClientAccess, setIsClientAccess] = useState(false);
+  const [contractType, setContractType] = useState('standard'); // 'standard' or 'premium'
+  
+  // Header font state
+  const [headerFont, setHeaderFont] = useState('Ka Blam');
+  const [previewFont, setPreviewFont] = useState('Ka Blam');
+  
+  // Header styles state
+  const [headerStyles, setHeaderStyles] = useState({
+    fontSize: 'clamp(39px, 5.6vw, 50px)',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontStyle: 'normal',
+    textDecoration: 'none',
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    lineHeight: '1.2',
+    color: '#000',
+    textStroke: 'none',
+    webkitTextStroke: 'none',
+    transform: 'none',
+    opacity: '1',
+    marginTop: '0px',
+    marginBottom: '20px',
+    padding: '10px'
+  });
+
+  // Header style dropdown state
+  const [showHeaderStyleDropdown, setShowHeaderStyleDropdown] = useState(false);
+
+  // Add responsive styles for music library buttons and mobile optimizations
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .music-library-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      @media (min-width: 480px) {
+        .music-library-buttons {
+          flex-direction: row;
+          align-items: center;
+        }
+      }
+      
+      /* Mobile modal optimizations */
+      @media (max-width: 768px) {
+        .genre-modal-content {
+          margin: 8px !important;
+          max-height: 95vh !important;
+          border-radius: 12px !important;
+        }
+        
+        .genre-modal-grid {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+          gap: 8px !important;
+        }
+        
+        .genre-modal-item {
+          padding: 12px 8px !important;
+          font-size: 14px !important;
+          min-height: 44px !important;
+        }
+        
+        /* Streaming service button optimizations */
+        .streaming-service-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 8px !important;
+        }
+        
+        .streaming-service-button {
+          flex-direction: column !important;
+          padding: 12px 8px !important;
+          gap: 4px !important;
+          min-height: 60px !important;
+        }
+        
+        .streaming-service-icon {
+          margin-right: 0 !important;
+          margin-bottom: 4px !important;
+        }
+        
+        .streaming-service-text {
+          font-size: 12px !important;
+          text-align: center !important;
+          line-height: 1.2 !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
+  
+  // Get form context (now returns default values if not available)
+  const { contractFormData, weddingAgendaData, updateContractFormData, isClient: contextIsClient } = useFormContext();
+  
+  // Initial form data structure for reference
+  const initialFormData = {
+    // Personal Information
+    name: '',
+    email: '',
+    phone: '',
+    eventDate: '',
+    eventType: '',
+    startTime: '6:00 PM',
+    endTime: '11:00 PM',
+    
+    // Event Details
+    guestCount: '',
+    venue: '',
+    venueAddress: '',
+    
+    // Services
+    lighting: false,
+    photography: false,
+    videoVisuals: false,
+    additionalHours: 0,
+    
+    // Playlist - Updated to use the new music library system
+    selectedMusicLibrarySongs: [], // New: Songs from the music library
+    
+    // Genre preferences (keeping for legacy compatibility)
+    preferredGenres: [],
+    musicPreferences: [], // Music genre preferences
+    
+    // Payment
+    paymentAmount: 'deposit', // 'deposit' or 'full'
+    paymentMethod: '',
+    
+    // Additional
+    specialRequests: '',
+    
+    // System
+    bookingId: ''
+  };
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    // Personal Information
+    name: '',
+    email: '',
+    phone: '',
+    eventDate: '',
+    eventType: '',
+    startTime: '6:00 PM',
+    endTime: '11:00 PM',
+    
+    // Event Details
+    guestCount: '',
+    venue: '',
+    venueAddress: '',
+    
+    // Services
+    lighting: false,
+    photography: false,
+    videoVisuals: false,
+    additionalHours: 0,
+    
+    // Playlist - Updated to use the new music library system
+    selectedMusicLibrarySongs: [], // New: Songs from the music library
+    
+    // Genre preferences (keeping for legacy compatibility)
+    preferredGenres: [],
+    musicPreferences: [], // Music genre preferences
+    
+    // Payment
+    paymentAmount: 'deposit', // 'deposit' or 'full'
+    paymentMethod: '',
+    
+    // Additional
+    specialRequests: '',
+    
+    // System
+    bookingId: ''
+  });
+
+  // Authentication state management and client access detection
+  useEffect(() => {
+    const auth = getAuth();
+    
+    // Check for admin access first
+    const adminUser = AdminAuth.getAdminUser();
+    if (adminUser) {
+      console.log('🔑 Admin access detected:', adminUser.email);
+      setUser(adminUser);
+      setLoading(false);
+      return;
+    }
+    
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // If user is admin, set admin privileges
+      if (user && isAdminEmail(user.email)) {
+        console.log('🔑 Admin user signed in:', user.email);
+        const adminUser = AdminAuth.createAdminUser(user.email);
+        AdminAuth.setAdminUser(user.email);
+        setUser(adminUser);
+      } else if (user) {
+        // For authenticated users, check if they have an active subscription
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.email));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const subscription = userData.subscription;
+            
+            // Set user with subscription info
+            setUser({
+              ...user,
+              subscription: subscription,
+              hasActiveSubscription: subscription?.status === 'active' || subscription?.status === 'trial',
+              isDJ: true // Authenticated users are considered DJs
+            });
+          } else {
+            // User exists in auth but no profile - treat as regular user
+            setUser({
+              ...user,
+              hasActiveSubscription: false,
+              isDJ: false
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user subscription:', error);
+          setUser({
+            ...user,
+            hasActiveSubscription: false,
+            isDJ: false
+          });
+        }
+      } else {
+        // No authenticated user - allow basic access without authentication
+        console.log('📝 Allowing unauthenticated access for basic features');
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    // Check if this is client access via URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('clientId');
+    const djId = urlParams.get('djId');
+    
+    if (clientId && djId) {
+      setIsClientAccess(true);
+      
+      // Check contract type from client record
+      const checkContractType = async () => {
+        try {
+          const clientDoc = await getDoc(doc(db, 'users', djId, 'clients', clientId));
+          if (clientDoc.exists()) {
+            const clientData = clientDoc.data();
+            const type = clientData.contractType || 'standard';
+            setContractType(type);
+            console.log('📋 Contract type:', type);
+          }
+        } catch (error) {
+          console.error('Error checking contract type:', error);
+          setContractType('standard'); // Default to standard on error
+        }
+      };
+      
+      checkContractType();
+    }
+
+    return () => unsubscribe();
+  }, []);
+
+  // Load any existing music library songs from localStorage
+  useEffect(() => {
+    try {
+      const savedSongs = localStorage.getItem('musicLibrarySelectedSongs');
+      if (savedSongs) {
+        const parsedSongs = JSON.parse(savedSongs);
+        // Ensure parsedSongs is an array before setting
+        if (Array.isArray(parsedSongs)) {
+          setFormData(prev => ({
+            ...prev,
+            selectedMusicLibrarySongs: parsedSongs
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading music library songs:', error);
+    }
+  }, []);
+
+  // Load custom fonts on component mount
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        await fontManager.loadBuiltInFonts();
+      } catch (error) {
+        console.error('Error loading fonts:', error);
+      }
+    };
+    
+    loadFonts();
+  }, []);
+
+  // Handle font change and update CSS
+  const handleFontChange = (fontName) => {
+    console.log('🎨 Font change requested:', fontName);
+    setHeaderFont(fontName);
+    setPreviewFont(fontName); // Keep preview in sync with selected font
+    
+    // Update the CSS custom property for the header font
+    const root = document.documentElement;
+    const fontFamily = `"${fontName}", system-ui, sans-serif`;
+    root.style.setProperty('--header-font-family', fontFamily);
+    
+    // Debug: Verify the CSS property was set
+    const appliedFont = getComputedStyle(root).getPropertyValue('--header-font-family');
+    console.log('🎨 CSS custom property set to:', fontFamily);
+    console.log('🎨 CSS custom property applied as:', appliedFont);
+    
+    // Also try to directly update any existing header elements
+    const headerElements = document.querySelectorAll('.contract-header');
+    console.log('🎨 Found header elements:', headerElements.length);
+    headerElements.forEach((element, index) => {
+      element.style.fontFamily = fontFamily;
+      console.log(`🎨 Direct font applied to header element ${index + 1}:`, element.textContent);
+      
+      // Force a style recalculation
+      element.style.display = 'none';
+      element.offsetHeight; // Trigger reflow
+      element.style.display = '';
+    });
+    
+    // Save font preference to localStorage
+    localStorage.setItem('headerFont', fontName);
+    
+    // Force a re-render by updating state
+    setHeaderStyles(prev => ({ ...prev }));
+  };
+
+  // Handle font preview change (for live preview while scrolling/hovering)
+  const handlePreviewChange = (fontName) => {
+    console.log('🎨 Preview font changed to:', fontName);
+    setPreviewFont(fontName);
+    
+    // Update the CSS custom property for live preview
+    const root = document.documentElement;
+    const fontFamily = `"${fontName}", system-ui, sans-serif`;
+    root.style.setProperty('--header-font-family', fontFamily);
+    
+    // Also try to directly update any existing header elements
+    const headerElements = document.querySelectorAll('.contract-header');
+    headerElements.forEach((element, index) => {
+      element.style.fontFamily = fontFamily;
+      console.log(`🎨 Preview font applied to header element ${index + 1}:`, fontName);
+      
+      // Force a style recalculation for preview
+      element.style.display = 'none';
+      element.offsetHeight; // Trigger reflow
+      element.style.display = '';
+    });
+  };
+
+  // Handle header style changes
+  const handleStyleChange = (newStyles) => {
+    console.log('🎨 Style change requested:', newStyles);
+    setHeaderStyles(newStyles);
+    
+    // Update CSS custom properties for all style properties
+    const root = document.documentElement;
+    
+    // Set all style properties as CSS custom properties
+    Object.entries(newStyles).forEach(([property, value]) => {
+      const cssProperty = `--header-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+      root.style.setProperty(cssProperty, value);
+    });
+    
+    // Also apply styles directly to header elements
+    const headerElements = document.querySelectorAll('.contract-header');
+    headerElements.forEach(element => {
+      Object.entries(newStyles).forEach(([property, value]) => {
+        // Convert camelCase to kebab-case for CSS properties
+        const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+        element.style.setProperty(cssProperty, value);
+      });
+      console.log('🎨 Direct styles applied to header element');
+    });
+    
+    // Save style preferences to localStorage
+    localStorage.setItem('headerStyles', JSON.stringify(newStyles));
+  };
+
+  // Load saved font and style preferences on mount
+  useEffect(() => {
+    const savedFont = localStorage.getItem('headerFont');
+    const savedStyles = localStorage.getItem('headerStyles');
+    
+    // Load font
+    if (savedFont) {
+      console.log('🎨 Loading saved font on mount:', savedFont);
+      setHeaderFont(savedFont);
+      setPreviewFont(savedFont); // Initialize preview font
+      const root = document.documentElement;
+      const fontFamily = `"${savedFont}", system-ui, sans-serif`;
+      root.style.setProperty('--header-font-family', fontFamily);
+      
+      // Also apply directly to header elements if they exist
+      setTimeout(() => {
+        const headerElements = document.querySelectorAll('.contract-header');
+        headerElements.forEach(element => {
+          element.style.fontFamily = fontFamily;
+          console.log('🎨 Initial font applied to header element');
+        });
+      }, 100);
+    } else {
+      // Set default font if no saved font
+      console.log('🎨 No saved font, setting default Ka Blam');
+      setPreviewFont('Ka Blam'); // Initialize preview font with default
+      const root = document.documentElement;
+      const fontFamily = `"Ka Blam", system-ui, sans-serif`;
+      root.style.setProperty('--header-font-family', fontFamily);
+      
+      setTimeout(() => {
+        const headerElements = document.querySelectorAll('.contract-header');
+        headerElements.forEach(element => {
+          element.style.fontFamily = fontFamily;
+          console.log('🎨 Default font applied to header element');
+        });
+      }, 100);
+    }
+    
+    // Load styles
+    if (savedStyles) {
+      try {
+        const parsedStyles = JSON.parse(savedStyles);
+        console.log('🎨 Loading saved styles on mount:', parsedStyles);
+        setHeaderStyles(parsedStyles);
+        
+        // Apply saved styles
+        const root = document.documentElement;
+        Object.entries(parsedStyles).forEach(([property, value]) => {
+          const cssProperty = `--header-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+          root.style.setProperty(cssProperty, value);
+        });
+        
+        // Also apply directly to header elements
+        setTimeout(() => {
+          const headerElements = document.querySelectorAll('.contract-header');
+          headerElements.forEach(element => {
+            Object.entries(parsedStyles).forEach(([property, value]) => {
+              const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+              element.style.setProperty(cssProperty, value);
+            });
+            console.log('🎨 Initial styles applied to header element');
+          });
+        }, 100);
+      } catch (error) {
+        console.error('🎨 Error loading saved styles:', error);
+      }
+    }
+  }, []);
+  
+  // Terms and conditions text
+  const termsAndConditionsText = `
+Live City DJ Contract Terms and Conditions:
+
+1. Booking & Deposit: A deposit of 50% is required to secure your date.
+2. Cancellation Policy: Cancellations made less than 30 days before the event forfeit the full deposit.
+3. Final Payment: Remaining balance is due on the day of the event before services begin.
+4. Equipment: DJ provides all necessary sound equipment unless otherwise specified.
+5. Venue Requirements: Client is responsible for providing adequate power supply and space.
+6. Time Extensions: Additional hours beyond contracted time will be charged at $75/hour.
+7. Force Majeure: Neither party shall be liable for failure to perform due to circumstances beyond reasonable control.
+8. Breaks: For events longer than 4 hours, DJ is entitled to a 15-minute break per 2 hours of performance.
+9. Liability: DJ is not responsible for any injuries or property damage caused by guests.
+10. Media Rights: DJ may use event photos/videos for promotional purposes unless otherwise specified.
+`;
+
+  // Music genre options for playlist preferences
+  const musicGenres = [
+    { id: 'hiphop', label: 'Hip Hop' },
+    { id: 'rnb', label: 'R&B' },
+    { id: 'pop', label: 'Pop' },
+    { id: 'dance', label: 'Dance/EDM' },
+    { id: 'latin', label: 'Latin' },
+    { id: 'reggae', label: 'Reggae/Dancehall' },
+    { id: 'afrobeats', label: 'Afrobeats' },
+    { id: 'house', label: 'House' },
+    { id: 'trap', label: 'Trap' },
+    { id: 'oldschool', label: 'Old School Classics' },
+    { id: 'rock', label: 'Rock' },
+    { id: 'country', label: 'Country' },
+    { id: 'jazz', label: 'Jazz' },
+    { id: 'other', label: 'Other' }
+  ];
+
+  // Music streaming services
+  const streamingServices = [
+    { id: 'spotify', label: 'Spotify', icon: 'https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png', placeholder: 'Paste your Spotify playlist link' },
+    { id: 'apple', label: 'Apple Music', icon: 'https://www.apple.com/v/apple-music/s/images/overview/icon_apple_music__hbcmmzxl7ysy_large_2x.jpg', placeholder: 'Paste your Apple Music playlist link' },
+    { id: 'youtube', label: 'YouTube', icon: 'https://www.youtube.com/img/desktop/yt_1200.png', placeholder: 'Paste your YouTube playlist link' },
+    { id: 'tidal', label: 'TIDAL', icon: 'https://tidal.com/img/tidal-share-image.jpg', placeholder: 'Paste your TIDAL playlist link' }
+  ];
+
+
+  const [isClient, setIsClient] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  // Google Maps state is now handled by the AddressAutocomplete component
+  const [isChangingPayment, setIsChangingPayment] = useState(false);
+  const [hasSignature, setHasSignature] = useState(false); // Track signature status
+  
+  const [showStripe, setShowStripe] = useState(false);
+  const [infoPopup, setInfoPopup] = useState(null);
+  const [showTerms, setShowTerms] = useState(false);
+  const [modalText, setModalText] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState(null);
+  const [showGenreModal, setShowGenreModal] = useState(false);
+  const [showPlaylistHelp, setShowPlaylistHelp] = useState(false);
+
+
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showErrorMessage, setShowErrorMessage] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
+  const [basePrice, setBasePrice] = useState(400); // Added setBasePrice state
+  
+  // Google Maps autocomplete is now handled by the AddressAutocomplete component
+  
+  // Debug function to manually reload form data
+  const debugReloadFormData = () => {
+    console.log('Manual reload triggered...');
+    try {
+      const savedData = localStorage.getItem('djContractFormData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        console.log('Manual reload found data:', parsedData);
+        
+        setFormData(prev => {
+          const mergedData = { ...prev, ...parsedData };
+          console.log('Manual reload merged data:', mergedData);
+          return mergedData;
+        });
+        
+        if (parsedData.eventType) {
+          const newBasePrice = getBasePriceForEventType(parsedData.eventType);
+          setBasePrice(newBasePrice);
+        }
+      } else {
+        console.log('Manual reload: No data found in localStorage');
+      }
+    } catch (error) {
+      console.error('Manual reload error:', error);
+    }
+  };
+  
+  // Debug function to manually save test data
+  const debugSaveTestData = () => {
+    console.log('Saving test data...');
+    const testData = {
+      clientName: 'Test Client',
+      email: 'test@example.com',
+      contactPhone: '1234567890',
+      eventType: 'wedding'
+    };
+    
+    // Save via context
+    updateContractFormData(testData);
+    
+    // Also save directly to localStorage for comparison
+    localStorage.setItem('djContractFormData', JSON.stringify(testData));
+    
+    console.log('Test data saved:', testData);
+  };
+
+  // Debug function to clear all stored data
+  const debugClearData = () => {
+    console.log('Clearing all stored data...');
+    
+    // Clear localStorage
+    localStorage.removeItem('djContractFormData');
+    localStorage.removeItem('djWeddingAgendaData');
+    
+    // Reset form data to initial state
+    setFormData(initialFormData);
+    
+    // Clear context
+    updateContractFormData({});
+    
+    console.log('All data cleared');
+  };
+
+  // Debug function to test input field functionality
+  const debugTestInputs = () => {
+    console.log('🧪 Testing input field functionality...');
+    
+    // Test each critical input field
+    const testFields = ['clientName', 'email', 'contactPhone', 'venueName'];
+    
+    testFields.forEach(fieldName => {
+      const field = document.querySelector(`input[name="${fieldName}"]`);
+      if (field) {
+        const computedStyle = getComputedStyle(field);
+        console.log(`✅ Found ${fieldName} field:`, {
+          disabled: field.disabled,
+          readOnly: field.readOnly,
+          value: field.value,
+          style: {
+            pointerEvents: computedStyle.pointerEvents,
+            userSelect: computedStyle.userSelect,
+            display: computedStyle.display,
+            visibility: computedStyle.visibility,
+            zIndex: computedStyle.zIndex,
+            position: computedStyle.position
+          }
+        });
+        
+        // Test if field can receive focus
+        try {
+          field.focus();
+          console.log(`✅ ${fieldName} can receive focus`);
+          
+          // Test if field can accept input
+          const originalValue = field.value;
+          const testValue = 'TEST_INPUT_' + Date.now();
+          
+          // Simulate typing
+          field.value = testValue;
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+          
+          setTimeout(() => {
+            if (field.value === testValue) {
+              console.log(`✅ ${fieldName} accepts input - value set to: ${field.value}`);
+            } else {
+              console.error(`❌ ${fieldName} input was overridden - expected: ${testValue}, actual: ${field.value}`);
+            }
+            
+            // Restore original value
+            field.value = originalValue;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+          }, 100);
+          
+          field.blur();
+        } catch (error) {
+          console.error(`❌ ${fieldName} cannot receive focus:`, error);
+        }
+      } else {
+        console.error(`❌ ${fieldName} field not found`);
+      }
+    });
+    
+    // Check for any overlapping elements
+    console.log('🔍 Checking for overlapping elements...');
+    testFields.forEach(fieldName => {
+      const field = document.querySelector(`input[name="${fieldName}"]`);
+      if (field) {
+        const rect = field.getBoundingClientRect();
+        const elementAtPoint = document.elementFromPoint(rect.left + rect.width/2, rect.top + rect.height/2);
+        
+        if (elementAtPoint !== field) {
+          console.warn(`⚠️ ${fieldName} field may be covered by:`, elementAtPoint);
+        } else {
+          console.log(`✅ ${fieldName} field is not covered by other elements`);
+        }
+      }
+    });
+  };
+  
+  // Helper function to get base price for event type - USING CONSOLIDATED LOGIC
+  const getBasePriceForEventType = useCallback((eventType) => {
+    console.log('getBasePriceForEventType called with:', eventType);
+    
+    // Use the consolidated function with V2 logic
+    const price = getBasePrice(eventType);
+    console.log('CONSOLIDATED: getBasePrice returned:', price, 'for:', eventType);
+    
+    return price;
+  }, []);
+  
+  // Handler for event type changes
+  const handleEventTypeChange = useCallback((e) => {
+    const newEventType = e.target ? e.target.value : e;
+    console.log('Event type changed to:', newEventType);
+    
+    const newData = {
+      ...formData,
+      eventType: newEventType
+    };
+    
+    setFormData(newData);
+    
+    // Save to context for persistence - moved outside setState
+    setTimeout(() => {
+      updateContractFormData(newData);
+    }, 0);
+    
+    // Update base price based on event type
+    const newBasePrice = getBasePriceForEventType(newEventType);
+    setBasePrice(newBasePrice);
+    console.log('Base price updated to:', newBasePrice, 'for event type:', newEventType);
+  }, [formData, getBasePriceForEventType, updateContractFormData]);
+
+  // Handler for base price updates
+  const handleBasePriceUpdate = useCallback((price) => {
+    console.log('Base price update requested:', price);
+    setBasePrice(price);
+  }, []);
+  
+  // Memoized service card style function for better performance
+  const getServiceCardStyle = useCallback((serviceName) => {
+    const isSelected = formData[serviceName] === true;
+    return {
+      backgroundColor: isSelected ? '#e6f3ff' : 'white',
+      border: isSelected ? '2px solid #0070f3' : '1px solid #ddd',
+      borderRadius: '12px',
+      padding: 'clamp(16px, 3vw, 20px)',
+      transition: 'all 0.2s ease',
+      boxShadow: isSelected ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
+      transform: isSelected ? 'translateY(-2px)' : 'none',
+      position: 'relative'
+    };
+  }, [formData.lighting, formData.photography, formData.videoVisuals]);
+  
+  // Convert time to minutes for better comparison
+  const convertToMinutes = useCallback((t) => {
+    if (!t) return 0;
+    const [time, period] = t.split(' ');
+    let [hour, minute] = time.split(':').map(Number);
+
+    if (period === 'PM' && hour !== 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+
+    // Adjust early morning times (12:00 AM – 2:00 AM) to come *after* 11:30 PM
+    const total = hour * 60 + minute;
+    return total < 180 ? total + 1440 : total; // if before 3:00 AM, treat as after midnight
+  }, []);
+
+  // Time options for the dropdowns
+  const timeOptions = [
+    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
+    '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+    '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
+    '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM',
+    '8:00 PM', '8:30 PM', '9:00 PM', '9:30 PM',
+    '10:00 PM', '10:30 PM', '11:00 PM', '11:30 PM',
+    '12:00 AM', '12:30 AM', '1:00 AM', '1:30 AM', '2:00 AM'
+  ];
+
+  // Calculate hours between two time strings
+  const calculateHoursBetween = useCallback((startTime, endTime) => {
+    if (!startTime || !endTime) return 0;
+    
+    // Convert both times to minutes
+    const startMinutes = convertToMinutes(startTime);
+    const endMinutes = convertToMinutes(endTime);
+    
+    // Calculate difference in minutes and convert to hours
+    const diffMinutes = endMinutes - startMinutes;
+    return diffMinutes / 60;
+  }, [convertToMinutes]);
+
+  // Calculate additional hours beyond base package (4 hours)
+  const calculateAdditionalHours = useCallback((startTime, endTime) => {
+    const totalHours = calculateHoursBetween(startTime, endTime);
+    const basePackageHours = 4;
+    
+    return Math.max(0, Math.ceil(totalHours - basePackageHours));
+  }, [calculateHoursBetween]);
+
+  const calculateTotal = () => {
+    let total = basePrice; // Use basePrice state instead of hardcoded value
+    
+    // Add cost of additional hours
+    total += (formData.additionalHours || 0) * SERVICES.ADDITIONAL_HOUR;
+    
+    // Add cost of additional services
+    if (formData.lighting) total += SERVICES.LIGHTING;
+    if (formData.photography) total += SERVICES.PHOTOGRAPHY;
+    if (formData.videoVisuals) total += SERVICES.VIDEO_VISUALS;
+    
+    return total;
+  };
+
+  // Calculate the deposit amount (50% of total)
+  const calculateDepositAmount = () => {
+    const total = calculateTotal();
+    return Math.round(total * 0.5);
+  };
+  
+  // Get the final amount to pay based on selection (deposit or full)
+  const getAmountToPay = () => {
+    return formData.paymentAmount === 'deposit' 
+      ? calculateDepositAmount() 
+      : calculateTotal();
+  };
+  
+  const handleEndTimeChange = (endTime) => {
+    // Calculate additional hours based on time difference
+    const additionalHours = calculateAdditionalHours(formData.startTime, endTime);
+    
+    const newData = { 
+      ...formData, 
+      endTime,
+      additionalHours
+    };
+    
+    // Update form data with both new end time and calculated additional hours
+    setFormData(newData);
+    
+    // Update context - deferred to avoid setState during render
+    setTimeout(() => {
+      updateContractFormData(newData);
+    }, 0);
+  };
+  
+  // Set isClient to true when running on client side and load initial data ONCE
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Load initial data only once when component mounts
+    if (typeof window !== 'undefined') {
+      console.log('Component mounted, loading initial form data...');
+      
+      // Only load data if form is currently empty
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isFormEmpty) {
+        try {
+          const savedData = localStorage.getItem('djContractFormData');
+          console.log('Loading initial data from localStorage:', savedData);
+          
+          if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            console.log('Found saved contract data on mount:', parsedData);
+            
+            setFormData(parsedData);
+            
+            // Update base price if needed
+            if (parsedData.eventType) {
+              const newBasePrice = getBasePriceForEventType(parsedData.eventType);
+              setBasePrice(newBasePrice);
+              console.log('Initial base price set to:', newBasePrice);
+            }
+          } else {
+            console.log('No saved data found in localStorage');
+          }
+        } catch (error) {
+          console.error('Error loading initial data on mount:', error);
+        }
+      } else {
+        console.log('Form already has data, skipping initial load');
+      }
+    }
+  }, []); // Empty dependency array - only run once on mount
+  
+  // DISABLED: Aggressive page visibility reloading that interferes with user input
+  // This was causing input fields to reset while users were typing
+  /*
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Only reload if form is completely empty to avoid interfering with user input
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (!document.hidden && isClient && isFormEmpty) {
+        console.log('Page became visible and form is empty, reloading form data...');
+        // ... reloading logic would go here
+      }
+    };
+    
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName]);
+  */
+  
+  // DISABLED: Aggressive window focus reloading that interferes with user input
+  // This was causing input fields to reset while users were typing
+  /*
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      // Only reload if form is completely empty to avoid interfering with user input
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isClient && isFormEmpty) {
+        console.log('Window focused and form is empty, reloading form data...');
+        // ... reloading logic would go here
+      }
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleWindowFocus);
+      return () => window.removeEventListener('focus', handleWindowFocus);
+    }
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName]);
+  */
+  
+  // DISABLED: Storage change listener that interferes with user input
+  // This was causing input fields to reset when localStorage was updated
+  /*
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'djContractFormData' && e.newValue && isClient) {
+        // Only reload if form is completely empty to avoid interfering with user input
+        const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+        
+        if (isFormEmpty) {
+          console.log('localStorage changed from another tab and form is empty, reloading...');
+          // ... reloading logic would go here
+        }
+      }
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName]);
+  */
+  
+  // DISABLED: Aggressive context sync that interferes with user input
+  // This was causing input fields to reset when context data changed
+  /*
+  useEffect(() => {
+    console.log('Context sync effect triggered:', { contextIsClient, contractFormData });
+    
+    if (contextIsClient) {
+      // Only sync if form is completely empty to avoid interfering with user input
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isFormEmpty && contractFormData && Object.keys(contractFormData).length > 0) {
+        console.log('Form is empty, syncing with context data:', contractFormData);
+        setFormData(contractFormData);
+        
+        if (contractFormData.eventType) {
+          const newBasePrice = getBasePriceForEventType(contractFormData.eventType);
+          setBasePrice(newBasePrice);
+        }
+      }
+    }
+  }, [contextIsClient, contractFormData, formData.clientName, formData.email, formData.contactPhone, formData.venueName, getBasePriceForEventType]);
+  */
+
+  // Sync with wedding agenda data when available (for shared fields)
+  useEffect(() => {
+    if (contextIsClient && weddingAgendaData && Object.keys(weddingAgendaData).length > 0) {
+      console.log('Contract form syncing with wedding agenda data:', weddingAgendaData);
+      
+      setFormData(prev => {
+        const updatedData = { ...prev };
+        let hasChanges = false;
+        
+        // Sync email if not set in contract form but available in wedding agenda
+        if (weddingAgendaData.email && !prev.email) {
+          updatedData.email = weddingAgendaData.email;
+          hasChanges = true;
+        }
+        
+        // Sync phone if not set in contract form but available in wedding agenda
+        if (weddingAgendaData.phone && !prev.contactPhone) {
+          updatedData.contactPhone = weddingAgendaData.phone;
+          hasChanges = true;
+        }
+        
+        // Sync event date if not set in contract form but available in wedding agenda
+        if (weddingAgendaData.weddingDate && !prev.eventDate) {
+          updatedData.eventDate = weddingAgendaData.weddingDate;
+          hasChanges = true;
+        }
+        
+        // Sync client name from bride/groom names if not set in contract form
+        if ((weddingAgendaData.brideName || weddingAgendaData.groomName) && !prev.clientName) {
+          const brideName = weddingAgendaData.brideName || '';
+          const groomName = weddingAgendaData.groomName || '';
+          updatedData.clientName = `${brideName} ${groomName}`.trim();
+          hasChanges = true;
+        }
+        
+        // If we made changes, save to context (deferred to avoid setState during render)
+        if (hasChanges) {
+          console.log('Contract form updated with wedding agenda data:', updatedData);
+          setTimeout(() => {
+            updateContractFormData(updatedData);
+          }, 0);
+        }
+        
+        return hasChanges ? updatedData : prev;
+      });
+    }
+  }, [contextIsClient, weddingAgendaData, updateContractFormData]);
+  
+  // DISABLED: Force reload on mount that could interfere with user input
+  // This was potentially causing issues with form data being overwritten
+  /*
+  useEffect(() => {
+    if (isClient) {
+      // Only reload if form is completely empty
+      const isFormEmpty = !formData.clientName && !formData.email && !formData.contactPhone && !formData.venueName;
+      
+      if (isFormEmpty) {
+        console.log('Component mounted and form is empty, loading data...');
+        // ... loading logic would go here
+      }
+    }
+  }, [isClient, formData.clientName, formData.email, formData.contactPhone, formData.venueName, getBasePriceForEventType]);
+  */
+  
+  // Update base price when event type changes
+  useEffect(() => {
+    if (formData.eventType) {
+      const newBasePrice = getBasePriceForEventType(formData.eventType);
+      if (newBasePrice !== basePrice) {
+        setBasePrice(newBasePrice);
+        console.log('Base price updated to:', newBasePrice, 'for event type:', formData.eventType);
+      }
+    }
+  }, [formData.eventType, basePrice, getBasePriceForEventType]);
+
+  // Google Maps autocomplete is now handled by the AddressAutocomplete component
+  // Removed duplicate initialization code to prevent conflicts
+
+
+  const handleChange = (e) => {
+    // Ensure we have a valid event and target
+    if (!e || !e.target) {
+      console.error('Invalid event or target in handleChange');
+      return;
+    }
+    
+    const { name, type, value, checked } = e.target;
+    
+    // Debug logging for input issues
+    console.log(`handleChange called for ${name}:`, { type, value, checked });
+    
+    if (type === 'checkbox') {
+      console.log(`Setting ${name} to ${checked} (checkbox)`);
+    }
+    
+    setFormData((prev) => {
+      let newData;
+      
+      console.log(`🔄 handleChange processing: ${name} = ${value} (type: ${type})`);
+      console.log('Previous form data:', prev);
+      
+      // Special handler for musicPreferences checkboxes
+      if (name.startsWith('music_')) {
+        const genreId = name.replace('music_', '');
+        let updatedPreferences = [...prev.musicPreferences];
+        
+        if (checked) {
+          // Add genre to preferences if checked and not already there
+          if (!updatedPreferences.includes(genreId)) {
+            updatedPreferences.push(genreId);
+          }
+        } else {
+          // Remove genre from preferences if unchecked
+          updatedPreferences = updatedPreferences.filter(id => id !== genreId);
+        }
+        
+        newData = {
+          ...prev,
+          musicPreferences: updatedPreferences
+        };
+      } else {
+        // Default handler for other form fields
+        newData = {
+          ...prev,
+          [name]: type === 'checkbox' ? checked : type === 'number' ? parseInt(value) || 0 : value,
+        };
+      }
+      
+      console.log(`✅ Updated formData ${name}:`, newData[name]);
+      console.log('New form data state:', newData);
+      
+      // Defer context update to avoid setState during render
+      setTimeout(() => {
+        console.log('💾 Saving to context:', newData);
+        updateContractFormData(newData);
+      }, 0);
+      
+      // Also save directly to localStorage as backup
+      try {
+        localStorage.setItem('djContractFormData', JSON.stringify(newData));
+        console.log('💾 Saved to localStorage successfully');
+      } catch (error) {
+        console.error('❌ Error saving to localStorage:', error);
+      }
+      
+      return newData;
+    });
+  };
+
+  // Basic manual address validation: requires at least one letter, one number, and at least 5 characters.
+  const validateAddress = (address) => {
+    const regex = /^(?=.*[a-zA-Z])(?=.*\d).{5,}$/;
+    return regex.test(address);
+  };
+
+  const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
+  const validatePhone = (phone) =>
+    /^[0-9]{10}$/.test(phone.replace(/\D/g, ''));
+
+  // Replacement for EmailJS functionality with Firebase API call
+  const sendConfirmationEmail = async (templateParams) => {
+    try {
+      // Validate required parameters for the API
+      if (!templateParams.bookingId) {
+        console.error("Missing required bookingId parameter");
+        return {
+          success: false,
+          error: "Missing required bookingId parameter",
+          fallbackMessage: "Could not send confirmation email: missing booking ID."
+        };
+      }
+      
+      // Make sure we have an email to send to
+      if (!templateParams.email) {
+        console.error("Missing required email parameter");
+        return {
+          success: false,
+          error: "Missing required email parameter",
+          fallbackMessage: "Could not send confirmation email: missing email address."
+        };
+      }
+      
+      // Log what we're sending to help with debugging
+      console.log('Sending confirmation email with parameters:', {
+        bookingId: templateParams.bookingId,
+        email: templateParams.email,
+        paymentMethod: templateParams.paymentMethod
+      });
+      
+      // Make API call to our own backend to handle email sending
+      const response = await fetch('/api/payment-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(templateParams),
+      });
+      
+      // Handle non-OK responses
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error text available');
+        console.error(`Server returned ${response.status}: ${response.statusText}`, errorText);
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('📧 Email sent successfully:', result);
+      
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("❌ Failed to send confirmation email:", error);
+      
+      // Log specific error details for debugging
+      if (error.message) console.error("Error message:", error.message);
+      if (error.code) console.error("Error code:", error.code);
+      if (error.details) console.error("Error details:", error.details);
+      
+      // Return a structured error response
+      return {
+        success: false,
+        error: error.message || "Failed to send confirmation email",
+        fallbackMessage: "We've saved your booking but couldn't send the confirmation email. We'll contact you shortly."
+      };
+    }
+  };
+
+  const validateForm = () => {
+    let errors = {};
+    
+    // Validate required fields
+    if (!formData.clientName) errors.clientName = 'Client name is required';
+    if (!formData.email) errors.email = 'Email is required';
+    if (!formData.contactPhone) errors.contactPhone = 'Phone number is required';
+    if (!formData.eventType) errors.eventType = 'Event type is required';
+    if (!formData.venueName) errors.venueName = 'Venue name is required';
+    if (!formData.venueLocation) errors.venueLocation = 'Venue location is required';
+    if (!formData.eventDate) errors.eventDate = 'Event date is required';
+    if (!formData.startTime) errors.startTime = 'Start time is required';
+    if (!formData.endTime) errors.endTime = 'End time is required';
+    if (!formData.paymentMethod) errors.paymentMethod = 'Payment method is required';
+    if (!formData.signerName.trim()) errors.signerName = 'Please enter your name to sign';
+    
+    // Validate email format
+    if (formData.email && !validateEmail(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    // Validate phone format
+    if (formData.contactPhone && !validatePhone(formData.contactPhone)) {
+      errors.contactPhone = 'Please enter a valid phone number';
+    }
+    
+    // Validate client phone format if provided
+    if (formData.clientPhone && !validatePhone(formData.clientPhone)) {
+      errors.clientPhone = 'Please enter a valid phone number';
+    }
+    
+    // Validate venue location
+    if (formData.venueLocation && !validateAddress(formData.venueLocation)) {
+      errors.venueLocation = 'Please enter a valid address';
+    }
+    
+    // If there are errors, update state and return false
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // Scroll to first error field
+      const firstErrorField = Object.keys(errors)[0];
+      const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return false;
+    }
+    
+    // Clear any previous errors
+    setFormErrors({});
+    return true;
+  };
+
+  // Create a success page URL for non-Stripe payment methods
+  const createSuccessPageUrl = (bookingId, paymentMethod, amount) => {
+    const baseUrl = window.location.origin + '/payment/success';
+    const params = new URLSearchParams();
+    params.append('booking_id', bookingId);
+    params.append('payment_method', paymentMethod);
+    if (amount) params.append('amount', amount);
+    return `${baseUrl}?${params.toString()}`;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent any other handlers
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setShowConfirmation(false); // Reset any existing confirmation message
+
+    try {
+      // Validate form data
+      if (!validateForm()) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check payment method selection
+      if (!formData.paymentMethod) {
+        setFormErrors(prev => ({
+          ...prev,
+          paymentMethod: 'Please select a payment method'
+        }));
+        setIsSubmitting(false);
+        
+        // Scroll to payment method section
+        const paymentMethodSection = document.querySelector('.payment-options');
+        if (paymentMethodSection) {
+          paymentMethodSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      
+      // For Stripe payments, use the dedicated Stripe payment handler
+      if (formData.paymentMethod === 'Stripe') {
+        handleStripeButtonClick();
+        return;
+      }
+
+      // Save form data first
+      console.log("Saving form data before payment redirection");
+      const docRef = await addDoc(collection(db, 'djContracts'), {
+        ...formData,
+        createdAt: serverTimestamp(),
+        status: 'redirecting_to_payment',
+        totalAmount: calculateTotal(),
+        depositAmount: calculateDepositAmount(),
+        paymentMethod: formData.paymentMethod
+      });
+
+      console.log("Document written with ID: ", docRef.id);
+      const bookingId = docRef.id;
+
+      // Prepare email template parameters but don't send yet
+      const templateParams = {
+        clientName: formData.clientName,
+        email: formData.email,
+        eventType: formData.eventType,
+        eventDate: formData.eventDate,
+        venueName: formData.venueName,
+        venueLocation: formData.venueLocation,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        totalAmount: calculateTotal(),
+        paymentMethod: formData.paymentMethod,
+        bookingId: docRef.id,
+        signerName: formData.signerName,
+        hasSigned: hasSignature ? 'Yes' : 'No'
+      };
+      
+      // For payment methods like Venmo, CashApp, and PayPal, show confirmation page
+      if (formData.paymentMethod === 'Venmo' || formData.paymentMethod === 'CashApp' || formData.paymentMethod === 'PayPal') {
+        console.log(`Setting up confirmation for ${formData.paymentMethod} payment`);
+        
+        // Update document with payment initiated status
+        try {
+          await updateDoc(doc(db, 'djContracts', bookingId), {
+            status: 'payment_initiated',
+            bookingConfirmed: true
+          });
+        } catch (updateError) {
+          console.error("Error updating document status:", updateError);
+        }
+        
+        // Send confirmation email automatically
+        try {
+          const emailResult = await sendConfirmationEmail(templateParams);
+          if (emailResult.success) {
+            console.log("Confirmation email sent successfully");
+            await updateDoc(doc(db, 'djContracts', bookingId), {
+              confirmationSent: true,
+              emailSentAt: serverTimestamp()
+            });
+          } else {
+            console.warn("Email sending failed:", emailResult.error);
+          }
+        } catch (emailError) {
+          console.error("Error sending confirmation email:", emailError);
+        }
+        
+        // Show the confirmation page with integrated payment options
+        setSubmitted(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // This code will only run if we're not redirecting to a payment platform
+      // Send confirmation email
+      const emailResult = await sendConfirmationEmail(templateParams);
+
+      if (emailResult.success) {
+        // Update the document with email confirmation
+        try {
+          await updateDoc(doc(db, 'djContracts', docRef.id), {
+            confirmationSent: true,
+            status: 'emailSent'
+          });
+        } catch (updateError) {
+          console.error("Error updating document status:", updateError);
+        }
+      } else {
+        console.warn("Email sending failed:", emailResult.error);
+        // Show a user-friendly message but don't block form submission
+        setSubmitError(emailResult.fallbackMessage || "We'll send your confirmation email shortly.");
+      }
+
+      // Only show success state for fallback or other payment methods
+      setSubmitted(true);
+      setShowConfirmation(true);
+
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      setSubmitError("An error occurred while submitting the form. Please try again or contact support.");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add payment confirmation component
+  const PaymentInstructions = ({ paymentMethod, bookingId }) => {
+    const [copySuccess, setCopySuccess] = useState(false);
+
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        setShowErrorMessage('Failed to copy to clipboard');
+      }
+    };
+
+    const getPaymentDetails = () => {
+      switch (paymentMethod) {
+        case 'Venmo':
+          return {
+            username: '@Bobby-Martin-64',
+            color: '#3D95CE',
+            url: PAYMENT_URLS.VENMO,
+            icon: <SiVenmo className="w-5 h-5" />
+          };
+        case 'CashApp':
+          return {
+            username: '$LiveCity',
+            color: '#00C244',
+            url: PAYMENT_URLS.CASHAPP,
+            icon: <SiCashapp className="w-5 h-5" />
+          };
+        case 'PayPal':
+          return {
+            username: 'paypal.me/bmartin4659',
+            color: '#0070BA',
+            url: PAYMENT_URLS.PAYPAL,
+            icon: <FaPaypal className="w-5 h-5" />
+          };
+        default:
+          return null;
+      }
+    };
+
+    const handlePayment = () => {
+      console.log('handlePayment called for:', paymentMethod);
+      console.log('Available payment URLs:', PAYMENT_URLS);
+      
+      // Open payment app based on type - direct to payment platform using replace
+      if (paymentMethod === 'Venmo') {
+        console.log('Redirecting to Venmo:', PAYMENT_URLS.VENMO);
+        window.open(PAYMENT_URLS.VENMO, '_blank');
+      } else if (paymentMethod === 'CashApp') {
+        console.log('CashApp URL being used:', PAYMENT_URLS.CASHAPP);
+        console.log('Environment variable NEXT_PUBLIC_CASHAPP_URL:', process.env.NEXT_PUBLIC_CASHAPP_URL);
+        
+        // Ensure the URL is properly formatted
+        let cashAppUrl = PAYMENT_URLS.CASHAPP;
+        if (cashAppUrl === 'https://cash.app/' || cashAppUrl === 'https://cash.app') {
+          cashAppUrl = 'https://cash.app/$LiveCity';
+          console.log('Fixed CashApp URL to:', cashAppUrl);
+        }
+        
+        console.log('Redirecting to Cash App:', cashAppUrl);
+        window.open(cashAppUrl, '_blank');
+      } else if (paymentMethod === 'PayPal') {
+        console.log('Redirecting to PayPal:', PAYMENT_URLS.PAYPAL);
+        window.open(PAYMENT_URLS.PAYPAL, '_blank');
+      } else {
+        console.error('Unknown payment method:', paymentMethod);
+      }
+    };
+
+    const paymentDetails = getPaymentDetails();
+
+    return (
+      <div className="payment-instructions bg-white rounded-lg shadow-lg p-6 mt-8">
+        <h3 className="text-2xl font-semibold text-primary mb-4">
+          Payment Instructions for {paymentMethod}
+        </h3>
+        
+        <div className="mb-6 space-y-2">
+          <p className="text-lg">
+            <strong>Amount Due:</strong> ${calculateDepositAmount()}
+          </p>
+          <p className="text-lg">
+            <strong>Booking Reference:</strong> {bookingId}
+          </p>
+        </div>
+
+        {paymentDetails && (
+          <div className="space-y-4">
+            <p className="text-lg">
+              Please send payment to: <strong>{paymentDetails.username}</strong>
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => copyToClipboard(paymentDetails.username)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-md text-white transition-all"
+                style={{ backgroundColor: paymentDetails.color }}
+              >
+                {copySuccess ? (
+                  <>
+                    <FaCheckCircle className="w-5 h-5" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <FaMobileAlt className="w-5 h-5" />
+                    <span>Copy Username</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={handlePayment}
+                className="flex items-center space-x-2 px-4 py-2 rounded-md text-white transition-all"
+                style={{ backgroundColor: paymentDetails.color }}
+              >
+                {paymentDetails.icon}
+                <span>Pay Now &amp; Continue</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Success message component
+  const SuccessMessage = () => (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      backgroundColor: '#4CAF50',
+      color: 'white',
+      padding: '16px 24px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px'
+    }}>
+      <FaCheckCircle />
+      <div>
+        <p style={{ margin: 0, fontWeight: '500' }}>Booking Submitted Successfully!</p>
+        <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+          Please check your email for confirmation details.
+        </p>
+      </div>
+    </div>
+  );
+
+  // Error message component
+  const ErrorMessage = ({ message }) => (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      backgroundColor: '#f44336',
+      color: 'white',
+      padding: '16px 24px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px'
+    }}>
+      <FaInfoCircle />
+      <p style={{ margin: 0 }}>{message}</p>
+    </div>
+  );
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '0.5rem',
+    fontWeight: 'bold',
+    color: '#333',
+    fontSize: 'clamp(16px, 2.5vw, 18px)'
+  };
+
+  const inputStyle = {
+    backgroundColor: 'white',
+    width: '100%',
+    padding: 'clamp(12px, 2vw, 16px)',
+    marginBottom: '1rem',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    color: '#1a1a1a', // Darker text for better mobile visibility
+    fontSize: 'clamp(16px, 2.5vw, 18px)',
+    fontWeight: '500', // Thicker font weight for mobile readability
+    // Mobile optimizations
+    minHeight: '44px',
+    lineHeight: '1.4',
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    touchAction: 'manipulation',
+    WebkitTapHighlightColor: 'transparent',
+    // Enhanced mobile input support
+    outline: 'none',
+    boxSizing: 'border-box',
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
+    // Prevent zoom on iOS with better logic
+    ...(typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator?.userAgent || '') ? {
+      fontSize: '16px',
+      WebkitTextSizeAdjust: '100%'
+    } : {}),
+    // Focus styles
+    '&:focus': {
+      borderColor: '#0070f3',
+      boxShadow: '0 0 0 2px rgba(0, 112, 243, 0.2)',
+      outline: 'none'
+    }
+  };
+
+  const iconStyle = {
+    marginRight: '8px',
+    fontSize: '18px',
+    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+  };
+
+  const fieldIcons = {
+    clientName: <FaUserAlt style={{...iconStyle, color: '#4299E1'}} />,
+    email: <FaEnvelope style={{...iconStyle, color: '#ED8936'}} />,
+    contactPhone: <FaPhoneAlt style={{...iconStyle, color: '#48BB78'}} />,
+    eventType: <FaCalendarAlt style={{...iconStyle, color: '#9F7AEA'}} />,
+    guestCount: <FaUsers style={{...iconStyle, color: '#F56565'}} />,
+    venueName: <FaBuilding style={{...iconStyle, color: '#38B2AC'}} />,
+  };
+
+  const venueLocationIcon = <FaMapMarkerAlt style={{...iconStyle, color: '#FC8181'}} />;
+  const timeIcons = {
+    eventDate: <FaCalendarAlt style={{...iconStyle, color: '#D53F8C'}} />,
+    startTime: <FaClock style={{...iconStyle, color: '#805AD5'}} />,
+    endTime: <FaClock style={{...iconStyle, color: '#3182CE'}} />,
+  };
+  const serviceIcons = {
+    lighting: <FaLightbulb style={{...iconStyle, color: '#ECC94B'}} />,
+    photography: <FaCamera style={{...iconStyle, color: '#4FD1C5'}} />,
+    videoVisuals: <FaVideo style={{...iconStyle, color: '#F687B3'}} />,
+  };
+  const additionalHoursIcon = <FaClock style={{...iconStyle, color: '#68D391'}} />;
+  const paymentIcons = {
+    Stripe: <FaCreditCard className="payment-icon" style={{ fontSize: '24px', marginRight: '10px', color: '#6772E5' }} />,
+    Venmo: <SiVenmo className="payment-icon" style={{ fontSize: '24px', marginRight: '10px', color: '#3D95CE' }} />,
+    CashApp: <SiCashapp className="payment-icon" style={{ fontSize: '24px', marginRight: '10px', color: '#00C244' }} />,
+    PayPal: <FaPaypal className="payment-icon" style={{ fontSize: '24px', marginRight: '10px', color: '#0070BA' }} />
+  };
+
+  const itemizedTotal = () => (
+    <ul className="event-summary-list" style={{ listStyle: 'none', padding: 0, marginTop: '1rem', color: '#000' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+      }}>
+        <span style={{ flex: '1 1 auto' }}>
+          {isWeddingEvent(formData.eventType) ? '💍 Wedding Package' : '🎶 Base Package'}
+        </span>
+        <span style={{ whiteSpace: 'nowrap' }}>${basePrice}</span>
+      </div>
+      {formData.lighting && <li>💡 Lighting: ${SERVICES.LIGHTING}</li>}
+      {formData.photography && <li>📸 Event Photography: ${SERVICES.PHOTOGRAPHY}</li>}
+      {formData.videoVisuals && <li>📽️ Video Visuals: ${SERVICES.VIDEO_VISUALS}</li>}
+      {formData.additionalHours > 0 && (
+        <li>⏱️ Additional Hours: ${formData.additionalHours * SERVICES.ADDITIONAL_HOUR}</li>
+      )}
+      <li className="event-total" style={{
+        marginTop: '10px',
+        paddingTop: '10px',
+        borderTop: '1px solid #ddd',
+        fontWeight: 'bold'
+      }}>
+        <strong>Subtotal: ${calculateTotal()}</strong>
+      </li>
+      
+      {/* Show the payment amount based on selection */}
+      <li style={{ 
+        marginTop: '5px',
+        fontWeight: formData.paymentAmount === 'deposit' ? 'bold' : 'normal',
+        color: formData.paymentAmount === 'deposit' ? '#0070f3' : 'inherit'
+      }}>
+        {formData.paymentAmount === 'deposit' ? (
+          <>💵 <strong>Deposit (50%): ${calculateDepositAmount()}</strong></>
+        ) : (
+          <>💵 Deposit (50%): ${calculateDepositAmount()}</>
+        )}
+      </li>
+      
+      <li style={{ 
+        marginTop: '5px',
+        fontWeight: formData.paymentAmount === 'full' ? 'bold' : 'normal',
+        color: formData.paymentAmount === 'full' ? '#0070f3' : 'inherit'
+      }}>
+        {formData.paymentAmount === 'full' ? (
+          <>💰 <strong>Full Payment: ${calculateTotal()}</strong></>
+        ) : (
+          <>💰 Full Payment: ${calculateTotal()}</>
+        )}
+      </li>
+      
+      <li className="amount-to-pay" style={{
+        marginTop: '15px',
+        padding: '10px',
+        backgroundColor: 'rgba(0, 112, 243, 0.1)',
+        borderRadius: '8px',
+        fontWeight: 'bold',
+        fontSize: '1.1rem',
+        textAlign: 'center'
+      }}>
+        <strong>Amount to Pay: ${getAmountToPay()}</strong>
+      </li>
+    </ul>
+  );
+
+  // InfoModal component for displaying info popups with an "Ok" button.
+  function InfoModal({ text, onClose }) {
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '15px'
+        }}
+        onClick={onClose}
+      >
+        <div 
+          style={{
+            backgroundColor: 'white',
+            padding: '32px 28px 24px 28px',
+            borderRadius: '8px',
+            maxWidth: '90%',
+            width: '500px',
+            maxHeight: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+            position: 'relative'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div 
+            style={{ 
+              overflowY: 'auto', 
+              flex: '1 1 auto',
+              marginBottom: '20px',
+              paddingRight: '5px',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div style={{ whiteSpace: 'pre-wrap' }}>{text}</div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: '100%',
+              padding: '15px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
+              backgroundColor: '#0070f3',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Ok
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // PaymentModal component for displaying payment information with HTML content
+  function PaymentModal({ htmlContent, onClose }) {
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+      >
+        <div 
+          style={{
+            backgroundColor: 'white',
+            padding: '25px',
+            borderRadius: '12px',
+            maxWidth: '500px',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.2)',
+            border: '2px solid #0070f3',
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <div 
+            dangerouslySetInnerHTML={{ __html: htmlContent }} 
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          />
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            style={{
+              backgroundColor: '#0070f3',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              marginTop: '15px',
+              width: '100%'
+            }}
+          >
+            Ok
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Create a more direct payment method handler that doesn't rely on async processing
+  // Update handlePaymentMethodSelect to be more direct
+  const handlePaymentMethodSelect = useCallback((method) => {
+    console.log('Payment method selected:', method);
+    
+    // Prevent multiple rapid clicks
+    if (isChangingPayment) {
+      console.log('Payment method change already in progress, ignoring click');
+      return;
+    }
+    
+    setIsChangingPayment(true);
+    
+    // Direct assignment for immediate UI feedback
+    document.querySelectorAll('.payment-option').forEach(el => {
+      el.style.border = el.dataset.method === method 
+        ? '2px solid #0070f3' 
+        : '2px solid #ddd';
+      el.style.backgroundColor = el.dataset.method === method 
+        ? 'rgba(0, 112, 243, 0.05)' 
+        : 'white';
+      el.style.boxShadow = el.dataset.method === method 
+        ? '0 4px 12px rgba(0, 112, 243, 0.15)' 
+        : '0 1px 3px rgba(0,0,0,0.05)';
+    });
+    
+    // Update form data immediately to avoid state update issues
+    setFormData(prev => {
+      const newData = { ...prev, paymentMethod: method };
+      console.log('Updated form data with payment method:', newData.paymentMethod);
+      
+      // Defer context update to avoid setState during render
+      setTimeout(() => {
+        updateContractFormData(newData);
+        setIsChangingPayment(false);
+      }, 100);
+      
+      // Also save to localStorage as backup
+      try {
+        localStorage.setItem('djContractFormData', JSON.stringify(newData));
+      } catch (error) {
+        console.error('Error saving payment method to localStorage:', error);
+      }
+      return newData;
+    });
+    
+    // Clear any payment method error when a selection is made
+    if (formErrors.paymentMethod) {
+      setFormErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors.paymentMethod;
+        return newErrors;
+      });
+    }
+  }, [formErrors, updateContractFormData, isChangingPayment]);
+
+  // Memoize the payment method option styles to reduce recalculations
+  const getPaymentOptionStyle = useCallback((method) => {
+    const isSelected = formData.paymentMethod === method;
+    return {
+      border: `2px solid ${isSelected ? '#0070f3' : '#ddd'}`,
+      borderRadius: '12px',
+      padding: '15px 10px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: isChangingPayment ? 'wait' : 'pointer',
+      backgroundColor: isSelected ? 'rgba(0, 112, 243, 0.05)' : 'white',
+      transition: 'all 0.2s ease',
+      boxShadow: isSelected ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
+      opacity: isChangingPayment ? 0.7 : 1,
+      position: 'relative',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      pointerEvents: isChangingPayment ? 'none' : 'auto',
+      ':hover': {
+        transform: isSelected ? 'none' : 'translateY(-2px)',
+        boxShadow: isSelected ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 4px 8px rgba(0,0,0,0.1)'
+      }
+    };
+  }, [formData.paymentMethod, isChangingPayment]);
+
+
+
+  // Memoize common styles to avoid recreation on each render
+  const paymentIconStyle = useMemo(() => ({ 
+    fontSize: '28px', 
+    marginBottom: '6px' 
+  }), []);
+
+  // Define icon colors for payment methods
+  const paymentIconColors = useMemo(() => ({
+    Stripe: '#6772E5',
+    Venmo: '#3D95CE',
+    CashApp: '#00C244',
+    PayPal: '#0070BA'
+  }), []);
+
+  const paymentLabelStyle = useMemo(() => ({ 
+    fontWeight: 'bold',
+    fontSize: '1rem'
+  }), []);
+
+  const radioStyle = useMemo(() => ({ 
+    position: 'absolute', 
+    opacity: 0 
+  }), []);
+
+  // Log initial form state
+  useEffect(() => {
+    console.log("Initial form data:", formData);
+    console.log("Service selections:", {
+      lighting: formData.lighting,
+      photography: formData.photography,
+      videoVisuals: formData.videoVisuals
+    });
+  }, []);
+
+
+
+  // GenreSelectionModal component for selecting music genres
+  function GenreSelectionModal({ onClose }) {
+    const [selectedGenres, setSelectedGenres] = useState([...formData.musicPreferences]);
+    const [otherGenre, setOtherGenre] = useState(formData.otherMusicPreference || '');
+    const [animateIn, setAnimateIn] = useState(false);
+    
+    // Set animation on mount
+    useEffect(() => {
+      const timer = setTimeout(() => setAnimateIn(true), 50);
+      return () => clearTimeout(timer);
+    }, []);
+    
+    // Apply changes and close the modal
+    const applyChanges = () => {
+      const newData = {
+        ...formData,
+        musicPreferences: selectedGenres,
+        otherMusicPreference: selectedGenres.includes('other') ? otherGenre : ''
+      };
+      setFormData(newData);
+      
+      // Use setTimeout to defer the context update to avoid setState during render
+      setTimeout(() => {
+        updateContractFormData(newData);
+      }, 0);
+      
+      onClose();
+    };
+    
+    // Handle genre selection
+    const toggleGenre = (genreId) => {
+      if (selectedGenres.includes(genreId)) {
+        setSelectedGenres(prev => prev.filter(id => id !== genreId));
+      } else {
+        setSelectedGenres(prev => [...prev, genreId]);
+      }
+    };
+    
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1050,
+          opacity: animateIn ? 1 : 0,
+          transition: 'opacity 0.3s ease'
+        }}
+        onClick={onClose}
+      >
+        <div 
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            maxWidth: '800px',
+            width: '90%',
+            maxHeight: '85vh',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)',
+            border: '2px solid #0070f3',
+            overflow: 'hidden',
+            transform: animateIn ? 'translateY(0)' : 'translateY(30px)',
+            transition: 'transform 0.4s ease-out',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{
+            padding: '20px 25px',
+            borderBottom: '1px solid #eaeaea',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'linear-gradient(90deg, #0070f3, #3291ff)'
+          }}>
+            <h2 style={{ 
+              margin: 0, 
+              color: 'white',
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <span style={{ marginRight: '12px', fontSize: '1.8rem' }}>🎵</span>
+              Choose Your Music Style
+            </h2>
+            <button 
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                transition: 'background-color 0.2s',
+                ':hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+              }}
+            >
+              ×
+            </button>
+          </div>
+          
+          <div style={{ 
+            padding: '20px 25px',
+            overflowY: 'auto',
+            flexGrow: 1
+          }}>
+            <p style={{ 
+              marginBottom: '20px', 
+              fontSize: '1.1rem',
+              color: '#444'
+            }}>
+              Select the music genres you&apos;d like to hear at your event:
+            </p>
+            
+            <div className="genre-modal-grid" style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: '15px',
+              marginBottom: '25px'
+            }}>
+              {musicGenres.map(genre => (
+                <div key={genre.id} 
+                  onClick={() => toggleGenre(genre.id)}
+                  className="genre-modal-item"
+                  style={{
+                    padding: '15px',
+                    borderRadius: '8px',
+                    border: `2px solid ${selectedGenres.includes(genre.id) ? '#0070f3' : '#e0e0e0'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: selectedGenres.includes(genre.id) ? 'rgba(0, 112, 243, 0.08)' : 'white',
+                    transition: 'all 0.2s ease',
+                    boxShadow: selectedGenres.includes(genre.id) 
+                      ? '0 6px 14px rgba(0, 112, 243, 0.15)' 
+                      : '0 2px 5px rgba(0,0,0,0.05)',
+                    // Mobile touch optimization
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation',
+                    minHeight: '44px'
+                  }}
+                >
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: '2px solid',
+                    borderColor: selectedGenres.includes(genre.id) ? '#0070f3' : '#ddd',
+                    marginRight: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: selectedGenres.includes(genre.id) ? '#0070f3' : 'white',
+                    transition: 'all 0.15s ease',
+                    flexShrink: 0
+                  }}>
+                    {selectedGenres.includes(genre.id) && (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
+                  <label style={{
+                    margin: 0,
+                    fontSize: '1.05rem',
+                    fontWeight: selectedGenres.includes(genre.id) ? '600' : '500', 
+                    color: selectedGenres.includes(genre.id) ? '#0070f3' : '#444',
+                    cursor: 'pointer',
+                    flexGrow: 1
+                  }}>
+                    {genre.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            
+            {selectedGenres.includes('other') && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontWeight: '500',
+                  color: '#555'
+                }}>
+                  Please specify other genres:
+                </label>
+                <input
+                  type="text"
+                  value={otherGenre}
+                  onChange={(e) => setOtherGenre(e.target.value)}
+                  placeholder="Tell us about your other music preferences"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '2px solid #0070f3',
+                    fontSize: '1rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          
+          <div style={{
+            padding: '15px 25px',
+            borderTop: '1px solid #eaeaea',
+            display: 'flex',
+            justifyContent: 'space-between',
+            backgroundColor: '#f9f9f9'
+          }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '10px 20px',
+                borderRadius: '6px',
+                border: '1px solid #ddd',
+                backgroundColor: 'white',
+                color: '#555',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                ':hover': { backgroundColor: '#f5f5f5' }
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={applyChanges}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: '#0070f3',
+                color: 'white',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                ':hover': { backgroundColor: '#0060df' }
+              }}
+            >
+              Apply Selections
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Near the top of the component where other useEffect hooks are defined
+  // Add responsive styles for header and logo
+  useEffect(() => {
+    if (isClient) {
+      const responsiveStyles = document.createElement('style');
+      responsiveStyles.textContent = `
+        @media (max-width: 768px) {
+          .logo-container {
+            width: 150px !important;
+            height: 150px !important;
+          }
+          .header-title {
+            font-size: 32px !important;
+          }
+          .header-email {
+            font-size: 15px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .logo-container {
+            width: 120px !important;
+            height: 120px !important;
+          }
+          .header-title {
+            font-size: 28px !important;
+          }
+          .header-email {
+            font-size: 14px !important;
+          }
+        }
+      `;
+      document.head.appendChild(responsiveStyles);
+      
+      return () => {
+        if (document.head.contains(responsiveStyles)) {
+          document.head.removeChild(responsiveStyles);
+        }
+      };
+    }
+  }, [isClient]);
+
+  if (!isClient) {
+    return null;
+  }
+
+  if (submitted) {
+    return (
+      <BookingConfirmationPage 
+        formData={{
+          ...formData,
+          totalAmount: calculateTotal()
+        }}
+        onSendEmail={sendConfirmationEmail}
+        onBookAgain={() => {
+          setFormData({
+            clientName: '',
+            email: '',
+            contactPhone: '',
+            eventType: 'Wedding',
+            guestCount: '100',
+            venueName: '',
+            venueLocation: '',
+            eventDate: '',
+            startTime: '',
+            endTime: '',
+            paymentMethod: 'Stripe',
+            paymentAmount: 'deposit',
+            lighting: false,
+            photography: false,
+            videoVisuals: false,
+            additionalHours: 0,
+            agreeToTerms: false,
+            musicPreferences: [],
+            otherMusicPreference: '',
+            streamingService: '',
+            playlistLink: ''
+          });
+          setSubmitted(false);
+        }}
+      />
+    );
+  }
+
+  // Function to handle Stripe payment initialization - placed inside the component
+  const handleStripeButtonClick = async () => {
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Create the document in Firebase first to get the ID
+      const docRef = await addDoc(collection(db, 'djContracts'), {
+        ...formData,
+        createdAt: serverTimestamp(),
+        status: 'payment_pending',
+        totalAmount: calculateTotal(),
+        depositAmount: calculateDepositAmount()
+      });
+      
+      console.log("Document written with ID for Stripe payment: ", docRef.id);
+      
+      // Update form data with booking ID
+      const bookingId = docRef.id;
+      setFormData(prev => ({
+        ...prev,
+        bookingId: bookingId
+      }));
+      
+      // Update document status
+      try {
+        await updateDoc(doc(db, 'djContracts', bookingId), {
+          status: 'payment_initiated',
+          bookingConfirmed: true
+        });
+      } catch (updateError) {
+        console.error("Error updating document status:", updateError);
+      }
+      
+      // Prepare email template parameters
+      const templateParams = {
+        clientName: formData.clientName,
+        email: formData.email,
+        eventType: formData.eventType,
+        eventDate: formData.eventDate,
+        venueName: formData.venueName,
+        venueLocation: formData.venueLocation,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        totalAmount: calculateTotal(),
+        paymentMethod: formData.paymentMethod,
+        bookingId: bookingId,
+        signerName: formData.signerName,
+        hasSigned: true
+      };
+      
+      // Send confirmation email automatically
+      try {
+        const emailResult = await sendConfirmationEmail(templateParams);
+        if (emailResult.success) {
+          console.log("Confirmation email sent successfully");
+          await updateDoc(doc(db, 'djContracts', bookingId), {
+            confirmationSent: true,
+            emailSentAt: serverTimestamp()
+          });
+        } else {
+          console.warn("Email sending failed:", emailResult.error);
+        }
+      } catch (emailError) {
+        console.error("Error sending confirmation email:", emailError);
+      }
+      
+      // Show confirmation page instead of immediately redirecting
+      setSubmitted(true);
+      setIsSubmitting(false);
+      
+      // Prepare Stripe checkout in the background
+      try {
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: getAmountToPay() * 100,
+            contractDetails: {
+              clientName: formData.clientName,
+              email: formData.email,
+              eventType: formData.eventType,
+              eventDate: formData.eventDate,
+              venueName: formData.venueName,
+              venueLocation: formData.venueLocation,
+              startTime: formData.startTime,
+              endTime: formData.endTime,
+              lighting: formData.lighting === true,
+              photography: formData.photography === true,
+              videoVisuals: formData.videoVisuals === true,
+              additionalHours: parseInt(formData.additionalHours || 0),
+              paymentAmount: formData.paymentAmount,
+              isDeposit: formData.paymentAmount === 'deposit'
+            }
+          }),
+        });
+        
+        if (response.ok) {
+          const { url } = await response.json();
+          if (url) {
+            // Store the URL for later use on confirmation page
+            localStorage.setItem('stripeCheckoutUrl', url);
+            
+            // Update the document with the checkout URL
+            await updateDoc(doc(db, 'djContracts', bookingId), {
+              stripeCheckoutUrl: url
+            });
+          }
+        }
+      } catch (stripeError) {
+        console.error("Error preparing Stripe payment in background:", stripeError);
+      }
+      
+    } catch (error) {
+      console.error("Error preparing Stripe payment:", error);
+      setSubmitError("Error initializing payment. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Admin Quick Access Panel
+  const AdminPanel = () => {
+    const adminUser = AdminAuth.getAdminUser();
+    const [showAdminPanel, setShowAdminPanel] = useState(false);
+    
+    if (!adminUser && !showAdminPanel) {
+      return (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => setShowAdminPanel(true)}
+            className="bg-yellow-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-yellow-600 transition-colors"
+          >
+            Admin
+          </button>
+        </div>
+      );
+    }
+    
+    if (adminUser) {
+      return (
+        <div className="fixed top-4 right-4 z-50 bg-yellow-100 border border-yellow-300 rounded-lg p-3 shadow-lg">
+          <div className="flex items-center space-x-2">
+            <span className="text-yellow-800 font-medium text-sm">🔑 Admin Mode</span>
+            <span className="text-yellow-600 text-xs">{adminUser.email}</span>
+            <button
+              onClick={() => {
+                AdminAuth.clearAdminSession();
+                window.location.reload();
+              }}
+              className="text-yellow-600 hover:text-yellow-800 text-xs font-medium"
+            >
+              Exit
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    if (showAdminPanel) {
+      return (
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 rounded-lg p-4 shadow-lg w-80">
+          <h3 className="font-medium text-gray-900 mb-3">Admin Access</h3>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            if (AdminAuth.setAdminUser(email)) {
+              window.location.reload();
+            } else {
+              alert('Invalid admin email');
+            }
+          }}>
+            <input
+              name="email"
+              type="email"
+              placeholder="Enter admin email"
+              className="w-full px-3 py-2 border border-gray-300 rounded mb-3 text-sm"
+              required
+            />
+            <div className="flex space-x-2">
+              <button
+                type="submit"
+                className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
+              >
+                Access
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAdminPanel(false)}
+                className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
+
+
+  return (
+    <SuppressHydration>
+      <div className="main-wrapper" style={{ 
+        width: '100%', 
+        position: 'relative',
+        minHeight: '100vh',
+        overflowX: 'hidden',
+        paddingBottom: '2rem'
+      }}>
+
+        <AdminPanel />
+        <AccessLevelBanner user={user} className="m-4" />
+
+        
+        <ToastContainer position="top-center" autoClose={5000} />
+        {showConfirmation && (
+          <PaymentConfirmationBanner 
+            paymentMethod={formData.paymentMethod} 
+            onClose={() => setShowConfirmation(false)} 
+          />
+        )}
+        {infoPopup && <InfoModal text={infoPopup} onClose={() => setInfoPopup(null)} />}
+        {showTerms && <InfoModal text={termsAndConditionsText} onClose={() => setShowTerms(false)} />}
+        {modalText && <PaymentModal htmlContent={modalText} onClose={() => setModalText(null)} />}
+        
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center',
+          width: '100%',
+          overflow: 'visible',
+          minHeight: '100vh'
+        }}>
+          {submitted && (
+            <BookingConfirmationPage 
+              formData={{
+                ...formData,
+                totalAmount: calculateTotal()
+              }}
+              onSendEmail={sendConfirmationEmail}
+              onBookAgain={() => {
+                setFormData(initialFormData);
+                setSubmitted(false);
+              }}
+            />
+          )}
+          {!submitted && (
+            <div style={{ 
+              maxWidth: '800px',
+              width: isMobile ? '98%' : '96%',
+              margin: isMobile ? '1rem auto 2rem auto' : '2rem auto 3rem auto'
+            }}>
+              <form onSubmit={handleSubmit} style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                padding: isMobile ? '1rem' : '2.5rem',
+                borderRadius: isMobile ? '8px' : '20px',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+                width: '100%',
+                marginBottom: '50px',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)'
+              }}>
+                {/* Form Header with Logo */}
+                <div style={{
+                  textAlign: 'center',
+                  marginBottom: '30px',
+                  position: 'relative',
+                  maxWidth: '100%',
+                  padding: '0 10px'
+                }}>
+                  {/* Back to DJ Dashboard Button - Only for authenticated DJs */}
+                  {user && !isClientAccess && (
+                    <button
+                      onClick={() => router.push('/dj/dashboard')}
+                      style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: isMobile ? '0' : '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        backgroundColor: '#6366f1',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(99, 102, 241, 0.2)',
+                        transition: 'all 0.2s ease',
+                        zIndex: 10
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#4f46e5';
+                        e.target.style.transform = 'translateY(-1px)';
+                        e.target.style.boxShadow = '0 4px 8px rgba(99, 102, 241, 0.3)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = '#6366f1';
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 4px rgba(99, 102, 241, 0.2)';
+                      }}
+                    >
+                      <FaArrowLeft style={{ fontSize: '12px' }} />
+                      <span style={{ display: isMobile ? 'none' : 'inline' }}>DJ Dashboard</span>
+                      <span style={{ display: isMobile ? 'inline' : 'none' }}>Dashboard</span>
+                    </button>
+                  )}
+
+                  <div style={{
+                    width: '150px',
+                    height: '150px',
+                    margin: '0 auto 15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Image
+                      src="/dj-bobby-drake-logo.png"
+                      alt="DJ Bobby Drake Logo"
+                      width={150}
+                      height={150}
+                      priority
+                      unoptimized={false}
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                  
+                  <h1 className="contract-header" style={{
+                    fontSize: 'clamp(39px, 5.6vw, 50px)',
+                    fontWeight: 'bold',
+                    margin: '10px auto',
+                    color: 'transparent',
+                    WebkitTextStroke: '2px #000',
+                    textStroke: '2px #000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    lineHeight: '1.2',
+                    maxWidth: '100%',
+                    textAlign: 'center',
+                    flexWrap: 'nowrap',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    <span>EVENT CONTRACT</span>
+                  </h1>
+
+
+
+                  {/* Standard Contract Notification */}
+                  {isClientAccess && contractType === 'standard' && (
+                    <div style={{
+                      backgroundColor: '#fef3c7',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      marginBottom: '20px',
+                      textAlign: 'center'
+                    }}>
+                      <p style={{
+                        fontSize: '14px',
+                        color: '#92400e',
+                        fontWeight: '500',
+                        margin: '0'
+                      }}>
+                        📝 Standard Contract - Basic styling and fonts are applied by your DJ
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        color: '#78350f',
+                        margin: '4px 0 0 0'
+                      }}>
+                        Premium features (custom fonts, advanced styling) are available with DJ subscription plans
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Header Style Controls Dropdown - Only for premium contracts or authenticated DJs */}
+                  {((user && !isClientAccess) || (isClientAccess && contractType === 'premium')) && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginBottom: '20px',
+                      position: 'relative'
+                    }}>
+                      <div style={{
+                        width: '100%',
+                        maxWidth: '600px',
+                        position: 'relative'
+                      }}>
+                        {/* Dropdown Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={() => setShowHeaderStyleDropdown(!showHeaderStyleDropdown)}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '12px 16px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            color: '#374151'
+                          }}
+                          onMouseOver={(e) => {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                          }}
+                        >
+                          <span style={{ display: 'flex', alignItems: 'center' }}>
+                            🎨 Header Style Controls
+                          </span>
+                          <span style={{
+                            transform: showHeaderStyleDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                            fontSize: '12px'
+                          }}>
+                            ▼
+                          </span>
+                        </button>
+
+                        {/* Dropdown Content */}
+                        {showHeaderStyleDropdown && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '0',
+                            right: '0',
+                            marginTop: '4px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            padding: '12px',
+                            zIndex: 50,
+                            maxHeight: '70vh',
+                            overflowY: 'auto'
+                          }}>
+                            {/* Compact Top Row: Preview + Quick Controls */}
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: '2fr 1fr',
+                              gap: '12px',
+                              marginBottom: '12px'
+                            }}>
+                              {/* Left: Compact Preview */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Live Preview
+                                </label>
+                                <div style={{
+                                  padding: '8px',
+                                  backgroundColor: 'rgba(248, 250, 252, 0.8)',
+                                  borderRadius: '4px',
+                                  border: '1px solid #e2e8f0',
+                                  textAlign: 'center',
+                                  minHeight: '50px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center'
+                                }}>
+                                  <div 
+                                    className="contract-header"
+                                    style={{
+                                      fontSize: 'clamp(14px, 2.5vw, 18px)', // Much smaller for compact view
+                                      fontWeight: headerStyles.fontWeight || 'bold',
+                                      fontStyle: headerStyles.fontStyle || 'normal',
+                                      textAlign: headerStyles.textAlign || 'center',
+                                      color: headerStyles.color || 'transparent',
+                                      textStroke: headerStyles.textStroke || '1px #000',
+                                      WebkitTextStroke: headerStyles.webkitTextStroke || '1px #000',
+                                      textTransform: headerStyles.textTransform || 'uppercase',
+                                      letterSpacing: headerStyles.letterSpacing || '1px',
+                                      lineHeight: headerStyles.lineHeight || '1.2',
+                                      textDecoration: headerStyles.textDecoration || 'none',
+                                      textShadow: headerStyles.textShadow || 'none',
+                                      transform: headerStyles.transform || 'rotate(0deg)',
+                                      marginBottom: '2px',
+                                      display: 'block',
+                                      width: '100%'
+                                    }}>
+                                    EVENT CONTRACT
+                                  </div>
+                                  <div style={{
+                                    fontSize: '9px',
+                                    color: '#64748b',
+                                    fontStyle: 'italic'
+                                  }}>
+                                    {previewFont !== headerFont ? `Preview: ${previewFont.substring(0, 12)}...` : `Current: ${headerFont.substring(0, 12)}...`}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right: Quick Style Buttons */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Quick Style
+                                </label>
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr 1fr',
+                                  gap: '3px'
+                                }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newWeight = headerStyles.fontWeight === 'bold' ? 'normal' : 'bold';
+                                      const newStyles = { ...headerStyles, fontWeight: newWeight };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      fontWeight: 'bold',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: headerStyles.fontWeight === 'bold' ? '#dbeafe' : 'white',
+                                      color: headerStyles.fontWeight === 'bold' ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    B
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyle = headerStyles.fontStyle === 'italic' ? 'normal' : 'italic';
+                                      const newStyles = { ...headerStyles, fontStyle: newStyle };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      fontStyle: 'italic',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: headerStyles.fontStyle === 'italic' ? '#dbeafe' : 'white',
+                                      color: headerStyles.fontStyle === 'italic' ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    I
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newDecoration = headerStyles.textDecoration === 'underline' ? 'none' : 'underline';
+                                      const newStyles = { ...headerStyles, textDecoration: newDecoration };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      textDecoration: 'underline',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: headerStyles.textDecoration === 'underline' ? '#dbeafe' : 'white',
+                                      color: headerStyles.textDecoration === 'underline' ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    U
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const shadows = ['none', '2px 2px 4px rgba(0,0,0,0.3)', '0 0 10px rgba(255,255,255,0.8)'];
+                                      const currentIndex = shadows.indexOf(headerStyles.textShadow || 'none');
+                                      const nextIndex = (currentIndex + 1) % shadows.length;
+                                      const newStyles = { ...headerStyles, textShadow: shadows[nextIndex] };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '4px 6px',
+                                      fontSize: '10px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '3px',
+                                      backgroundColor: (headerStyles.textShadow && headerStyles.textShadow !== 'none') ? '#dbeafe' : 'white',
+                                      color: (headerStyles.textShadow && headerStyles.textShadow !== 'none') ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    S
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Compact Control Sections */}
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr',
+                              gap: '12px',
+                              marginBottom: '12px'
+                            }}>
+                              {/* Left Column: Font Selector */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Header Font
+                                </label>
+                                <SystemFontSelector 
+                                  onFontChange={handleFontChange}
+                                  onPreviewChange={handlePreviewChange}
+                                  currentFont={headerFont}
+                                />
+                              </div>
+
+                              {/* Right Column: Size + Alignment */}
+                              <div>
+                                <label style={{
+                                  display: 'block',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: '#374151',
+                                  marginBottom: '6px'
+                                }}>
+                                  Size & Align
+                                </label>
+                                
+                                {/* Font Size - Compact */}
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(4, 1fr)',
+                                  gap: '3px',
+                                  marginBottom: '6px'
+                                }}>
+                                  {[
+                                    { label: 'S', value: 'clamp(24px, 3vw, 32px)' },
+                                    { label: 'M', value: 'clamp(32px, 4vw, 40px)' },
+                                    { label: 'L', value: 'clamp(39px, 5.6vw, 50px)' },
+                                    { label: 'XL', value: 'clamp(48px, 7vw, 64px)' }
+                                  ].map((size) => (
+                                    <button
+                                      key={size.label}
+                                      type="button"
+                                      onClick={() => {
+                                        const newStyles = { ...headerStyles, fontSize: size.value };
+                                        handleStyleChange(newStyles);
+                                      }}
+                                      style={{
+                                        padding: '4px 6px',
+                                        fontSize: '10px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '3px',
+                                        backgroundColor: headerStyles.fontSize === size.value ? '#dbeafe' : 'white',
+                                        color: headerStyles.fontSize === size.value ? '#1d4ed8' : '#374151',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      {size.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                
+                                {/* Text Alignment - Compact */}
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(3, 1fr)',
+                                  gap: '3px'
+                                }}>
+                                  {[
+                                    { label: 'L', value: 'left' },
+                                    { label: 'C', value: 'center' },
+                                    { label: 'R', value: 'right' }
+                                  ].map((align) => (
+                                    <button
+                                      key={align.label}
+                                      type="button"
+                                      onClick={() => {
+                                        const newStyles = { ...headerStyles, textAlign: align.value };
+                                        handleStyleChange(newStyles);
+                                      }}
+                                      style={{
+                                        padding: '4px 6px',
+                                        fontSize: '10px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '3px',
+                                        backgroundColor: headerStyles.textAlign === align.value ? '#dbeafe' : 'white',
+                                        color: headerStyles.textAlign === align.value ? '#1d4ed8' : '#374151',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      {align.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Text Style Controls */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Style
+                              </label>
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newWeight = headerStyles.fontWeight === 'bold' ? 'normal' : 'bold';
+                                    const newStyles = { ...headerStyles, fontWeight: newWeight };
+                                    handleStyleChange(newStyles);
+                                  }}
+                                  style={{
+                                    padding: '8px 16px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    backgroundColor: headerStyles.fontWeight === 'bold' ? '#dbeafe' : 'white',
+                                    color: headerStyles.fontWeight === 'bold' ? '#1d4ed8' : '#374151',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Bold
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newStyle = headerStyles.fontStyle === 'italic' ? 'normal' : 'italic';
+                                    const newStyles = { ...headerStyles, fontStyle: newStyle };
+                                    handleStyleChange(newStyles);
+                                  }}
+                                  style={{
+                                    padding: '8px 16px',
+                                    fontSize: '14px',
+                                    fontStyle: 'italic',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    backgroundColor: headerStyles.fontStyle === 'italic' ? '#dbeafe' : 'white',
+                                    color: headerStyles.fontStyle === 'italic' ? '#1d4ed8' : '#374151',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Italic
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newDecoration = headerStyles.textDecoration === 'underline' ? 'none' : 'underline';
+                                    const newStyles = { ...headerStyles, textDecoration: newDecoration };
+                                    handleStyleChange(newStyles);
+                                  }}
+                                  style={{
+                                    padding: '8px 16px',
+                                    fontSize: '14px',
+                                    textDecoration: 'underline',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    backgroundColor: headerStyles.textDecoration === 'underline' ? '#dbeafe' : 'white',
+                                    color: headerStyles.textDecoration === 'underline' ? '#1d4ed8' : '#374151',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Underline
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Text Transform */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Transform
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(70px, 1fr))',
+                                gap: '6px'
+                              }}>
+                                {[
+                                  { label: 'None', value: 'none' },
+                                  { label: 'UPPER', value: 'uppercase' },
+                                  { label: 'lower', value: 'lowercase' },
+                                  { label: 'Title', value: 'capitalize' }
+                                ].map((transform) => (
+                                  <button
+                                    key={transform.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, textTransform: transform.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 10px',
+                                      fontSize: '12px',
+                                      fontWeight: '500',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.textTransform || 'uppercase') === transform.value ? '#dbeafe' : 'white',
+                                      color: (headerStyles.textTransform || 'uppercase') === transform.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      textTransform: transform.value,
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {transform.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Shadow */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Shadow
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
+                                gap: '6px'
+                              }}>
+                                {[
+                                  { label: 'None', value: 'none' },
+                                  { label: 'Soft', value: '2px 2px 4px rgba(0,0,0,0.3)' },
+                                  { label: 'Hard', value: '3px 3px 0px rgba(0,0,0,0.8)' },
+                                  { label: 'Glow', value: '0 0 10px rgba(255,255,255,0.8)' },
+                                  { label: 'Deep', value: '4px 4px 8px rgba(0,0,0,0.5)' },
+                                  { label: 'Neon', value: '0 0 15px #00ffff, 0 0 25px #00ffff' }
+                                ].map((shadow) => (
+                                  <button
+                                    key={shadow.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, textShadow: shadow.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 10px',
+                                      fontSize: '12px',
+                                      fontWeight: '500',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.textShadow || 'none') === shadow.value ? '#dbeafe' : 'white',
+                                      color: (headerStyles.textShadow || 'none') === shadow.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      textShadow: shadow.value !== 'none' ? shadow.value : 'none',
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {shadow.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Letter Spacing */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Letter Spacing
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(65px, 1fr))',
+                                gap: '6px'
+                              }}>
+                                {[
+                                  { label: 'Tight', value: '-1px' },
+                                  { label: 'Normal', value: '0px' },
+                                  { label: 'Wide', value: '2px' },
+                                  { label: 'Wider', value: '4px' },
+                                  { label: 'Widest', value: '6px' }
+                                ].map((spacing) => (
+                                  <button
+                                    key={spacing.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, letterSpacing: spacing.value };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 10px',
+                                      fontSize: '11px',
+                                      fontWeight: '500',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.letterSpacing || '2px') === spacing.value ? '#dbeafe' : 'white',
+                                      color: (headerStyles.letterSpacing || '2px') === spacing.value ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      // Don't apply letter spacing to the button text itself, only to the header when selected
+                                      letterSpacing: 'normal',
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {spacing.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Color */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Color
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(65px, 1fr))',
+                                gap: '6px'
+                              }}>
+                                {[
+                                  { label: 'Hollow', value: 'transparent', stroke: '2px #000' },
+                                  { label: 'Black', value: '#000000', stroke: 'none' },
+                                  { label: 'White', value: '#ffffff', stroke: '1px #000' },
+                                  { label: 'Blue', value: '#3b82f6', stroke: 'none' },
+                                  { label: 'Red', value: '#ef4444', stroke: 'none' },
+                                  { label: 'Gold', value: '#f59e0b', stroke: 'none' },
+                                  { label: 'Purple', value: '#8b5cf6', stroke: 'none' },
+                                  { label: 'Green', value: '#10b981', stroke: 'none' }
+                                ].map((color) => (
+                                  <button
+                                    key={color.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { 
+                                        ...headerStyles, 
+                                        color: color.value,
+                                        webkitTextStroke: color.stroke,
+                                        textStroke: color.stroke
+                                      };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 10px',
+                                      fontSize: '12px',
+                                      fontWeight: '600',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.color || 'transparent') === color.value ? '#dbeafe' : 'white',
+                                      color: color.value === 'transparent' ? '#000' : color.value,
+                                      WebkitTextStroke: color.value === 'transparent' ? '1px #000' : (color.stroke !== 'none' ? color.stroke : 'none'),
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {color.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Text Rotation */}
+                            <div style={{ marginBottom: '16px' }}>
+                              <label style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                marginBottom: '8px'
+                              }}>
+                                Text Rotation
+                              </label>
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(55px, 1fr))',
+                                gap: '6px'
+                              }}>
+                                {[
+                                  { label: '0°', value: '0deg' },
+                                  { label: '-5°', value: '-5deg' },
+                                  { label: '5°', value: '5deg' },
+                                  { label: '10°', value: '10deg' }
+                                ].map((rotation) => (
+                                  <button
+                                    key={rotation.label}
+                                    type="button"
+                                    onClick={() => {
+                                      const newStyles = { ...headerStyles, transform: `rotate(${rotation.value})` };
+                                      handleStyleChange(newStyles);
+                                    }}
+                                    style={{
+                                      padding: '8px 10px',
+                                      fontSize: '12px',
+                                      fontWeight: '500',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      backgroundColor: (headerStyles.transform || 'rotate(0deg)') === `rotate(${rotation.value})` ? '#dbeafe' : 'white',
+                                      color: (headerStyles.transform || 'rotate(0deg)') === `rotate(${rotation.value})` ? '#1d4ed8' : '#374151',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      transform: rotation.value,
+                                      minHeight: '36px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {rotation.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Debug section - temporary for testing */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      marginBottom: '20px',
+                      padding: '15px',
+                      backgroundColor: '#fef3c7',
+                      borderRadius: '8px',
+                      border: '1px solid #f59e0b'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={debugReloadFormData}
+                        style={{
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginBottom: '10px',
+                          marginRight: '10px'
+                        }}
+                      >
+                        🔄 Debug: Reload Form Data
+                      </button>
+                      <button
+                        type="button"
+                        onClick={debugSaveTestData}
+                        style={{
+                          backgroundColor: '#10b981',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginBottom: '10px',
+                          marginRight: '10px'
+                        }}
+                      >
+                        💾 Save Test Data
+                      </button>
+                      <button
+                        type="button"
+                        onClick={debugTestInputs}
+                        style={{
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginBottom: '10px',
+                          marginRight: '10px'
+                        }}
+                      >
+                        🧪 Test Inputs
+                      </button>
+                      <button
+                        type="button"
+                        onClick={debugClearData}
+                        style={{
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginBottom: '10px'
+                        }}
+                      >
+                        🗑️ Clear Data
+                      </button>
+                      <div style={{ fontSize: '12px', color: '#92400e' }}>
+                        <div>Client Name: {formData.clientName || 'empty'}</div>
+                        <div>Email: {formData.email || 'empty'}</div>
+                        <div>Event Type: {formData.eventType || 'empty'}</div>
+                        <div>Context Client: {contextIsClient ? 'true' : 'false'}</div>
+                        <div>Context Data Keys: {Object.keys(contractFormData).length}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Spacer div between email address and client name */}
+                <div style={{ 
+                  height: '20px', 
+                  marginBottom: '20px', 
+                  borderBottom: '1px solid #e0e0e0',
+                  opacity: 0.5
+                }} className="section-divider"></div>
+                
+                {/* Client Information Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                  <div>
+                    <label htmlFor="clientName" style={{
+                      ...labelStyle,
+                      fontSize: 'clamp(16px, 2.5vw, 18px)'
+                    }} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['clientName']} Client Name *
+                      </span>
+                    </label>
+                    <input
+                      id="clientName"
+                      name="clientName"
+                      type="text"
+                      required
+                      style={{
+                        ...inputStyle,
+                        // Simplified styling for better mobile compatibility
+                        fontSize: typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator?.userAgent || '') ? '16px' : 'clamp(16px, 2.5vw, 18px)',
+                        padding: typeof window !== 'undefined' && window.innerWidth <= 768 ? '14px 16px' : 'clamp(12px, 2vw, 16px)',
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
+                      className="field-input"
+                      value={formData.clientName || ''}
+                      onChange={handleChange}
+                      placeholder="Enter your full name"
+                      autoComplete="name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['email']} Email *
+                      </span>
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
+                      className="field-input"
+                      value={formData.email || ''}
+                      onChange={handleChange}
+                      placeholder="your@email.com"
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone Information Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                  <div>
+                    <label htmlFor="contactPhone" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['contactPhone']} Contact Phone *
+                      </span>
+                    </label>
+                    <input
+                      id="contactPhone"
+                      name="contactPhone"
+                      type="tel"
+                      required
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
+                      className="field-input"
+                      value={formData.contactPhone || ''}
+                      onChange={handleChange}
+                      placeholder="(123) 456-7890"
+                      autoComplete="tel"
+                    />
+                    {formErrors.contactPhone && (
+                      <p className="text-red-500 text-xs italic">{formErrors.contactPhone}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="clientPhone" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <FaPhoneAlt style={{ color: '#10b981', marginRight: '8px' }} /> Client Phone
+                      </span>
+                    </label>
+                    <input
+                      id="clientPhone"
+                      name="clientPhone"
+                      type="tel"
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
+                      className="field-input"
+                      value={formData.clientPhone || ''}
+                      onChange={handleChange}
+                      placeholder="(123) 456-7890"
+                      autoComplete="tel"
+                    />
+                    {formErrors.clientPhone && (
+                      <p className="text-red-500 text-xs italic">{formErrors.clientPhone}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Event Details Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                  <div>
+                    <label style={{
+                      ...labelStyle,
+                      fontSize: 'clamp(16px, 2.5vw, 18px)'
+                    }} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['eventType']} Event Type *
+                      </span>
+                    </label>
+                    <EventTypeDropdown
+                      value={formData.eventType}
+                      onChange={handleEventTypeChange}
+                      onPriceUpdate={handleBasePriceUpdate}
+                      showWeddingAgendaLink={true}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="guestCount" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['guestCount']} Guest Count *
+                      </span>
+                    </label>
+                    <input
+                      id="guestCount"
+                      name="guestCount"
+                      type="number"
+                      required
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text'
+                      }}
+                      className="field-input"
+                      value={formData.guestCount || ''}
+                      onChange={handleChange}
+                      placeholder="Number of guests"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+
+                {/* Time Selection Section - Two Column Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: '2.5rem' }}>
+                  {/* Start Time */}
+                  <div>
+                    <label htmlFor="startTime" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {timeIcons['startTime']} Start Time *
+                      </span>
+                    </label>
+                    <select
+                      id="startTime"
+                      name="startTime"
+                      value={formData.startTime || ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        
+                        if (formData.endTime) {
+                          // If end time already exists, calculate new additional hours
+                          const additionalHours = calculateAdditionalHours(value, formData.endTime);
+                          const newData = {
+                            ...formData,
+                            startTime: value,
+                            additionalHours
+                          };
+                          setFormData(newData);
+                          updateContractFormData(newData);
+                        } else {
+                          // If no end time yet, just update start time
+                          const newData = {
+                            ...formData,
+                            startTime: value,
+                            endTime: '' // reset endTime on startTime change
+                          };
+                          setFormData(newData);
+                          updateContractFormData(newData);
+                        }
+                      }}
+                      required
+                      style={inputStyle}
+                      className="field-input"
+                    >
+                      <option value="">Select start time</option>
+                      {timeOptions.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* End Time */}
+                  <div>
+                    <label htmlFor="endTime" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {timeIcons['endTime']} End Time *
+                      </span>
+                    </label>
+                    <select
+                      id="endTime"
+                      name="endTime"
+                      value={formData.endTime || ''}
+                      onChange={(e) => handleEndTimeChange(e.target.value)}
+                      required
+                      disabled={!formData.startTime}
+                      style={inputStyle}
+                      className="field-input"
+                    >
+                      <option value="">Select end time</option>
+                      {formData.startTime &&
+                        timeOptions
+                          .filter((t) => convertToMinutes(t) > convertToMinutes(formData.startTime))
+                          .map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                    </select>
+                    {formData.startTime && formData.endTime && (
+                      <div style={{
+                        fontSize: '0.9rem',
+                        color: formData.additionalHours > 0 ? '#0070f3' : '#666',
+                        marginTop: '0.5rem',
+                        fontWeight: formData.additionalHours > 0 ? '500' : 'normal'
+                      }}>
+                        {formData.additionalHours > 0 
+                          ? `${calculateHoursBetween(formData.startTime, formData.endTime).toFixed(1)} hour event (+${formData.additionalHours} additional hours)`
+                          : `${calculateHoursBetween(formData.startTime, formData.endTime).toFixed(1)} hour event (base package)`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Two-column grid for venue information - changed to single column */}
+                <div className="form-grid-1col">
+                  <div style={{ marginBottom: '2rem' }}>
+                    <label htmlFor="venueName" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {fieldIcons['venueName']} Venue Name:
+                      </span>
+                    </label>
+                    <VenueNameWithSuggestions
+                      value={formData.venueName || ''}
+                      onChange={handleChange}
+                      onAddressChange={handleChange}
+                      name="venueName"
+                      placeholder="Enter venue name"
+                      required={true}
+                      style={{
+                        ...inputStyle,
+                        // Ensure input is interactive
+                        pointerEvents: 'auto',
+                        userSelect: 'text',
+                        WebkitUserSelect: 'text',
+                        marginBottom: '0'
+                      }}
+                      className="field-input"
+                    />
+                  </div>
+                  <div style={{ marginBottom: '2rem' }}>
+                    <label htmlFor="venueLocation" style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center' }}>
+                        {venueLocationIcon} Venue Location:
+                      </span>
+                    </label>
+                    <AddressAutocomplete
+                      value={formData.venueLocation || ''}
+                      onChange={handleChange}
+                      name="venueLocation"
+                      placeholder="Enter venue address"
+                      required={true}
+                      className="field-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Event Date Section */}
+                <div className="form-grid-1col" style={{ marginBottom: '2.5rem' }}>
+                  {/* Event Date */}
+                  <div>
+                    <label style={labelStyle} className="field-label">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FaCalendarAlt style={{ color: '#6366f1' }} /> Event Date *
+                      </span>
+                    </label>
+                    
+                    {/* Replace CustomDatePicker with ReactDatePickerField */}
+                    <ReactDatePickerField
+                      key={`date-picker-${formData.eventType}`}
+                      selectedDate={formData.eventDate ? new Date(formData.eventDate) : null}
+                      onChange={(date) => {
+                        handleChange({
+                          target: {
+                            name: 'eventDate',
+                            value: date ? date.toISOString().split('T')[0] : ''
+                          }
+                        });
+                      }}
+                      errorMessage={formErrors.eventDate}
+                      minDate={new Date()}
+                    />
+                  </div>
+                </div>
+
+                {/* Additional Services Header */}
+                <div style={{
+                  marginTop: '2.5rem',
+                  marginBottom: '1.5rem',
+                  borderBottom: '2px solid #e2e8f0',
+                  position: 'relative',
+                  paddingBottom: '0.5rem'
+                }} className="section-header">
+                  <h3 style={{
+                    color: '#2d3748',
+                    fontSize: '1.25rem',
+                    fontWeight: '600',
+                    backgroundColor: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '0'
+                  }}>
+                    <FaPlus style={{ color: '#0070f3', fontSize: '0.9rem' }} />
+                    Additional Services
+                  </h3>
+                </div>
+
+                {/* Redesigned Card-Style Additional Services */}
+                <div 
+                  key={`service-options-${formData.eventType}`}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '20px',
+                    marginBottom: '2rem'
+                  }} 
+                  className="service-options"
+                >
+                  {[
+                    {
+                      name: 'lighting',
+                      label: 'Event Lighting',
+                      price: '$100',
+                      description: 'Transform your venue with dynamic light shows that pulse to the music! Professional setup includes state-of-the-art strobes & LED effects.',
+                      icon: <FaLightbulb style={{ fontSize: '24px', color: '#ECC94B' }} />
+                    },
+                    {
+                      name: 'photography',
+                      label: 'Event Photography',
+                      price: '$150',
+                      description: 'Capture all your perfect moments! 50+ professionally edited high-resolution photos delivered within 48 hours of your event.',
+                      icon: <FaCamera style={{ fontSize: '24px', color: '#4FD1C5' }} />
+                    },
+                    {
+                      name: 'videoVisuals',
+                      label: 'Video Visuals',
+                      price: '$100',
+                      description: 'Add immersive visuals to your event! Custom HD projection including music videos, slideshows, and interactive displays.',
+                      icon: <FaVideo style={{ fontSize: '24px', color: '#F687B3' }} />
+                    }
+                  ].map(({ name, label, price, description, icon }) => {
+                    // Debug the current item's selection status
+                    const isSelected = formData[name] === true;
+                    console.log(`Service Card ${name}: isSelected=${isSelected}, value=${formData[name]}, type=${typeof formData[name]}`);
+                    
+                    const handleServiceToggle = (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log(`Toggling ${name} from ${formData[name]} to ${!formData[name]}`);
+                      
+                      // Use direct state update with explicit true/false values
+                      const newValue = formData[name] === true ? false : true;
+                      console.log(`Setting ${name} to ${newValue} (explicit boolean)`);
+                      
+                      const newData = {
+                        ...formData,
+                        [name]: newValue
+                      };
+                      
+                      setFormData(newData);
+                      
+                      // Defer context update to avoid setState during render
+                      setTimeout(() => {
+                        updateContractFormData(newData);
+                      }, 0);
+                      
+                      // Also save directly to localStorage as backup
+                      try {
+                        localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        console.log(`Saved ${name} service selection to localStorage:`, newValue);
+                      } catch (error) {
+                        console.error('Error saving service selection to localStorage:', error);
+                      }
+                    };
+                    
+                    return (
+                      <div 
+                        key={name}
+                        onClick={handleServiceToggle}
+                        className="service-card"
+                        style={{
+                          ...getServiceCardStyle(name),
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          WebkitTapHighlightColor: 'transparent',
+                          touchAction: 'manipulation'
+                        }}
+                      >
+                        {formData[name] === true && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            backgroundColor: '#0070f3',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 2
+                          }}>
+                            <FaCheck color="white" size={12} />
+                          </div>
+                        )}
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                          <div style={{ 
+                            marginRight: '12px',
+                            padding: '10px',
+                            borderRadius: '8px',
+                            backgroundColor: formData[name] ? 'rgba(0, 112, 243, 0.1)' : '#f5f5f5'
+                          }}>
+                            {icon}
+                          </div>
+                          <div>
+                            <h4 style={{ 
+                              margin: '0 0 4px 0',
+                              color: '#333',
+                              fontWeight: formData[name] ? '600' : '500'
+                            }}>
+                              {label}
+                            </h4>
+                            <div style={{ 
+                              fontSize: '1rem', 
+                              fontWeight: 'bold',
+                              color: formData[name] ? '#0070f3' : '#666'
+                            }}>
+                              {price}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#666', 
+                          margin: '0',
+                          lineHeight: '1.4'
+                        }}>
+                          {description}
+                        </p>
+                        
+                        <input
+                          id={`service_${name}`}
+                          type="checkbox"
+                          name={name}
+                          checked={formData[name]}
+                          onChange={handleChange}
+                          style={{ position: 'absolute', opacity: 0 }}
+                        />
+                        <label htmlFor={`service_${name}`} style={{ display: 'none' }}>{label} Service</label>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Wedding Agenda Card - Using client-only component */}
+                  {formData.eventType && isWeddingEvent(formData.eventType) ? (
+                    <div>
+                      <WeddingAgendaCard 
+                        key={`wedding-agenda-${formData.eventType}`}
+                        eventType={formData.eventType} 
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Music Preferences Section - Revamped with Tick Boxes */}
+                <div style={{
+                  marginTop: '2rem',
+                  marginBottom: '1.5rem',
+                  borderBottom: '2px solid #e0e0e0',
+                  position: 'relative'
+                }} className="section-header">
+                  <h3 style={{
+                    color: '#333',
+                    fontSize: 'clamp(20px, 3vw, 24px)',
+                    fontWeight: '600',
+                    backgroundColor: 'rgba(255,255,255,0.92)',
+                    display: 'inline-block',
+                    padding: '0 1rem 0.5rem 0',
+                    position: 'relative',
+                    marginBottom: '0',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <span className="music-icon" style={{ 
+                      color: '#0070f3', 
+                      marginRight: '10px', 
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>🎵</span>
+                    What&apos;s On Your Playlist?
+                  </h3>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  {/* Genre selection card that opens the modal */}
+                  <div 
+                    onClick={() => setShowGenreModal(true)}
+                    style={{
+                      padding: '15px 20px',
+                      borderRadius: '12px',
+                      border: '2px solid #e0e0e0',
+                      backgroundColor: 'white',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      marginBottom: '1.5rem',
+                      ':hover': {
+                        borderColor: '#0070f3',
+                        boxShadow: '0 4px 14px rgba(0, 112, 243, 0.1)'
+                      }
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '10px'
+                    }}>
+                      <p style={{ 
+                        fontWeight: '500', 
+                        fontSize: '1.05rem', 
+                        color: '#333',
+                        margin: 0
+                      }}>
+                        Choose your preferred music genres
+                      </p>
+                      
+                      <span style={{ 
+                        backgroundColor: '#0070f3', 
+                        color: 'white',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        padding: '5px 10px',
+                        borderRadius: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '70px'
+                      }}>
+                        Select
+                      </span>
+                    </div>
+                    
+                    {(formData.musicPreferences?.length || 0) > 0 ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {musicGenres
+                          .filter(genre => formData.musicPreferences.includes(genre.id))
+                          .map(genre => (
+                            <span key={genre.id} style={{
+                              backgroundColor: 'rgba(0, 112, 243, 0.1)',
+                              color: '#0070f3',
+                              padding: '5px 12px',
+                              borderRadius: '30px',
+                              fontSize: '0.9rem',
+                              fontWeight: '500'
+                            }}>
+                              {genre.label}
+                            </span>
+                          ))
+                        }
+                      </div>
+                    ) : (
+                      <p style={{ 
+                        color: '#666', 
+                        fontStyle: 'italic', 
+                        margin: 0 
+                      }}>
+                        No genres selected yet. Click to choose your preferences
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Streaming Service Integration */}
+                  <div style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      marginBottom: '0.75rem',
+                      gap: '8px'
+                    }}>
+                      <p style={{ 
+                        color: '#333', 
+                        fontSize: '1rem', 
+                        fontWeight: '500',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        <span style={{ marginRight: '8px' }}>📱</span>
+                        Share your playlist (optional)
+                      </p>
+                      <FaInfoCircle
+                        style={{ 
+                          color: '#0070f3',
+                          cursor: 'pointer',
+                          fontSize: '1rem'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowPlaylistHelp(true);
+                        }}
+                        title="Click for help sharing your playlist"
+                      />
+                    </div>
+                    
+                    <div className="streaming-service-grid" style={{ 
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                      gap: 'clamp(8px, 2vw, 12px)',
+                      marginBottom: '1rem'
+                    }}>
+                      {streamingServices.map(service => (
+                        <div 
+                          key={service.id}
+                          className="streaming-service-button"
+                          onClick={() => {
+                            const newData = { ...formData, streamingService: service.id };
+                            setFormData(newData);
+                            
+                            // Defer context update to avoid setState during render
+                            setTimeout(() => {
+                              updateContractFormData(newData);
+                            }, 0);
+                            
+                            // Also save to localStorage as backup
+                            try {
+                              localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                            } catch (error) {
+                              console.error('Error saving streaming service to localStorage:', error);
+                            }
+                          }}
+                          style={{
+                            padding: 'clamp(8px, 2vw, 12px)',
+                            borderRadius: '8px',
+                            border: formData.streamingService === service.id 
+                              ? '2px solid #0070f3' 
+                              : '1px solid #e0e0e0',
+                            backgroundColor: formData.streamingService === service.id 
+                              ? 'rgba(0, 112, 243, 0.05)' 
+                              : 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            minHeight: '44px',
+                            textAlign: 'center',
+                            // Mobile touch optimization
+                            WebkitTapHighlightColor: 'transparent',
+                            touchAction: 'manipulation'
+                          }}
+                        >
+                          <div 
+                            className="streaming-service-icon"
+                            style={{ 
+                              width: 'clamp(20px, 4vw, 24px)', 
+                              height: 'clamp(20px, 4vw, 24px)', 
+                              backgroundImage: `url(${service.icon})`,
+                              backgroundSize: 'contain',
+                              backgroundPosition: 'center',
+                              backgroundRepeat: 'no-repeat',
+                              marginRight: '10px',
+                              flexShrink: 0
+                            }} 
+                          />
+                          <span className="streaming-service-text" style={{
+                            fontWeight: formData.streamingService === service.id ? '500' : 'normal',
+                            color: formData.streamingService === service.id ? '#0070f3' : '#333',
+                            fontSize: 'clamp(12px, 3vw, 14px)',
+                            lineHeight: '1.2'
+                          }}>
+                            {service.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {formData.streamingService && (
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label htmlFor="playlistLink" style={{ 
+                          display: 'block', 
+                          marginBottom: '0.5rem', 
+                          fontWeight: '500', 
+                          color: '#333' 
+                        }}>
+                          Playlist Link:
+                        </label>
+                        <input
+                          id="playlistLink"
+                          type="text"
+                          name="playlistLink"
+                          value={formData.playlistLink || ''}
+                          onChange={handleChange}
+                          placeholder={streamingServices.find(s => s.id === formData.streamingService)?.placeholder || 'Paste your playlist link'}
+                          style={{
+                            ...inputStyle,
+                            borderColor: '#0070f3',
+                            borderWidth: '1px'
+                          }}
+                        />
+                        <p style={{ 
+                          fontSize: '0.8rem', 
+                          color: '#666', 
+                          marginTop: '0.5rem',
+                          fontStyle: 'italic'
+                        }}>
+                          This helps us prepare the right music for your event. We&apos;ll review your playlist and incorporate your favorites.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* iTunes Playlist Creator */}
+                  <div style={{ marginTop: '2rem', marginBottom: '1rem' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      marginBottom: '0.75rem',
+                      gap: '8px'
+                    }}>
+                      <p style={{ 
+                        color: '#333', 
+                        fontSize: '1rem', 
+                        fontWeight: '500',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        <span style={{ marginRight: '8px' }}>🎵</span>
+                        Create A Custom Playlist From Your DJ&apos;s Music Library
+                      </p>
+                      <FaInfoCircle
+                        style={{ 
+                          color: '#0070f3',
+                          cursor: 'pointer',
+                          fontSize: '1rem'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                                                     setModalText('Browse And Select Songs From DJ Bobby Drake\'s Extensive Music Library To Create Your Perfect Event Playlist. Choose From Thousands Of Tracks Across All Genres!');
+                        }}
+                        title="Click for more information about the iTunes playlist feature"
+                      />
+                    </div>
+                    
+                    <div style={{
+                      padding: 'clamp(12px, 4vw, 20px)',
+                      borderRadius: '12px',
+                      border: '2px solid #e0e0e0',
+                      backgroundColor: 'white',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      marginBottom: '1.5rem'
+                    }}>
+                      {/* Song count display */}
+                      {formData.selectedMusicLibrarySongs && formData.selectedMusicLibrarySongs.length > 0 && (
+                        <div style={{ marginBottom: 'clamp(10px, 3vw, 15px)' }}>
+                          <p style={{ 
+                            color: '#0070f3', 
+                            fontSize: 'clamp(0.85rem, 3vw, 1rem)',
+                            fontWeight: '600',
+                            margin: '0 0 5px 0'
+                          }}>
+                            {(formData.selectedMusicLibrarySongs?.length || 0)} song{(formData.selectedMusicLibrarySongs?.length || 0) !== 1 ? 's' : ''} selected
+                          </p>
+                          <p style={{ 
+                            color: '#666', 
+                            fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+                            margin: 0 
+                          }}>
+                            Your custom playlist is ready
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Responsive buttons layout */}
+                      <div className="music-library-buttons" style={{
+                        display: 'flex',
+                        gap: 'clamp(8px, 2vw, 12px)'
+                      }}>
+                        <Link
+                          href="/music-library"
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#0070f3',
+                            color: 'white',
+                            border: 'none',
+                            padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 20px)',
+                            borderRadius: '8px',
+                            fontSize: 'clamp(0.85rem, 3vw, 1rem)',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 'clamp(6px, 1.5vw, 8px)',
+                            transition: 'background-color 0.2s ease',
+                            textDecoration: 'none',
+                            minHeight: '44px'
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor = '#0060df'}
+                          onMouseOut={(e) => e.target.style.backgroundColor = '#0070f3'}
+                        >
+                          <FaMusic style={{ fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }} />
+                          Browse Music Library
+                        </Link>
+                        
+                        {formData.selectedMusicLibrarySongs && formData.selectedMusicLibrarySongs.length > 0 && (
+                          <Link
+                            href="/music-library?view=playlist"
+                            style={{
+                              flex: 1,
+                              backgroundColor: '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              padding: 'clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 20px)',
+                              borderRadius: '8px',
+                              fontSize: 'clamp(0.85rem, 3vw, 1rem)',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 'clamp(6px, 1.5vw, 8px)',
+                              transition: 'background-color 0.2s ease',
+                              textDecoration: 'none',
+                              minHeight: '44px'
+                            }}
+                            onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                            onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+                          >
+                            <FaList style={{ fontSize: 'clamp(0.8rem, 2.5vw, 0.9rem)' }} />
+                            View Playlist
+                          </Link>
+                        )}
+                      </div>
+                      
+                      {/* Help text */}
+                      {(!formData.selectedMusicLibrarySongs || formData.selectedMusicLibrarySongs.length === 0) && (
+                        <p style={{ 
+                          color: '#666', 
+                          fontStyle: 'italic', 
+                          margin: '15px 0 0 0',
+                          textAlign: 'center',
+                          fontSize: '0.9rem'
+                        }}>
+                          Browse the music library to start building your custom playlist
+                        </p>
+                      )}
+                    </div>
+                    
+                    <p style={{ 
+                      fontSize: '0.8rem', 
+                      color: '#666', 
+                      marginTop: '0.5rem',
+                      fontStyle: 'italic'
+                    }}>
+                                             Select songs from DJ Bobby Drake&apos;s professional Music library. Perfect for creating a custom playlist that matches your event&apos;s vibe!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Compact Additional Hours Selector */}
+                <div>
+                  <label style={labelStyle} className="field-label">
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <FaClock style={{ marginRight: '8px', color: '#68D391', fontSize: '18px' }} />
+                      Additional Hours ($75/hr):
+                    </span>
+                    {formData.additionalHours > 0 && (
+                      <span style={{
+                        fontSize: '0.8rem',
+                        color: '#0070f3',
+                        fontWeight: '500'
+                      }}>
+                        Auto-calculated from your time selection
+                      </span>
+                    )}
+                  </label>
+                  <div style={{ 
+                    marginTop: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }} className="hours-selector">
+                      {[0, 1, 2, 3, 4].map(num => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => {
+                            console.log(`Setting additionalHours to ${num}`);
+                            const newData = { ...formData, additionalHours: num };
+                            setFormData(newData);
+                            
+                            // Defer context update to avoid setState during render
+                            setTimeout(() => {
+                              updateContractFormData(newData);
+                            }, 0);
+                            
+                            // Also save to localStorage as backup
+                            try {
+                              localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                            } catch (error) {
+                              console.error('Error saving additional hours to localStorage:', error);
+                            }
+                          }}
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: formData.additionalHours === num ? '#0070f3' : '#f5f5f5',
+                            color: formData.additionalHours === num ? 'white' : '#333',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '16px',
+                            boxShadow: formData.additionalHours === num ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                          }}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {formData.additionalHours > 0 && (
+                      <div style={{
+                        backgroundColor: 'rgba(0, 112, 243, 0.05)',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        marginTop: '12px',
+                        border: '1px solid rgba(0, 112, 243, 0.2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}>
+                          <span style={{
+                            fontSize: '0.9rem',
+                            color: '#333',
+                            fontWeight: '500'
+                          }}>
+                            <FaClock style={{ marginRight: '6px', color: '#0070f3', fontSize: '14px' }} />
+                            {formData.additionalHours} additional {formData.additionalHours === 1 ? 'hour' : 'hours'}
+                          </span>
+                          <span style={{
+                            fontSize: '0.9rem',
+                            color: '#0070f3',
+                            fontWeight: 'bold'
+                          }}>
+                            +${formData.additionalHours * SERVICES.ADDITIONAL_HOUR}
+                          </span>
+                        </div>
+                        <div style={{
+                          fontSize: '0.8rem',
+                          color: '#666'
+                        }}>
+                          Auto-calculated from {formData.startTime} to {formData.endTime}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment Amount Selection */}
+                <div className="payment-amount-section" style={{ marginBottom: '2rem' }}>
+                  <label style={{
+                    ...labelStyle,
+                    fontSize: '1.1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    Payment Option:
+                  </label>
+                  <div className="payment-amount-options" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '15px',
+                    marginBottom: '1rem'
+                  }}>
+                    {/* Deposit Option */}
+                    <div 
+                      className="payment-amount-option"
+                      onClick={() => {
+                        const newData = { ...formData, paymentAmount: 'deposit' };
+                        setFormData(newData);
+                        updateContractFormData(newData);
+                        // Also save to localStorage as backup
+                        try {
+                          localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        } catch (error) {
+                          console.error('Error saving payment amount to localStorage:', error);
+                        }
+                      }}
+                      style={{
+                        border: `2px solid ${formData.paymentAmount === 'deposit' ? '#0070f3' : '#ddd'}`,
+                        borderRadius: '12px',
+                        padding: '20px 15px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: formData.paymentAmount === 'deposit' ? 'rgba(0, 112, 243, 0.05)' : 'white',
+                        transition: 'all 0.2s ease',
+                        boxShadow: formData.paymentAmount === 'deposit' ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: '28px', 
+                        color: '#0070f3',
+                        marginBottom: '10px' 
+                      }}>
+                        💵
+                      </div>
+                      <div style={{ 
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem',
+                        marginBottom: '5px'
+                      }}>
+                        Pay Deposit
+                      </div>
+                      <div style={{
+                        fontSize: '0.9rem',
+                        color: '#666',
+                        textAlign: 'center'
+                      }}>
+                        50% now, 50% on event day
+                      </div>
+                      <div style={{
+                        marginTop: '8px',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        color: '#0070f3'
+                      }}>
+                        ${calculateDepositAmount()}
+                      </div>
+                      <input
+                        id="paymentAmountDeposit"
+                        type="radio"
+                        name="paymentAmount"
+                        value="deposit"
+                        checked={formData.paymentAmount === 'deposit'}
+                        onChange={(e) => {
+                          const newData = { ...formData, paymentAmount: e.target.value };
+                          setFormData(newData);
+                          
+                          // Defer context update to avoid setState during render
+                          setTimeout(() => {
+                            updateContractFormData(newData);
+                          }, 0);
+                          
+                          // Also save to localStorage as backup
+                          try {
+                            localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                          } catch (error) {
+                            console.error('Error saving payment amount to localStorage:', error);
+                          }
+                        }}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentAmountDeposit" style={{ display: 'none' }}>Pay Deposit</label>
+                    </div>
+                    
+                    {/* Full Payment Option */}
+                    <div 
+                      className="payment-amount-option"
+                      onClick={() => {
+                        const newData = { ...formData, paymentAmount: 'full' };
+                        setFormData(newData);
+                        
+                        // Defer context update to avoid setState during render
+                        setTimeout(() => {
+                          updateContractFormData(newData);
+                        }, 0);
+                        
+                        // Also save to localStorage as backup
+                        try {
+                          localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        } catch (error) {
+                          console.error('Error saving payment amount to localStorage:', error);
+                        }
+                      }}
+                      style={{
+                        border: `2px solid ${formData.paymentAmount === 'full' ? '#0070f3' : '#ddd'}`,
+                        borderRadius: '12px',
+                        padding: '20px 15px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: formData.paymentAmount === 'full' ? 'rgba(0, 112, 243, 0.05)' : 'white',
+                        transition: 'all 0.2s ease',
+                        boxShadow: formData.paymentAmount === 'full' ? '0 4px 12px rgba(0, 112, 243, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: '28px', 
+                        color: '#0070f3',
+                        marginBottom: '10px' 
+                      }}>
+                        💰
+                      </div>
+                      <div style={{ 
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem',
+                        marginBottom: '5px'
+                      }}>
+                        Pay in Full
+                      </div>
+                      <div style={{
+                        fontSize: '0.9rem',
+                        color: '#666',
+                        textAlign: 'center'
+                      }}>
+                        Pay the full amount now
+                      </div>
+                      <div style={{
+                        marginTop: '8px',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        color: '#0070f3'
+                      }}>
+                        ${calculateTotal()}
+                      </div>
+                      <input
+                        id="paymentAmountFull"
+                        type="radio"
+                        name="paymentAmount"
+                        value="full"
+                        checked={formData.paymentAmount === 'full'}
+                        onChange={(e) => {
+                          const newData = { ...formData, paymentAmount: e.target.value };
+                          setFormData(newData);
+                          
+                          // Defer context update to avoid setState during render
+                          setTimeout(() => {
+                            updateContractFormData(newData);
+                          }, 0);
+                          
+                          // Also save to localStorage as backup
+                          try {
+                            localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                          } catch (error) {
+                            console.error('Error saving payment amount to localStorage:', error);
+                          }
+                        }}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentAmountFull" style={{ display: 'none' }}>Pay Full Amount</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <label style={{
+                    ...labelStyle,
+                    fontSize: '1.1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    Payment Method:
+                  </label>
+                  <div className="payment-options" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '12px',
+                  }}>
+                    {/* Stripe Payment Option */}
+                    <div 
+                      className="payment-option"
+                      data-method="Stripe"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Stripe payment option clicked');
+                        handlePaymentMethodSelect('Stripe');
+                      }}
+                      style={getPaymentOptionStyle('Stripe')}
+                    >
+                      <input
+                        id="paymentMethodStripe"
+                        type="radio"
+                        name="paymentMethod"
+                        value="Stripe"
+                        checked={formData.paymentMethod === 'Stripe'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodStripe" style={{ display: 'none' }}>Stripe Payment Method</label>
+                      <div className="payment-icon" style={{ 
+                        ...paymentIconStyle,
+                        color: paymentIconColors.Stripe
+                      }}>
+                        <FaCreditCard />
+                      </div>
+                      <div className="payment-method-label" style={{ 
+                        fontWeight: formData.paymentMethod === 'Stripe' ? 'bold' : 'normal',
+                        fontSize: '1rem'
+                      }}>
+                        Stripe
+                      </div>
+                    </div>
+                    
+                    {/* Venmo Payment Option */}
+                    <div 
+                      className="payment-option"
+                      data-method="Venmo"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Venmo payment option clicked');
+                        handlePaymentMethodSelect('Venmo');
+                      }}
+                      style={getPaymentOptionStyle('Venmo')}
+                    >
+                      <input
+                        id="paymentMethodVenmo"
+                        type="radio"
+                        name="paymentMethod"
+                        value="Venmo"
+                        checked={formData.paymentMethod === 'Venmo'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodVenmo" style={{ display: 'none' }}>Venmo Payment Method</label>
+                      <div className="payment-icon" style={{ 
+                        ...paymentIconStyle,
+                        color: paymentIconColors.Venmo
+                      }}>
+                        <SiVenmo />
+                      </div>
+                      <div className="payment-method-label" style={{ 
+                        fontWeight: formData.paymentMethod === 'Venmo' ? 'bold' : 'normal',
+                        fontSize: '1rem'
+                      }}>
+                        Venmo
+                      </div>
+                    </div>
+                    
+                    {/* Cash App Payment Option */}
+                    <div 
+                      className="payment-option"
+                      data-method="CashApp"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('CashApp payment option clicked');
+                        handlePaymentMethodSelect('CashApp');
+                      }}
+                      style={getPaymentOptionStyle('CashApp')}
+                    >
+                      <input
+                        id="paymentMethodCashApp"
+                        type="radio"
+                        name="paymentMethod"
+                        value="CashApp"
+                        checked={formData.paymentMethod === 'CashApp'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodCashApp" style={{ display: 'none' }}>CashApp Payment Method</label>
+                      <div className="payment-icon" style={{ 
+                        ...paymentIconStyle,
+                        color: paymentIconColors.CashApp
+                      }}>
+                        <SiCashapp />
+                      </div>
+                      <div className="payment-method-label" style={{ 
+                        fontWeight: formData.paymentMethod === 'CashApp' ? 'bold' : 'normal',
+                        fontSize: '1rem'
+                      }}>
+                        CashApp
+                      </div>
+                    </div>
+                    
+                    {/* PayPal Payment Option */}
+                    <div 
+                      className="payment-option"
+                      data-method="PayPal"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('PayPal payment option clicked');
+                        handlePaymentMethodSelect('PayPal');
+                      }}
+                      style={getPaymentOptionStyle('PayPal')}
+                    >
+                      <input
+                        id="paymentMethodPayPal"
+                        type="radio"
+                        name="paymentMethod"
+                        value="PayPal"
+                        checked={formData.paymentMethod === 'PayPal'}
+                        onChange={() => {}}
+                        style={{ position: 'absolute', opacity: 0 }}
+                      />
+                      <label htmlFor="paymentMethodPayPal" style={{ display: 'none' }}>PayPal Payment Method</label>
+                      <div className="payment-icon" style={{ 
+                        ...paymentIconStyle,
+                        color: paymentIconColors.PayPal
+                      }}>
+                        <FaPaypal />
+                      </div>
+                      <div className="payment-method-label" style={{ 
+                        fontWeight: formData.paymentMethod === 'PayPal' ? 'bold' : 'normal',
+                        fontSize: '1rem'
+                      }}>
+                        PayPal
+                      </div>
+                    </div>
+                  </div>
+                  {formErrors.paymentMethod && (
+                    <p style={{ color: 'red', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                      {formErrors.paymentMethod}
+                    </p>
+                  )}
+                </div>
+
+                {/* Itemized Total */}
+                <div className="event-summary" style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  marginBottom: '1.5rem',
+                }}>
+                  <h3 style={{ marginBottom: '0.5rem', color: '#000' }}>Event Package Summary:</h3>
+                  {itemizedTotal()}
+                </div>
+                
+                {/* Signature Section Header with Agreement Message - simplified */}
+                <button
+                  type="button"
+                  onClick={() => setShowTerms(true)}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    background: '#0070f3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    marginBottom: '18px',
+                    gap: '8px'
+                  }}
+                >
+                  <span>By entering your name below, you agree to the terms and conditions</span>
+                  <FaInfoCircle style={{ fontSize: '16px' }} />
+                </button>
+                {/* Signature Input Field with Script Font */}
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: '1.5rem 1rem 1rem 1rem',
+                  borderRadius: '10px',
+                  marginBottom: '1.5rem',
+                  border: formErrors.signerName ? '1px solid red' : '1px solid #e0e0e0',
+                  borderTop: 'none',
+                }}>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label htmlFor="signerName" style={{ 
+                      display: 'block', 
+                      marginBottom: '1rem', 
+                      color: '#333',
+                      fontSize: '1.125rem',
+                      fontWeight: '600'
+                    }}>
+                      Sign here
+                    </label>
+                    <input
+                      id="signerName"
+                      name="signerName"
+                      type="text"
+                      value={formData.signerName || ''}
+                      onChange={(e) => {
+                        // Capitalize the first letter and letters after spaces
+                        const input = e.target.value;
+                        const capitalized = input.replace(/(^\w|\s\w)/g, match => match.toUpperCase());
+                        handleChange({
+                          target: {
+                            name: 'signerName',
+                            value: capitalized
+                          }
+                        });
+                      }}
+                      placeholder="Type your full name here"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid #0070f3',
+                        fontFamily: 'Brush Script MT, Snell Roundhand, Comic Sans MS, cursive',
+                        fontSize: '2rem',
+                        letterSpacing: '0.05em',
+                        fontWeight: '500',
+                        color: '#222',
+                        background: 'white',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                        outline: 'none',
+                        marginBottom: '0.5rem',
+                      }}
+                      autoCapitalize="words"
+                      required
+                    />
+                  </div>
+                  <p style={{
+                    color: '#666',
+                    fontSize: '0.9rem',
+                    fontStyle: 'italic',
+                    textAlign: 'right'
+                  }}>
+                    Your legal signature
+                  </p>
+                  {formErrors.signerName && (
+                    <p style={{ color: 'red', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                      {formErrors.signerName}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Submit Error Message */}
+                {submitError && (
+                  <div style={{
+                    color: '#e53e3e',
+                    padding: '0.75rem',
+                    marginBottom: '1rem',
+                    backgroundColor: '#fee2e2',
+                    borderRadius: '0.25rem',
+                    borderLeft: '4px solid #e53e3e',
+                  }}>
+                    {submitError}
+                  </div>
+                )}
+
+                {/* Submit Button with dynamic text based on payment method */}
+                <div style={{ marginTop: '2rem', marginBottom: '1rem' }}>
+                  <button 
+                    type={formData.paymentMethod === 'Stripe' ? 'button' : 'submit'}
+                    onClick={formData.paymentMethod === 'Stripe' ? handleStripeButtonClick : undefined}
+                    style={{
+                      width: '100%',
+                      padding: '15px 20px',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '18px',
+                      backgroundColor: '#0070f3',
+                      color: 'white',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      opacity: isSubmitting ? 0.7 : 1,
+                      fontWeight: 'bold',
+                      boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="spin"></div> Processing...
+                      </>
+                    ) : (
+                      <>
+                        {formData.paymentMethod === 'Stripe' ? (
+                          <>
+                            <FaCreditCard /> Proceed to Payment
+                          </>
+                        ) : (
+                          <>
+                            <FaPaperPlane /> Submit Contract
+                          </>
+                        )}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+        
+        <PaymentConfirmation 
+          show={showConfirmation} 
+          message={confirmationMessage || `${formData.paymentMethod} payment initiated. Please complete the transaction.`}
+        />
+        {/* Render the genre selection modal */}
+        {showGenreModal && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1050,
+              opacity: 1,
+              transition: 'opacity 0.3s ease',
+              padding: '16px'
+            }}
+            onClick={() => setShowGenreModal(false)}
+          >
+            <div 
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                maxWidth: '800px',
+                width: '100%',
+                maxHeight: '90vh',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)',
+                border: '2px solid #0070f3',
+                overflow: 'hidden',
+                transform: 'translateY(0)',
+                transition: 'transform 0.4s ease-out',
+                display: 'flex',
+                flexDirection: 'column',
+                // Mobile-specific adjustments
+                ...(window?.innerWidth <= 768 ? {
+                  maxHeight: '95vh',
+                  borderRadius: '12px',
+                  margin: '8px'
+                } : {})
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                padding: '20px 25px',
+                borderBottom: '1px solid #eaeaea',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'linear-gradient(90deg, #0070f3, #3291ff)'
+              }}>
+                <h2 style={{ 
+                  margin: 0, 
+                  color: 'white',
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ marginRight: '12px', fontSize: '1.8rem' }}>🎵</span>
+                  Choose Your Music Style
+                </h2>
+                <button 
+                  onClick={() => setShowGenreModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    transition: 'background-color 0.2s',
+                    ':hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div style={{ 
+                padding: '20px 25px',
+                overflowY: 'auto',
+                flexGrow: 1
+              }}>
+                <p style={{ 
+                  marginBottom: '20px', 
+                  fontSize: '1.1rem',
+                  color: '#444'
+                }}>
+                  Select the music genres you&apos;d like to hear at your event:
+                </p>
+                
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: '15px',
+                  marginBottom: '25px'
+                }}>
+                  {musicGenres.map(genre => (
+                    <div key={genre.id} 
+                      onClick={() => {
+                        const newData = { ...formData, musicPreferences: [...formData.musicPreferences, genre.id] };
+                        setFormData(newData);
+                        
+                        // Defer context update to avoid setState during render
+                        setTimeout(() => {
+                          updateContractFormData(newData);
+                        }, 0);
+                        
+                        // Also save to localStorage as backup
+                        try {
+                          localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        } catch (error) {
+                          console.error('Error saving music preferences to localStorage:', error);
+                        }
+                      }}
+                      style={{
+                        padding: '15px',
+                        borderRadius: '8px',
+                        border: `2px solid ${formData.musicPreferences.includes(genre.id) ? '#0070f3' : '#e0e0e0'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: formData.musicPreferences.includes(genre.id) ? 'rgba(0, 112, 243, 0.08)' : 'white',
+                        transition: 'all 0.2s ease',
+                        transform: formData.musicPreferences.includes(genre.id) ? 'scale(1.02)' : 'scale(1)',
+                        boxShadow: formData.musicPreferences.includes(genre.id) 
+                          ? '0 6px 14px rgba(0, 112, 243, 0.15)' 
+                          : '0 2px 5px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: formData.musicPreferences.includes(genre.id) ? '#0070f3' : '#ddd',
+                        marginRight: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: formData.musicPreferences.includes(genre.id) ? '#0070f3' : 'white',
+                        transition: 'all 0.15s ease',
+                        flexShrink: 0
+                      }}>
+                        {formData.musicPreferences.includes(genre.id) && (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+                      <label style={{
+                        margin: 0,
+                        fontSize: '1.05rem',
+                        fontWeight: formData.musicPreferences.includes(genre.id) ? '600' : '500', 
+                        color: formData.musicPreferences.includes(genre.id) ? '#0070f3' : '#444',
+                        cursor: 'pointer',
+                        flexGrow: 1
+                      }}>
+                        {genre.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                
+                {formData.musicPreferences.includes('other') && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label htmlFor="otherMusicPreference" style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontWeight: '500',
+                      color: '#555'
+                    }}>
+                      Please specify other genres:
+                    </label>
+                    <input
+                      id="otherMusicPreference"
+                      name="otherMusicPreference"
+                      type="text"
+                      value={formData.otherMusicPreference}
+                      onChange={(e) => {
+                        const newData = { ...formData, otherMusicPreference: e.target.value };
+                        setFormData(newData);
+                        
+                        // Defer context update to avoid setState during render
+                        setTimeout(() => {
+                          updateContractFormData(newData);
+                        }, 0);
+                        
+                        // Also save to localStorage as backup
+                        try {
+                          localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                        } catch (error) {
+                          console.error('Error saving other music preference to localStorage:', error);
+                        }
+                      }}
+                      placeholder="Tell us about your other music preferences"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '2px solid #0070f3',
+                        fontSize: '1rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div style={{
+                padding: '15px 25px',
+                borderTop: '1px solid #eaeaea',
+                display: 'flex',
+                justifyContent: 'space-between',
+                backgroundColor: '#f9f9f9'
+              }}>
+                <button
+                  onClick={() => setShowGenreModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    backgroundColor: 'white',
+                    color: '#555',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    ':hover': { backgroundColor: '#f5f5f5' }
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const newData = { ...formData, musicPreferences: formData.musicPreferences.filter(id => id !== 'other') };
+                    setFormData(newData);
+                    
+                    // Defer context update to avoid setState during render
+                    setTimeout(() => {
+                      updateContractFormData(newData);
+                    }, 0);
+                    
+                    // Also save to localStorage as backup
+                    try {
+                      localStorage.setItem('djContractFormData', JSON.stringify(newData));
+                    } catch (error) {
+                      console.error('Error saving music preferences to localStorage:', error);
+                    }
+                  }}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: '#0070f3',
+                    color: 'white',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    ':hover': { backgroundColor: '#0060df' }
+                  }}
+                >
+                  Apply Selections
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Other modals */}
+        {modalText && <InfoModal text={modalText} onClose={() => setModalText(null)} />}
+        {showTerms && (
+          <InfoModal text={termsAndConditionsText} onClose={() => setShowTerms(false)} />
+        )}
+        {showPlaylistHelp && (
+          <PlaylistHelpModal
+            streamingService={formData.streamingService}
+            onClose={() => setShowPlaylistHelp(false)}
+          />
+        )}
+        {showSuccessMessage && <SuccessMessage />}
+        {showErrorMessage && <ErrorMessage message={showErrorMessage} />}
+        
+
+
+
+        
+        {/* Confirmation page handles payment instructions */}
+      </div>
+    </SuppressHydration>
+  );
+}
+

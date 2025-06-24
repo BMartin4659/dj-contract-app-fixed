@@ -57,7 +57,7 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold text-green-600 mb-4">Message Sent!</h2>
             <p className="text-gray-700 mb-6">Thank you for reaching out. We&apos;ll get back to you as soon as possible.</p>
             <button 
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/contract-form')}
               className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Return to Home

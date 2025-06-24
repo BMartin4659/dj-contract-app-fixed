@@ -8,6 +8,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AdminAuth } from '@/lib/utils';
+import { isAdminEmail } from '@/app/constants';
 
 export default function DJDashboardPage() {
   const [user, setUser] = useState(null);
@@ -16,20 +18,69 @@ export default function DJDashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Check for admin access first
+    const adminUser = AdminAuth.getAdminUser();
+    if (adminUser) {
+      console.log('🔑 Admin access to dashboard:', adminUser.email);
+      setUser(adminUser);
+      setUserProfile({
+        email: adminUser.email,
+        subscription: adminUser.subscription,
+        plan: 'admin'
+      });
+      setLoading(false);
+      return;
+    }
+    
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
-        setUser(currentUser);
-        
-        // Fetch user profile from Firestore
-        try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.email));
-          if (userDoc.exists()) {
-            setUserProfile(userDoc.data());
+        // Check if user is admin
+        if (isAdminEmail(currentUser.email)) {
+          console.log('🔑 Admin user accessing dashboard:', currentUser.email);
+          const adminUser = AdminAuth.createAdminUser(currentUser.email);
+          AdminAuth.setAdminUser(currentUser.email);
+          setUser(adminUser);
+          setUserProfile({
+            email: adminUser.email,
+            subscription: adminUser.subscription,
+            plan: 'admin'
+          });
+        } else {
+          setUser(currentUser);
+          
+          // Fetch user profile from Firestore
+          try {
+            const userDoc = await getDoc(doc(db, 'users', currentUser.email));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              setUserProfile(userData);
+              
+              // Check if user qualifies for dashboard access (DJ or active subscription)
+              const subscription = userData.subscription;
+              const hasActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trial';
+              const isDJ = userData.plan === 'dj' || userData.isDJ || hasActiveSubscription;
+              
+              if (!isDJ && !hasActiveSubscription) {
+                console.log('🚫 Dashboard access denied - no active subscription or DJ status');
+                alert('Dashboard access requires an active subscription or DJ account. Please upgrade your plan or sign up as a DJ.');
+                router.push('/auth/login');
+                return;
+              }
+            } else {
+              // User exists in auth but no profile - redirect to complete profile
+              console.log('⚠️ User profile not found, redirecting to login');
+              router.push('/auth/login');
+              return;
+            }
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            router.push('/auth/login');
+            return;
           }
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
         }
       } else {
+        // No authenticated user - redirect to login for dashboard access
+        console.log('🔒 Dashboard requires authentication - redirecting to login');
         router.push('/auth/login');
       }
       setLoading(false);
@@ -40,15 +91,18 @@ export default function DJDashboardPage() {
 
   const handleSignOut = async () => {
     try {
+      // Clear admin session if it exists
+      AdminAuth.clearAdminSession();
+      
       await auth.signOut();
-      router.push('/landing');
+      router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
   const handleGoToMainContract = () => {
-    router.push('/');
+    router.push('/contract-form');
   };
 
   if (loading) {

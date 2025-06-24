@@ -594,6 +594,7 @@ export default function BookingPage() {
                       <VenueNameWithSuggestions
                         value={formData.venueName}
                         onChange={handleChange}
+                        onAddressChange={handleChange}
                         name="venueName"
                         placeholder="Venue Name"
                         required={false}

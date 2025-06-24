@@ -404,7 +404,7 @@ function PaymentSuccessContent() {
           <h2 className="text-xl font-semibold text-red-600 mb-4">Payment Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button 
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/contract-form')}
             className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center mx-auto"
           >
             <FaArrowLeft className="mr-2" /> Return Home

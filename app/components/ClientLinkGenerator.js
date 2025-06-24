@@ -137,7 +137,7 @@ export default function ClientLinkGenerator({ djId }) {
   };
 
   const handleGoToMainContract = () => {
-    router.push('/');
+    router.push('/contract-form');
   };
 
   return (

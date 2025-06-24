@@ -1,6 +1,7 @@
 'use client';
 import LoginForm from '@/app/components/LoginForm';
 import GoogleLoginButton from '@/app/components/GoogleLoginButton';
+import AdminAccess from '@/app/components/AdminAccess';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -53,6 +54,9 @@ export default function LoginPage() {
             {/* Google Login */}
             <GoogleLoginButton />
           </div>
+
+          {/* Admin Access */}
+          <AdminAccess />
 
           {/* Sign Up Link */}
           <div className="mt-8 text-center">

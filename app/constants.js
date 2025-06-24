@@ -1,5 +1,35 @@
 // Common URL constants for the application
 
+// ADMIN CONFIGURATION
+export const ADMIN_CONFIG = {
+  // Admin email addresses that bypass authentication
+  ADMIN_EMAILS: [
+    'bmartin4659@gmail.com', // Your admin email
+    'bobby@livecityevents.com', // Alternative admin email
+    // Add more admin emails here as needed
+  ],
+  
+  // Admin privileges
+  PRIVILEGES: {
+    BYPASS_AUTH: true,           // Skip authentication requirements
+    ACCESS_ALL_FEATURES: true,   // Access to all premium features
+    ADMIN_DASHBOARD: true,       // Access to admin-only sections
+    UNLIMITED_USAGE: true        // No usage limits
+  }
+};
+
+// Helper function to check if an email is an admin
+export const isAdminEmail = (email) => {
+  if (!email) return false;
+  return ADMIN_CONFIG.ADMIN_EMAILS.includes(email.toLowerCase());
+};
+
+// Helper function to check admin privileges
+export const hasAdminPrivilege = (email, privilege) => {
+  if (!isAdminEmail(email)) return false;
+  return ADMIN_CONFIG.PRIVILEGES[privilege] === true;
+};
+
 // Payment method URL configurations
 export const PAYMENT_URLS = {
   VENMO: process.env.NEXT_PUBLIC_VENMO_URL || 'https://venmo.com/u/Bobby-Martin-64',

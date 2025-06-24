@@ -2476,7 +2476,7 @@ export default function WeddingAgendaForm() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      router.push('/');
+                      router.push('/contract-form');
                     }}
                     className="px-10 py-2.5 text-white font-medium rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 text-base inline-flex items-center justify-center"
                     style={{

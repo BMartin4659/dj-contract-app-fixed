@@ -11,7 +11,8 @@ const VenueNameWithSuggestions = ({
   required = true,
   style = {},
   className = "",
-  fieldIcon = null
+  fieldIcon = null,
+  onAddressChange = null
 }) => {
   const [venueSuggestions, setVenueSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -133,6 +134,37 @@ const VenueNameWithSuggestions = ({
     };
     
     onChange(syntheticEvent);
+    
+    // If onAddressChange is provided, get place details and auto-fill address
+    if (onAddressChange && venue.place_id && window.google?.maps?.places?.PlacesService) {
+      const placesService = new window.google.maps.places.PlacesService(document.createElement('div'));
+      
+      placesService.getDetails(
+        {
+          placeId: venue.place_id,
+          fields: ['formatted_address', 'name']
+        },
+        (place, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && place.formatted_address) {
+            console.log('VenueNameWithSuggestions: Auto-filling address:', place.formatted_address);
+            
+            // Create synthetic event for address field
+            const addressEvent = {
+              target: {
+                name: 'venueLocation',
+                value: place.formatted_address,
+                type: 'text'
+              }
+            };
+            
+            onAddressChange(addressEvent);
+          } else {
+            console.log('VenueNameWithSuggestions: Could not get place details for address auto-fill');
+          }
+        }
+      );
+    }
+    
     setShowSuggestions(false);
     setVenueSuggestions([]);
   };

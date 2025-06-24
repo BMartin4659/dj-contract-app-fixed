@@ -61,11 +61,39 @@ export class FontManager {
   // Check if user has active subscription
   async checkSubscriptionStatus() {
     try {
+      // First check for admin access
+      const { AdminAuth } = await import('../lib/utils');
+      const adminUser = AdminAuth.getAdminUser();
+      
+      if (adminUser) {
+        this.subscriptionStatus = { 
+          hasActiveSubscription: true, 
+          tier: 'admin',
+          status: 'active',
+          provider: 'admin',
+          reason: 'Admin access - unlimited features' 
+        };
+        return this.subscriptionStatus;
+      }
+      
       const auth = getAuth();
       const user = auth.currentUser;
       
       if (!user) {
         this.subscriptionStatus = { hasActiveSubscription: false, reason: 'Not authenticated' };
+        return this.subscriptionStatus;
+      }
+
+      // Check if current user is admin
+      const { isAdminEmail } = await import('../app/constants');
+      if (isAdminEmail(user.email)) {
+        this.subscriptionStatus = { 
+          hasActiveSubscription: true, 
+          tier: 'admin',
+          status: 'active',
+          provider: 'admin',
+          reason: 'Admin user - unlimited features' 
+        };
         return this.subscriptionStatus;
       }
 

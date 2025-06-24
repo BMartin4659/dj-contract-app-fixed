@@ -321,8 +321,42 @@ export default function MusicLibraryPage() {
           return;
         }
         
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            try {
+              // Fetch user profile to check subscription status
+              const firebaseModule = await import('../../lib/firebase');
+              const { doc, getDoc } = await import('firebase/firestore');
+              const userDoc = await getDoc(doc(firebaseModule.db, 'users', user.email));
+              
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                setUser({
+                  ...user,
+                  subscription: userData.subscription,
+                  hasActiveSubscription: userData.subscription?.status === 'active' || userData.subscription?.status === 'trial',
+                  isDJ: userData.plan === 'dj' || userData.isDJ
+                });
+              } else {
+                setUser({
+                  ...user,
+                  hasActiveSubscription: false,
+                  isDJ: false
+                });
+              }
+            } catch (error) {
+              console.error('Error fetching user profile:', error);
+              setUser({
+                ...user,
+                hasActiveSubscription: false,
+                isDJ: false
+              });
+            }
+          } else {
+            // Allow unauthenticated access to music library
+            console.log('🎵 Music Library - allowing unauthenticated access');
+            setUser(null);
+          }
           setAuthLoading(false);
         });
 
@@ -719,7 +753,7 @@ export default function MusicLibraryPage() {
       console.error('Error saving songs before navigation:', error);
     }
     
-    router.push('/');
+    router.push('/contract-form');
   }, [router, selectedSongs]);
 
   const handleTabChange = useCallback((tab) => {
