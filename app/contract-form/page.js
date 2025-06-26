@@ -1241,6 +1241,9 @@ export default function DJContractForm() {
   const [loading, setLoading] = useState(true);
   const [isClientAccess, setIsClientAccess] = useState(false);
   const [contractType, setContractType] = useState('standard'); // 'standard' or 'premium'
+  const [djProfile, setDjProfile] = useState(null);
+  const [customLogo, setCustomLogo] = useState(null);
+  const [logoPosition, setLogoPosition] = useState('center');
   
   // Header font state
   const [headerFont, setHeaderFont] = useState('Ka Blam');
@@ -1509,6 +1512,72 @@ export default function DJContractForm() {
 
     return () => unsubscribe();
   }, []);
+
+  // Fetch DJ profile and custom logo
+  useEffect(() => {
+    const fetchDJProfile = async () => {
+      // Only fetch when we have client access (djId and clientId from URL)
+      const urlParams = new URLSearchParams(window.location.search);
+      const djId = urlParams.get('djId');
+      
+      if (djId) {
+        try {
+          const djDoc = await getDoc(doc(db, 'users', djId));
+          if (djDoc.exists()) {
+            const djData = djDoc.data();
+            setDjProfile(djData);
+            setCustomLogo(djData.customLogo || null);
+            setLogoPosition(djData.logoPosition || 'center');
+            console.log('📋 DJ profile loaded:', djData.email, 'Custom logo:', !!djData.customLogo);
+          }
+        } catch (error) {
+          console.error('Error fetching DJ profile:', error);
+        }
+      } else if (user && !isClientAccess) {
+        // If authenticated DJ, fetch their own profile
+        try {
+          const djDoc = await getDoc(doc(db, 'users', user.email));
+          if (djDoc.exists()) {
+                      const djData = djDoc.data();
+          setDjProfile(djData);
+          setCustomLogo(djData.customLogo || null);
+          setLogoPosition(djData.logoPosition || 'center');
+          console.log('📋 Own DJ profile loaded:', djData.email, 'Custom logo:', !!djData.customLogo);
+          }
+        } catch (error) {
+          console.error('Error fetching own DJ profile:', error);
+        }
+      }
+    };
+
+    // Only run when user state is loaded and not during initial loading
+    if (!loading) {
+      fetchDJProfile();
+    }
+  }, [user, loading, isClientAccess]);
+
+  // Listen for logo updates
+  useEffect(() => {
+    const handleLogoUpdate = (event) => {
+      const { logoUrl, logoPosition, userEmail } = event.detail;
+      
+      // Check if this update is for the current DJ
+      const urlParams = new URLSearchParams(window.location.search);
+      const djId = urlParams.get('djId');
+      const currentDjEmail = djId || (user && !isClientAccess ? user.email : null);
+      
+      if (currentDjEmail === userEmail) {
+        console.log('🔄 Logo updated, refreshing display:', logoUrl, logoPosition);
+        setCustomLogo(logoUrl);
+        if (logoPosition) {
+          setLogoPosition(logoPosition);
+        }
+      }
+    };
+
+    window.addEventListener('logoUpdated', handleLogoUpdate);
+    return () => window.removeEventListener('logoUpdated', handleLogoUpdate);
+  }, [user, isClientAccess]);
 
   // Load any existing music library songs from localStorage
   useEffect(() => {
@@ -3754,7 +3823,6 @@ Live City DJ Contract Terms and Conditions:
         paddingBottom: '2rem'
       }}>
 
-        <AdminPanel />
         <AccessLevelBanner user={user} className="m-4" />
 
         
@@ -3861,19 +3929,31 @@ Live City DJ Contract Terms and Conditions:
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
-                    <Image
-                      src="/dj-bobby-drake-logo.png"
-                      alt="DJ Bobby Drake Logo"
-                      width={150}
-                      height={150}
-                      priority
-                      unoptimized={false}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        objectFit: 'contain'
-                      }}
-                    />
+                    <div style={{
+                      width: '150px',
+                      height: '150px',
+                      borderRadius: '50%',
+                      border: '2px solid #e5e7eb',
+                      overflow: 'hidden',
+                      backgroundColor: customLogo ? 'white' : 'transparent',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    }}>
+                      <Image
+                        src={customLogo || "/dj-bobby-drake-logo-transparent-60.png"}
+                        alt={customLogo ? "DJ Logo" : "DJ Bobby Drake Logo"}
+                        width={150}
+                        height={150}
+                        priority
+                        unoptimized={false}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: customLogo ? 'cover' : 'contain',
+                          objectPosition: djProfile?.logoPosition || 'center',
+                          backgroundColor: customLogo ? 'white' : 'transparent'
+                        }}
+                      />
+                    </div>
                   </div>
                   
                   <h1 className="contract-header" style={{

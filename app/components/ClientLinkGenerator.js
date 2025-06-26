@@ -107,7 +107,13 @@ export default function ClientLinkGenerator({ djId }) {
       await setDoc(doc(db, 'users', djId, 'clients', clientId), clientData);
       
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      const contractLink = `${baseUrl}/?clientId=${clientId}&djId=${djId}`;
+      
+      // Route to different forms based on subscription level
+      const contractPath = subscriptionStatus?.hasActiveSubscription 
+        ? '/contract-form'  // Premium DJs get full-featured form
+        : '/client-contract'; // Free DJs get basic form
+      
+      const contractLink = `${baseUrl}${contractPath}?clientId=${clientId}&djId=${djId}`;
       setLink(contractLink);
     } catch (error) {
       console.error('Error generating link:', error);

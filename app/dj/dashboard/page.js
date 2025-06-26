@@ -3,6 +3,7 @@ import DJClientPortal from '@/app/components/DJClientPortal';
 import ClientLinkGenerator from '@/app/components/ClientLinkGenerator';
 import EmailTemplateEditor from '@/app/components/EmailTemplateEditor';
 import SubscribeButtons from '@/app/components/SubscribeButtons';
+import LogoUpload from '@/app/components/LogoUpload';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
@@ -15,6 +16,7 @@ export default function DJDashboardPage() {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [customLogo, setCustomLogo] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -103,6 +105,16 @@ export default function DJDashboardPage() {
 
   const handleGoToMainContract = () => {
     router.push('/contract-form');
+  };
+
+  const handleLogoUpdate = (logoUrl, logoPosition) => {
+    setCustomLogo(logoUrl);
+    // Update userProfile state as well
+    setUserProfile(prev => ({
+      ...prev,
+      customLogo: logoUrl,
+      logoPosition: logoPosition || prev?.logoPosition || 'center'
+    }));
   };
 
   if (loading) {
@@ -225,8 +237,17 @@ export default function DJDashboardPage() {
         {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Client Link Generator */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-1">
             <ClientLinkGenerator djId={user.email} />
+          </div>
+
+          {/* Logo Upload */}
+          <div className="lg:col-span-1">
+            <LogoUpload 
+              user={user} 
+              userProfile={userProfile} 
+              onLogoUpdate={handleLogoUpdate} 
+            />
           </div>
 
           {/* Client Portal */}

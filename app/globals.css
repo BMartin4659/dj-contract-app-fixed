@@ -2638,3 +2638,20 @@ textarea:focus {
   padding: var(--header-padding, 10px) !important;
 }
 
+/* Logo transparency for original DJ Bobby Drake logo */
+.original-logo-transparent {
+  /* Remove white background and make it transparent */
+  background: transparent !important;
+  /* Use advanced blend modes to remove white */
+  mix-blend-mode: darken;
+  /* Enhance contrast to make logo stand out */
+  filter: contrast(120%) brightness(0.9);
+}
+
+/* Alternative transparency approach with CSS masking */
+.original-logo-transparent img {
+  background: transparent !important;
+  /* Use screen blend mode to remove white backgrounds */
+  mix-blend-mode: screen;
+}
+

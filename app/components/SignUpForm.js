@@ -84,72 +84,66 @@ export default function SignUpForm() {
 
   return (
     <div className="max-w-sm mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6 px-6 py-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             {error}
           </div>
         )}
         
-        <div className="space-y-2">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 ml-2">
+        <div className="space-y-3">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
             Email address
           </label>
-          <div className="px-4">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 ml-2">
+        <div className="space-y-3">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
             Password
           </label>
-          <div className="px-4">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              placeholder="Create a password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+            placeholder="Create a password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 ml-2">
+        <div className="space-y-3">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
             Confirm Password
           </label>
-          <div className="px-4">
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
         </div>
 
         {selectedPlan && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mx-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mt-6">
             <p className="text-sm text-blue-700">
               Selected plan: <span className="font-semibold capitalize">{selectedPlan}</span>
               <br />
@@ -158,7 +152,7 @@ export default function SignUpForm() {
           </div>
         )}
 
-        <div className="px-4">
+        <div className="pt-4">
           <button
             type="submit"
             disabled={loading}

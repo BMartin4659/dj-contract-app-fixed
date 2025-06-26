@@ -9,66 +9,10 @@ import { isAdminEmail } from './constants';
 export default function LandingPage() {
   const router = useRouter();
 
-  // Admin Quick Access Panel
-  const AdminPanel = () => {
-    const [showAdminPanel, setShowAdminPanel] = useState(false);
-    
-    return (
-      <>
-        {!showAdminPanel ? (
-          <button
-            onClick={() => setShowAdminPanel(true)}
-            className="bg-yellow-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-yellow-600 transition-colors"
-          >
-            Admin
-          </button>
-        ) : (
-          <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-lg w-80">
-            <h3 className="font-medium text-gray-900 mb-3">Admin Access</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const email = e.target.email.value;
-              if (AdminAuth.setAdminUser(email)) {
-                router.push('/dj/dashboard');
-              } else {
-                alert('Invalid admin email');
-              }
-            }}>
-              <input
-                name="email"
-                type="email"
-                placeholder="Enter admin email"
-                className="w-full px-3 py-2 border border-gray-300 rounded mb-3 text-sm"
-                required
-              />
-              <div className="flex space-x-2">
-                <button
-                  type="submit"
-                  className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
-                >
-                  Access
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAdminPanel(false)}
-                  className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-      </>
-    );
-  };
+
 
       return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      {/* Admin Panel */}
-      <div className="fixed top-4 right-4 z-50">
-        <AdminPanel />
-      </div>
 
       {/* Header */}
       <nav className="bg-white shadow-lg border-b border-gray-100">
@@ -128,7 +72,7 @@ export default function LandingPage() {
           
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-12">
             <Link 
-              href="/auth/signup" 
+              href="/contract-form" 
               className="bg-blue-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-2"
             >
               Start Free Trial
@@ -143,10 +87,10 @@ export default function LandingPage() {
           
           <div className="mt-8">
             <Link 
-              href="/contract-form" 
+              href="/auth/signup" 
               className="text-blue-600 hover:text-blue-800 font-medium text-lg"
             >
-              Try Contract Form (No Login Required) →
+              Create DJ Account (For Business Features) →
             </Link>
           </div>
         </div>

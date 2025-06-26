@@ -164,7 +164,7 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
       const highlightedFont = filteredFonts[highlightedIndex];
       onPreviewChange(highlightedFont);
     }
-  }, [highlightedIndex, filteredFonts, onPreviewChange]);
+  }, [highlightedIndex, filteredFonts.length]); // Remove onPreviewChange from dependencies to prevent infinite loops
 
   // Only restore position when dropdown is first opened, not during navigation
   useEffect(() => {
@@ -217,16 +217,18 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
     return () => clearTimeout(restoreTimeout);
   }, [isOpen, hasRestoredPosition]);
 
-  // Mark user as navigating and set timeout to reset
+  // Mark user as navigating and set timeout to reset - simplified
   const markUserNavigating = () => {
-    setUserIsNavigating(true);
+    if (!userIsNavigating) {
+      setUserIsNavigating(true);
+    }
     
-    // Clear existing timeout
+    // Clear any existing timeout
     if (navigationTimeoutRef.current) {
       clearTimeout(navigationTimeoutRef.current);
     }
     
-    // Reset navigation flag after 1 second of inactivity (reduced from 2 seconds)
+    // Reset navigation flag after 1 second of inactivity
     navigationTimeoutRef.current = setTimeout(() => {
       setUserIsNavigating(false);
     }, 1000);
@@ -324,8 +326,8 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
     const now = Date.now();
     const timeSinceLastWheel = now - lastWheelTime.current;
     
-    // More aggressive throttling to prevent erratic behavior
-    if (timeSinceLastWheel < 150) {
+    // Slower scrolling - increased throttling for better control
+    if (timeSinceLastWheel < 300) {
       return;
     }
     
@@ -429,10 +431,12 @@ export default function SystemFontSelector({ onFontChange, onPreviewChange, curr
     }
   };
 
-  // Handle mouse enter on font items
+  // Handle mouse enter on font items - simplified to prevent infinite loops
   const handleMouseEnter = (index) => {
-    markUserNavigating();
-    setHighlightedIndex(index);
+    // Simply set the highlighted index without calling markUserNavigating
+    if (highlightedIndex !== index) {
+      setHighlightedIndex(index);
+    }
   };
 
 
